@@ -1,0 +1,14 @@
+// fib function (recursive)
+fun fib( n ) {
+  if( n <= 1 ) return n;
+  return fib( n - 2 ) + fib( n - 1 );
+}
+
+// run 'fib' on the first 20 numbers
+for( var i = 0; i < 20; i = i + 1 ) {
+  print( fib( i ) );
+}
+
+// let's also test assigning it to a variable, and then calling it
+var f = fib;
+print( f( 0 ) );

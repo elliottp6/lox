@@ -1,0 +1,13 @@
+fun makeCounter() {
+  var i = 0;
+  fun count() {
+    i = i + 1; // <-- without a closure, this gives an "undefined variable 'i'"
+    print( i );
+  }
+
+  return count; // <-- returns the function, not an execution of it
+}
+
+var counter = makeCounter();
+counter(); // "1".
+counter(); // "2".
