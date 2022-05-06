@@ -89,7 +89,7 @@ sealed class Scanner {
 
     // tests
     [Test] public static void Test() {
-        var s = new Scanner();
+        Scanner scanner = new();
         Assert.AreEqual(
             new List<Token>() {
                 new( VAR, "var", 0, 0, 3 ),
@@ -105,13 +105,11 @@ sealed class Scanner {
                 new( GREATER_EQUAL, ">=", 1, 10, 2 ),
                 new( NUMBER, 0.0, 1, 13, 1 ),
                 new( RIGHT_PAREN, ")", 1, 15, 1 ),
-                new( STRING, "hello world", 1, 23, 13 ),
-                new( SEMICOLON, ";", 1, 36, 1 ),
-                new( IDENTIFIER, "PRINT", 2, 0, 5 ) },
-            s.ScanTokens(
+                new( STRING, "hello world", 1, 17, 13 ),
+                new( SEMICOLON, ";", 1, 30, 1 )},
+            scanner.ScanTokens(
                 "var x = 5; // initialize x to 5",
-                "if( x / 2 >= 0 ) print \"hello world\";",
-                "PRINT" ) );
+                "if( x / 2 >= 0 ) \"hello world\";" ) );
     }
 }
 
