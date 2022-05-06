@@ -11,10 +11,7 @@ static class MainClass {
             }
 
             // runs all tests in the system
-            case "test": {
-                Tester.RunTests();
-                return;
-            }
+            case "test": { Tester.RunTests(); return; }
 
             // runs a specific file
             case "eval": {

@@ -2,15 +2,8 @@ using System; using System.Text; using System.Collections.Generic; using System.
 
 static class CollectionExtensions {
 	// Array
-	public static T[] Add<T>( this T[] a, T[] b ) { var c = new T[a.Length + b.Length]; Array.Copy( a, c, a.Length ); Array.Copy( b, 0, c, a.Length, b.Length ); return c; }
 	public static int End<T>( this T[] a ) => a.Length - 1;
-	public static void Inmap<T>( this T[] a, Func<T,T> f ) { for( var i = 0; i < a.Length; i++ ) a[i] = f( a[i] ); }
 	public static T Last<T>( this T[] a ) => a[a.Length - 1];
-	public static string ToStringEach<T>( this ReadOnlySpan<T> a, char sep = ' ' ) { var b = new StringBuilder(); for( var i = 0; i < a.Length; i++ ) { if( i > 0 ) b.Append( sep ); b.Append( a[i] ); } return b.ToString(); }
-	//public static T TryGet<T>( this T[] a, int i, T @default = default ) => (i >= 0) & (i < a.Length) ? a[i] : @default;
-
-	// Dictionary
-	//public static T TryGetValue<K,T>( this Dictionary<K,T> d, K key, T @default = default ) => d.TryGetValue( key, out var value ) ? value : @default;
 	
 	// List
 	public static ReadOnlySpan<T> Clip<T>( this List<T> s, int start, int end ) => s.Readspan().Slice( start, end - start + 1 );
@@ -28,7 +21,6 @@ static class CollectionExtensions {
 	public static T GetOrNew<T>( this List<T> a, int i ) where T : new() { if( i < a.Count ) return a[i]; var t = new T(); a.Add( t ); return t; }
 	public static void Inmap<T>( this List<T> a, Func<T,T> f ) => a.Span().Inmap( f );
 	public static T Last<T>( this List<T> a ) => a[a.Count - 1];
-	public static T Peek<T>( this List<T> a ) => a[a.Count - 1];
 	public static T Penultimate<T>( this List<T> a ) => a[a.Count - 2];
 	public static T Pop<T>( this List<T> a ) => a.PopAt( a.End() );
 	public static T PopAt<T>( this List<T> a, int i ) { var value = a[i]; a.RemoveAt( i ); return value; }
@@ -37,13 +29,11 @@ static class CollectionExtensions {
 	public static void RemoveLast<T>( this List<T> a ) => a.RemoveAt( a.End() );
 	public static void Set<T>( this List<T> a, T value ) { a.Clear(); a.Add( value ); }
 	public static void Set<T>( this List<T> a, List<T> values ) { a.Clear(); a.AddRange( values ); }
-	public static void Shrink<T>( this List<T> a, int count ) => a.RemoveRange( count, a.Count - count );
 	
 	// ReadOnlySpan
 	public static ReadOnlySpan<T> Clip<T>( this ReadOnlySpan<T> s, int start, int end ) => s.Slice( start, end - start + 1 );
 	public static bool Contains<T>( this ReadOnlySpan<T> a, Func<T,bool> match ) { for( var i = 0; i < a.Length; i++ ) if( match( a[i] ) ) return true; return false; }
 	public static int End<T>( this ReadOnlySpan<T> a ) => a.Length - 1;
-	//public static T Find<T>( this ReadOnlySpan<T> s, Func<T,bool> match ) { foreach( var t in s ) if( match( t ) ) return t; return default; }
 	public static T Last<T>( this ReadOnlySpan<T> a ) => a[a.Length - 1];
 	public static bool Sorted<T>( this ReadOnlySpan<T> a ) where T : IComparable<T> { for( var i = 1; i < a.Length; i++ ) if( -1 == a[i].CompareTo( a[i - 1] ) ) return false; return true; }
 	public static T? TryGet<T>( this ReadOnlySpan<T> a, int i, T? @default = default ) => (i >= 0) & (i < a.Length) ? a[i] : @default;
@@ -51,13 +41,10 @@ static class CollectionExtensions {
 	public static ReadOnlySpan<T> RemoveOnward<T>( this ReadOnlySpan<T> a, Func<T,bool> match, int start = 0 ) { for( var i = start; i < a.Length; i++ ) if( match( a[i] ) ) return a.Slice( 0, i ); return a; }
 	public static ReadOnlySpan<T> KeepWhile<T>( this ReadOnlySpan<T> a, Func<T,bool> match, int start = 0 ) { for( var i = start; i < a.Length; i++ ) if( !match( a[i] ) ) return a.Slice( 0, i ); return a; }
 	public static ReadOnlySpan<T> KeepWhile<T>( this ReadOnlySpan<T> a, Func<T,T?,bool> match, int start = 0 ) { for( var i = start; i < a.Length; i++ ) if( !match( a[i], a.TryGet( i + 1 ) ) ) return a.Slice( 0, i ); return a; }
+	public static string ToStringEach<T>( this ReadOnlySpan<T> a, char sep = ' ' ) { var b = new StringBuilder(); for( var i = 0; i < a.Length; i++ ) { if( i > 0 ) b.Append( sep ); b.Append( a[i] ); } return b.ToString(); }
 
 	// Span
 	public static void Inmap<T>( this Span<T> a, Func<T,T> f ) { for( var i = 0; i < a.Length; i++ ) a[i] = f( a[i] ); }
-	public static int End<T>( this Span<T> a ) => a.Length - 1;
-
-	// StringBuilder
-	public static int End( this StringBuilder a ) => a.Length - 1;
 }
 
 } // namespace
