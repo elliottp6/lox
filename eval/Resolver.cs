@@ -46,7 +46,6 @@ sealed class Resolver : Visitor<object?> {
         for( var i = scopes_.End(); i >= 0; i-- ) {
             if( scopes_[i].ContainsKey( (string)name.Value ) ) {
                 interpreter_.Resolve( e, scopes_.End() - i );
-                // TODO: remove: Console.WriteLine( $"{name} resolved to scope {scopes_.End() - i}" );
                 return;
             }
         }
@@ -61,7 +60,8 @@ sealed class Resolver : Visitor<object?> {
     }
 
     object? Visitor<object?>.VisitClassDeclarationStatement( ClassDeclarationStatement s ) {
-        throw new NotImplementedException();
+        DeclareDefine( s.Name );
+        return null;
     }
 
     object? Visitor<object?>.VisitVariableDeclarationStatement( VariableDeclarationStatement s ) {

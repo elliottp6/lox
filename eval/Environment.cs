@@ -1,4 +1,4 @@
-using System; using System.Collections.Generic; using Lox.Scan; namespace Lox.Eval {
+using System.Collections.Generic; using Lox.Scan; namespace Lox.Eval {
 
 sealed class Environment {
     readonly Dictionary<string,object?> identifiers_ = new();
@@ -22,8 +22,6 @@ sealed class Environment {
     }
 
     public object? Get( Token name, int scope ) {
-        // TODO: remove: Console.WriteLine( $"{name} looking from scope {scope}" );
-
         // if not in the right scope, defer to parent
         if( scope > 0 ) {
             if( null == parent_ ) throw new RuntimeError( name, $"variable scope exceeds global -- error in Resolver" );
