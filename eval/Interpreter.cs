@@ -2,9 +2,13 @@ using System; using System.Collections.Generic; using Lox.Scan; using Lox.Syntax
 
 sealed class Interpreter : Visitor<object?> {
     Environment environment_ = new( parent: null );
+    Dictionary<Expression,int> locals_ = new( new IdentityEqualityComparer<Expression>() ); // side table for adding data to expressions (in this case, )
     
     // list of variables in the most local possible scope
     public List<string> Globals() => environment_.Global().List();
+
+    // adds an expression to the side table w/ scope information
+    public void Resolve( Expression e, int scope ) => locals_.Add( e, scope );
 
     // constructor
     public Interpreter() {
@@ -36,13 +40,15 @@ sealed class Interpreter : Visitor<object?> {
     }
 
     // top-level methods
-    public void Interpret( List<Statement> statements ) {
-        try {
-            foreach( var statement in statements ) statement.Accept( this );
-        } catch( RuntimeError error ) {
-            ColorConsole.WriteLine( "[" + error.Token.Line + "] " + error.Message, ConsoleColor.Red );
-            ColorConsole.WriteLine( "nil", ConsoleColor.DarkYellow );
-        }
+    public void Interpret( List<Statement> statements, bool catchRuntimeExceptions ) {
+        if( catchRuntimeExceptions ) {
+            try {
+                foreach( var statement in statements ) statement.Accept( this );
+            } catch( RuntimeError error ) {
+                ColorConsole.WriteLine( "[" + error.Token.Line + "] " + error.Message, ConsoleColor.Red );
+                ColorConsole.WriteLine( "nil", ConsoleColor.DarkYellow );
+            }
+        } else foreach( var statement in statements ) statement.Accept( this );
     }
 
     // -- expressions -
@@ -101,11 +107,11 @@ sealed class Interpreter : Visitor<object?> {
     }
 
     object? Visitor<object?>.VisitVariableExpression( VariableExpression e ) =>
-        environment_.Get( e.Name );
+        environment_.Get( e.Name, locals_[e] );
 
     object? Visitor<object?>.VisitAssignmentExpression( AssignmentExpression e ) {
         var rvalue = e.Value.Accept( this );
-        environment_.Set( e.Name, rvalue );
+        environment_.Set( e.Name, rvalue, locals_[e] );
         return rvalue;
     }
 

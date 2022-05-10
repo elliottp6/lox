@@ -1,40 +1,39 @@
-using System; using System.Collections.Generic; using Lox.Scan; using Lox.Syntax; using static Lox.Scan.TokenType; namespace Lox.Eval {
+using System; using System.Collections.Generic; using Lox.Scan; using Lox.Syntax; namespace Lox.Eval {
 
 // the resolver processes a list of statements, and for every var, tells interpreter
 // how many scopes (environments) there are between current scope & scope where var is defined
+// TODO: a cleaner design would be if the resolver actually created the side-data-structure that
+// held a map between expressions & their scopes
+// then this could just be passed to the interpreter
+// also, we could/should avoid defining the global scope here, so the interpreter doesn't need to provide these globals to the resolver
 sealed class Resolver : Visitor<object?> {
-    readonly Interpreter interpreter_;
     readonly List<Dictionary<string,bool>> scopes_ = new();
+    readonly Interpreter interpreter_;
 
     // constructor
     public Resolver( Interpreter interpreter ) {
+        BeginScope(); // global scope
+        foreach( var g in interpreter.Globals() ) scopes_.Peek().Add( g, true );
         interpreter_ = interpreter;
-        
-        // push globals
-        // TODO: not needed?
-        //BeginScope();
-        //foreach( var g in interpreter.Globals() ) scopes_[0].Add( g, true );
     }
 
     // scope
     void BeginScope() => scopes_.Push( new() );
     void EndScope() => scopes_.Pop();
-
-    // declare & define
-    // split into "Declare" vs "Define" to handle cases where initializer refers to same name, e.g.:
-    // var a = "outer";
-    // {
-    //      var a = a;
-    // }
+    
+    // variable is in scope, but not yet able to be accessed b/c its initializer is not yet run
+    // in this way, the initialize sees this variable, but cannot use it, so we can throw an error (cannot refer to self in initilaizer)
+    // (alternatively, we could use the value of outer-scope version of this variable, or perhaps just use 'nil', but that's not how lox works)
     void Declare( Token variable ) {
-        if( !scopes_.TryPeek( out var scope ) ) return;
-        scope.Add( (string)variable.Value, false );
+        if( !scopes_.Peek().TryAdd( (string)variable.Value, false ) )
+            throw new Exception( $"variable already declared in this scope: {variable}" );
     }
+    
+    // after the initializer is run, the variable has a value, and can safely be accessed
+    void Define( Token variable ) => scopes_.Peek()[(string)variable.Value] = true;
 
-    void Define( Token variable ) {
-        if( !scopes_.TryPeek( out var scope ) ) return;
-        scope[(string)variable.Value] = true;
-    }
+    // do both at once
+    void DeclareDefine( Token variable ) { Declare( variable ); Define( variable ); }
 
     // statement/expression resolution
     public void Resolve( List<Statement> statements ) { foreach( var s in statements ) Resolve( s ); }
@@ -44,7 +43,8 @@ sealed class Resolver : Visitor<object?> {
     void ResolveLocal( Expression e, Token name ) {
         for( var i = scopes_.End(); i >= 0; i-- ) {
             if( scopes_[i].ContainsKey( (string)name.Value ) ) {
-                // TODO: interpreter_.Resolve( e, scopes_.End() - i );
+                interpreter_.Resolve( e, scopes_.End() - i );
+                // TODO: remove: Console.WriteLine( $"{name} resolved to scope {scopes_.End() - i}" );
                 return;
             }
         }
@@ -60,29 +60,31 @@ sealed class Resolver : Visitor<object?> {
 
     public object? VisitVariableDeclarationStatement( VariableDeclarationStatement s ) {
         Declare( s.Name );
-        if( null != s.Initializer ) Resolve( s.Initializer );
+        if( null != s.Initializer ) Resolve( s.Initializer ); // variable cannot refer to itself within its initializer, so run the initializer before we define it
         Define( s.Name );
         return null;
     }
 
     public object? VisitFunctionDeclarationStatement( FunctionDeclarationStatement s ) {
-        Declare( s.Name );
-        Define( s.Name );
+        DeclareDefine( s.Name ); // a function is allowed to refer to itself
         ResolveFunction( s );
         return null;
     }
 
     void ResolveFunction( FunctionDeclarationStatement s ) {
         BeginScope();
-        foreach( var param in s.Parameters ) { Declare( param ); Define( param ); }
+        foreach( var param in s.Parameters ) DeclareDefine( param );
         Resolve( s.Body );
         EndScope();
     }
 
     // interesting expressions
     public object? VisitVariableExpression( VariableExpression e ) {
-        if( scopes_.TryPeek( out var scope ) &&
-            !scope[(string)e.Name.Value] ) throw new Exception( "Can't read local variable in its own initializer" );
+        // see if the variable is defined before we access it
+        // (it must be declared, of course, or else this would crash)
+        if( scopes_.Peek().TryGetValue( (string)e.Name.Value, out var defined ) & !defined ) throw new Exception( $"Can't read local variable {e.Name} in its own initializer" );
+        
+        // resolve it        
         ResolveLocal( e, e.Name );
         return null;
     }

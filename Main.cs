@@ -1,7 +1,7 @@
 using System; using System.IO; using Lox.Scan; using Lox.Syntax; using Lox.Parse; using Lox.Eval; namespace Lox {
 
 static class MainClass {
-    static void Main( string[] args ) {
+    static void Main( params string[] args ) {
         var command = args.Length > 0 ? args[0] : "debug";
         switch( command ) {
             // this is for putting whatever code you want for debugging purposes
@@ -50,7 +50,7 @@ static class MainClass {
 
             // unrecognized command
             default: {           
-                Console.WriteLine( $"unrecognized command \"{command}\" (expected: debug, test, run, prompt)" );
+                Console.WriteLine( $"unrecognized command \"{command}\" (expected: debug, test, eval, prompt)" );
                 return;
             }
         }
@@ -59,25 +59,25 @@ static class MainClass {
     public static void Eval( params string[] source ) {
         // scan (lexical analysis)
         ColorConsole.WriteLine( "--scan--", ConsoleColor.DarkBlue );
-        var scanner = new Scanner();
+        Scanner scanner = new();
         var tokens = scanner.ScanTokens( source );
         if( tokens.Count > 0 ) ColorConsole.WriteLine( tokens.ToStringEach( '\n' ), ConsoleColor.DarkBlue );
 
         // parse (syntactic analysis)
         ColorConsole.WriteLine( "--parse--", ConsoleColor.Magenta );
-        var parser = new Parser( tokens );
+        Parser parser = new( tokens );
         var statements = parser.Parse();
         new Printer().Print( statements );
         if( parser.Errors > 0 ) return;
 
         // resolve (semantic analysis)
-        var interpreter = new Interpreter();
-        var resolver = new Resolver( interpreter );
+        Interpreter interpreter = new();
+        Resolver resolver = new( interpreter );
         resolver.Resolve( statements );
 
         // evaluate
         ColorConsole.WriteLine( "--eval--", ConsoleColor.DarkYellow );
-        interpreter.Interpret( statements );
+        interpreter.Interpret( statements, catchRuntimeExceptions: true );
     }
 }
 
