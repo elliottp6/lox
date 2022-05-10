@@ -21,6 +21,7 @@ static class CollectionExtensions {
 	public static T GetOrNew<T>( this List<T> a, int i ) where T : new() { if( i < a.Count ) return a[i]; var t = new T(); a.Add( t ); return t; }
 	public static void Inmap<T>( this List<T> a, Func<T,T> f ) => a.Span().Inmap( f );
 	public static T Last<T>( this List<T> a ) => a[a.Count - 1];
+	public static T Peek<T>( this List<T> a ) => a[a.Count - 1];
 	public static T Penultimate<T>( this List<T> a ) => a[a.Count - 2];
 	public static T Pop<T>( this List<T> a ) => a.PopAt( a.End() );
 	public static T PopAt<T>( this List<T> a, int i ) { var value = a[i]; a.RemoveAt( i ); return value; }
