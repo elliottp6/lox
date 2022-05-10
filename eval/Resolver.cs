@@ -9,6 +9,8 @@ using System; using System.Collections.Generic; using Lox.Scan; using Lox.Syntax
 sealed class Resolver : Visitor<object?> {
     readonly List<Dictionary<string,bool>> scopes_ = new();
     readonly Interpreter interpreter_;
+    FunctionType currentFunction = FunctionType.NONE;
+    enum FunctionType { NONE, FUNCTION }
 
     // constructor
     public Resolver( Interpreter interpreter ) {
@@ -67,15 +69,18 @@ sealed class Resolver : Visitor<object?> {
 
     public object? VisitFunctionDeclarationStatement( FunctionDeclarationStatement s ) {
         DeclareDefine( s.Name ); // a function is allowed to refer to itself
-        ResolveFunction( s );
+        ResolveFunction( s, FunctionType.FUNCTION );
         return null;
     }
 
-    void ResolveFunction( FunctionDeclarationStatement s ) {
+    void ResolveFunction( FunctionDeclarationStatement s, FunctionType functionType ) {
+        var enclosingFunction = currentFunction;
+        currentFunction = functionType;
         BeginScope();
         foreach( var param in s.Parameters ) DeclareDefine( param );
         Resolve( s.Body );
         EndScope();
+        currentFunction = enclosingFunction;
     }
 
     // interesting expressions
@@ -97,6 +102,7 @@ sealed class Resolver : Visitor<object?> {
 
     // boring statements
     public object? VisitReturnStatement( ReturnStatement s ) {
+        if( FunctionType.NONE == currentFunction ) throw new Exception( "cannot return from top-level code" );
         if( null != s.Value ) Resolve( s.Value );
         return null;
     }
