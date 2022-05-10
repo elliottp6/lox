@@ -75,24 +75,42 @@ sealed class Parser {
     
     Statement Declaration() {
         // TODO: try/catch? https://craftinginterpreters.com/statements-and-state.html
+        if( Match( CLASS ) ) return ClassDeclarationStatement();
         if( Match( FUN ) ) return FunctionDeclarationStatement();
         if( Match( VAR ) ) return VariableDeclarationStatement();
         return Statement();
     }
 
-    FunctionDeclarationStatement FunctionDeclarationStatement() {
+    ClassDeclarationStatement ClassDeclarationStatement() {
+        // get class name
+        var name = Consume( IDENTIFIER, "Expected class name" );
+
+        // left brace
+        Consume( TokenType.LEFT_BRACE, "Expected '{' before class body" );
+
+        // methods
+        // TODO: these need to be "method-type" function declarations
+        List<FunctionDeclarationStatement> methods = new();
+        while( !Check( TokenType.RIGHT_BRACE ) && !IsAtEnd ) methods.Add( FunctionDeclarationStatement( "method" ) );
+
+        // right brace
+        Consume( TokenType.RIGHT_BRACE, "Expected '}' after class body" );
+        return new( name, methods );
+    }
+
+    FunctionDeclarationStatement FunctionDeclarationStatement( string kind = "function" ) {
         // get function name
-        var name = Consume( IDENTIFIER, "Expected function name" );
+        var name = Consume( IDENTIFIER, $"Expected {kind} name" );
 
         // get parameters
-        Consume( LEFT_PAREN, "Expect '(' after function name" );
-        var parameters = new List<Token>();
+        Consume( LEFT_PAREN, $"Expect '(' after {kind} name" );
+        List<Token> parameters = new();
         if( !Check( RIGHT_PAREN ) ) do parameters.Add( Consume( IDENTIFIER, "Expect parameter name" ) ); while( Match( COMMA ) );
         Consume( RIGHT_PAREN, "Expect ')' after parameters" );
         if( parameters.Count >= 255 ) throw new SyntaxError( Peek.Line, "cannot have more than 255 arguments" );
 
         // get body
-        Consume( LEFT_BRACE, "Expect '{' before function body" );
+        Consume( LEFT_BRACE, $"Expect '{{' before {kind} body" );
         return new( name, parameters, BlockStatement().Statements );
     }
 
