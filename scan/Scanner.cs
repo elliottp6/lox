@@ -24,7 +24,7 @@ sealed class Scanner {
     // methods
     public List<Token> ScanTokens( params string[] source ) {
         // allocate token list
-        var tokens = new List<Token>();
+        List<Token> tokens = new();
 
         // for each line, for each token => scan!
         Token token;
@@ -88,29 +88,26 @@ sealed class Scanner {
     };
 
     // tests
-    [Test] public static void Test() {
-        Scanner scanner = new();
-        Assert.AreEqual(
-            new List<Token>() {
-                new( VAR, "var", 0, 0, 3 ),
-                new( IDENTIFIER, "x", 0, 4, 1 ),
-                new( EQUAL, "=", 0, 6, 1 ),
-                new( NUMBER, 5.0, 0, 8, 1 ),
-                new( SEMICOLON, ";", 0, 9, 1 ),
-                new( IF, "if", 1, 0, 2 ),
-                new( LEFT_PAREN, "(", 1, 2, 1 ),
-                new( IDENTIFIER, "x", 1, 4, 1 ),
-                new( SLASH, "/", 1, 6, 1 ),
-                new( NUMBER, 2.0, 1, 8, 1 ),
-                new( GREATER_EQUAL, ">=", 1, 10, 2 ),
-                new( NUMBER, 0.0, 1, 13, 1 ),
-                new( RIGHT_PAREN, ")", 1, 15, 1 ),
-                new( STRING, "hello world", 1, 17, 13 ),
-                new( SEMICOLON, ";", 1, 30, 1 )},
-            scanner.ScanTokens(
-                "var x = 5; // initialize x to 5",
-                "if( x / 2 >= 0 ) \"hello world\";" ) );
-    }
+    [Test] public static void Test() => Assert.AreEqual(
+        new List<Token>() {
+            new( VAR, "var", 0, 0, 3 ),
+            new( IDENTIFIER, "x", 0, 4, 1 ),
+            new( EQUAL, "=", 0, 6, 1 ),
+            new( NUMBER, 5.0, 0, 8, 1 ),
+            new( SEMICOLON, ";", 0, 9, 1 ),
+            new( IF, "if", 1, 0, 2 ),
+            new( LEFT_PAREN, "(", 1, 2, 1 ),
+            new( IDENTIFIER, "x", 1, 4, 1 ),
+            new( SLASH, "/", 1, 6, 1 ),
+            new( NUMBER, 2.0, 1, 8, 1 ),
+            new( GREATER_EQUAL, ">=", 1, 10, 2 ),
+            new( NUMBER, 0.0, 1, 13, 1 ),
+            new( RIGHT_PAREN, ")", 1, 15, 1 ),
+            new( STRING, "hello world", 1, 17, 13 ),
+            new( SEMICOLON, ";", 1, 30, 1 )},
+        new Scanner().ScanTokens(
+            "var x = 5; // initialize x to 5",
+            "if( x / 2 >= 0 ) \"hello world\";" ) );
 }
 
 } // namespace

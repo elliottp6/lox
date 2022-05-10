@@ -53,21 +53,25 @@ sealed class Resolver : Visitor<object?> {
     }
 
     // interesting statements
-    public object? VisitBlockStatement( BlockStatement block ) {
+    object? Visitor<object?>.VisitBlockStatement( BlockStatement block ) {
         BeginScope();
         Resolve( block.Statements );
         EndScope();
         return null;
     }
 
-    public object? VisitVariableDeclarationStatement( VariableDeclarationStatement s ) {
+    object? Visitor<object?>.VisitClassDeclarationStatement( ClassDeclarationStatement s ) {
+        throw new NotImplementedException();
+    }
+
+    object? Visitor<object?>.VisitVariableDeclarationStatement( VariableDeclarationStatement s ) {
         Declare( s.Name );
         if( null != s.Initializer ) Resolve( s.Initializer ); // variable cannot refer to itself within its initializer, so run the initializer before we define it
         Define( s.Name );
         return null;
     }
 
-    public object? VisitFunctionDeclarationStatement( FunctionDeclarationStatement s ) {
+    object? Visitor<object?>.VisitFunctionDeclarationStatement( FunctionDeclarationStatement s ) {
         DeclareDefine( s.Name ); // a function is allowed to refer to itself
         ResolveFunction( s, FunctionType.FUNCTION );
         return null;
@@ -84,7 +88,7 @@ sealed class Resolver : Visitor<object?> {
     }
 
     // interesting expressions
-    public object? VisitVariableExpression( VariableExpression e ) {
+    object? Visitor<object?>.VisitVariableExpression( VariableExpression e ) {
         // see if the variable is defined before we access it
         // (it must be declared, of course, or else this would crash)
         if( scopes_.Peek().TryGetValue( (string)e.Name.Value, out var defined ) & !defined ) throw new Exception( $"Can't read local variable {e.Name} in its own initializer" );
@@ -94,64 +98,64 @@ sealed class Resolver : Visitor<object?> {
         return null;
     }
 
-    public object? VisitAssignmentExpression( AssignmentExpression e ) {
+    object? Visitor<object?>.VisitAssignmentExpression( AssignmentExpression e ) {
         Resolve( e.Value );
         ResolveLocal( e, e.Name );
         return null;
     }
 
     // boring statements
-    public object? VisitReturnStatement( ReturnStatement s ) {
+    object? Visitor<object?>.VisitReturnStatement( ReturnStatement s ) {
         if( FunctionType.NONE == currentFunction ) throw new Exception( "cannot return from top-level code" );
         if( null != s.Value ) Resolve( s.Value );
         return null;
     }
     
-    public object? VisitExpressionStatement( ExpressionStatement s ) {
+    object? Visitor<object?>.VisitExpressionStatement( ExpressionStatement s ) {
         Resolve( s.Expression );
         return null;
     }
 
-    public object? VisitIfStatement( IfStatement s ) {
+    object? Visitor<object?>.VisitIfStatement( IfStatement s ) {
         Resolve( s.Condition );
         Resolve( s.Then );
         if( null != s.Else ) Resolve( s.Else );
         return null;
     }
 
-    public object? VisitWhileStatement( WhileStatement s ) {
+    object? Visitor<object?>.VisitWhileStatement( WhileStatement s ) {
         Resolve( s.Condition );
         Resolve( s.Body );
         return null;
     }
     
     // boring expressions
-    public object? VisitBinaryExpression( BinaryExpression e ) {
+    object? Visitor<object?>.VisitBinaryExpression( BinaryExpression e ) {
         Resolve( e.Left );
         Resolve( e.Right );
         return null;
     }
 
-    public object? VisitCallExpression( CallExpression e ) {
+    object? Visitor<object?>.VisitCallExpression( CallExpression e ) {
         Resolve( e.Callee );
         foreach( var arg in e.Args ) Resolve( arg );
         return null;
     }
 
-    public object? VisitGroupExpression( GroupExpression e ) {
+    object? Visitor<object?>.VisitGroupExpression( GroupExpression e ) {
         Resolve( e.Inside );
         return null;
     }
 
-    public object? VisitLiteralExpression( LiteralExpression e ) => null;
+    object? Visitor<object?>.VisitLiteralExpression( LiteralExpression e ) => null;
 
-    public object? VisitLogicalExpression( LogicalExpression e ) {
+    object? Visitor<object?>.VisitLogicalExpression( LogicalExpression e ) {
         Resolve( e.Left );
         Resolve( e.Right );
         return null;
     }
 
-    public object? VisitUnaryExpression( UnaryExpression e ) {
+    object? Visitor<object?>.VisitUnaryExpression( UnaryExpression e ) {
         Resolve( e.Right );
         return null;
     }

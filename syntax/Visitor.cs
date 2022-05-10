@@ -12,6 +12,7 @@ interface Visitor<R> {
     R VisitAssignmentExpression( AssignmentExpression e );
 
     // statements
+    R VisitClassDeclarationStatement( ClassDeclarationStatement s );
     R VisitExpressionStatement( ExpressionStatement s );
     R VisitBlockStatement( BlockStatement s );
     R VisitVariableDeclarationStatement( VariableDeclarationStatement s );

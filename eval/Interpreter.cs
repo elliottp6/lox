@@ -3,7 +3,7 @@ using System; using System.Collections.Generic; using Lox.Scan; using Lox.Syntax
 sealed class Interpreter : Visitor<object?> {
     Environment environment_ = new( parent: null );
     Dictionary<Expression,int> locals_ = new( new IdentityEqualityComparer<Expression>() ); // side table for adding data to expressions (in this case, )
-    
+      
     // list of variables in the most local possible scope
     public List<string> Globals() => environment_.Global().List();
 
@@ -124,6 +124,10 @@ sealed class Interpreter : Visitor<object?> {
     object? Visitor<object?>.VisitBlockStatement( BlockStatement s ) {
         ExecuteBlock( s.Statements, new( environment_ ) );
         return null;
+    }
+
+    object? Visitor<object?>.VisitClassDeclarationStatement( ClassDeclarationStatement s ) {
+        throw new NotImplementedException();
     }
 
     void ExecuteBlock( List<Statement> statements, Environment e ) {

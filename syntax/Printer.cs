@@ -37,6 +37,15 @@ sealed class Printer : Visitor<string> {
         return b.ToString();
     }
 
+    string Visitor<string>.VisitClassDeclarationStatement( ClassDeclarationStatement s ) {
+        StringBuilder b = new();
+        b.Append( "(class " );
+        b.Append( s.Name );
+        foreach( var method in s.Methods ) { b.Append( ' ' ); b.Append( method.Accept( this ) ); }
+        b.Append( ')' );
+        return b.ToString();
+    }
+
     string Visitor<string>.VisitIfStatement( IfStatement s ) => $"(if {s.Condition.Accept( this )} {s.Then.Accept( this )}{(null != s.Else ? " " + s.Else.Accept( this ) : "")})";
     string Visitor<string>.VisitWhileStatement( WhileStatement s ) => $"(while {s.Condition.Accept( this )} {s.Body.Accept( this )})";
 

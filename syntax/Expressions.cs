@@ -1,9 +1,6 @@
 using System.Collections.Generic; using Lox.Scan; namespace Lox.Syntax {
 
-// https://craftinginterpreters.com/representing-code.html
-interface Expression {
-    R Accept<R>( Visitor<R> v );
-}
+interface Expression { R Accept<R>( Visitor<R> v ); }
 
 sealed class BinaryExpression : Expression {
     public readonly Token Operator;

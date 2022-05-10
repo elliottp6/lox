@@ -30,7 +30,9 @@ readonly struct Token {
     public readonly int Line, Start, Length;
  
     // constructor
-    public Token( TokenType type, object value, int line, int start, int length ) { Type = type; Value = value; Line = line; Start = start; Length = length; }
+    public Token( TokenType type, object value, int line, int start, int length ) {
+        Type = type; Value = value; Line = line; Start = start; Length = length;
+    }
 
     // properties
     public bool IsSyntax => Type > UNEXPECTED_CHARACTER;

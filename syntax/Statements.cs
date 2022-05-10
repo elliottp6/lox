@@ -1,7 +1,12 @@
 using System.Collections.Generic; using Lox.Scan; namespace Lox.Syntax {
 
-interface Statement {
-    R Accept<R>( Visitor<R> v );
+interface Statement { R Accept<R>( Visitor<R> v ); }
+
+sealed class ClassDeclarationStatement : Statement {
+    public readonly Token Name;
+    public readonly List<FunctionDeclarationStatement> Methods;
+    public ClassDeclarationStatement( Token name, List<FunctionDeclarationStatement> methods ) { Name = name; Methods = methods; }
+    public R Accept<R>( Visitor<R> v ) => v.VisitClassDeclarationStatement( this );
 }
 
 sealed class ExpressionStatement : Statement {
