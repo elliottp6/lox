@@ -14,8 +14,8 @@ sealed class Interpreter : Visitor<object?> {
     public Interpreter() {
         // print function
         environment_.Define(
-            new( TokenType.IDENTIFIER, "print", -1, -1, -1 ),
-            (LoxCallable)delegate( object?[] args, Token closeParen ) {
+            new Token( TokenType.IDENTIFIER, "print", -1, -1, -1 ),
+            (LoxFunction)delegate( object?[] args, Token closeParen ) {
                 // check arity
                 if( args.Length != 1 ) throw new RuntimeError( closeParen, $"mismatch # of arguments: expected {0} but got {args.Length}" );
                 
@@ -27,8 +27,8 @@ sealed class Interpreter : Visitor<object?> {
         
         // define sleep function
         environment_.Define(
-            new( TokenType.IDENTIFIER, "sleep", -1, -1, -1 ),
-            (LoxCallable)delegate( object?[] args, Token closeParen ) {
+            new Token( TokenType.IDENTIFIER, "sleep", -1, -1, -1 ),
+            (LoxFunction)delegate( object?[] args, Token closeParen ) {
                 // check arity
                 if( args.Length != 1 ) throw new RuntimeError( closeParen, $"mismatch # of arguments: expected {0} but got {args.Length}" );
                 if( !(args[0] is double) ) throw new RuntimeError( closeParen, $"mismatch argument 1: expected double" );
@@ -74,7 +74,7 @@ sealed class Interpreter : Visitor<object?> {
         for( var i = 0; i < argValues.Length; i++ ) argValues[i] = e.Args[i].Accept( this );
 
         // call function
-        var function = callee as LoxCallable;
+        var function = callee as LoxFunction;
         if( null == function ) throw new RuntimeError( e.CloseParen, "expected a function" );
         return function( argValues, e.CloseParen );
     }
@@ -140,16 +140,16 @@ sealed class Interpreter : Visitor<object?> {
 
     object? Visitor<object?>.VisitClassDeclarationStatement( ClassDeclarationStatement s ) {
         // bind methods
-        var methods = new Dictionary<string,LoxCallable?>();
+        Dictionary<string,LoxMethod> methods = new();
         foreach( var method in s.Methods )
-            methods.Add( (string)method.Name.Value, MakeCallable( method.Parameters, method.Body, environment_ ) );
+            methods.Add( (string)method.Name.Value, MakeMethod( method.Parameters, method.Body, environment_ ) );
 
         // create class
         LoxClass c = new( (string)s.Name.Value, methods );
 
         // define the class constructor
         environment_.Define( s.Name,
-            (LoxCallable)delegate( object?[] args, Token closeParen ) {
+            (LoxFunction)delegate( object?[] args, Token closeParen ) {
                 // check arigty
                 if( args.Length != 0 ) throw new RuntimeError( closeParen, $"constructor cannot take any arguments" );
 
@@ -181,12 +181,25 @@ sealed class Interpreter : Visitor<object?> {
     }
 
     object? Visitor<object?>.VisitFunctionDeclarationStatement( FunctionDeclarationStatement s ) {
-        environment_.Define( s.Name, MakeCallable( s.Parameters, s.Body, environment_ ) );
+        var function = MakeUnboundFunction( s.Parameters, s.Body );
+        environment_.Define( s.Name, BindFunction( function, environment_ ) );
         return null;
     }
 
-    LoxCallable MakeCallable( List<Token> parameters, List<Statement> body, Environment environment ) =>
-        (LoxCallable)delegate( object?[] args, Token closeParen ) {
+    LoxMethod MakeMethod( List<Token> parameters, List<Statement> body, Environment environment ) {
+        var unboundFunction = MakeUnboundFunction( parameters, body );
+        return (LoxMethod)delegate( LoxInstance instance ) {
+            Environment thisEnvironment = new( environment );
+            thisEnvironment.Define( "this", instance );
+            return BindFunction( unboundFunction, thisEnvironment );
+        };
+    }
+
+    LoxFunction BindFunction( LoxUnboundFunction unboundFunction, Environment e ) =>
+        (LoxFunction)delegate( object?[] args, Token closeParen ) { return unboundFunction( args, closeParen, e ); };
+
+    LoxUnboundFunction MakeUnboundFunction( List<Token> parameters, List<Statement> body ) =>
+        (LoxUnboundFunction)delegate( object?[] args, Token closeParen, Environment environment ) {
                 // put variables into local scope
                 if( args.Length != parameters.Count ) throw new RuntimeError( closeParen, $"mismatch # of arguments: expected {0} but got {args.Length}" );
                 Environment local = new( environment );

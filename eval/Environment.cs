@@ -21,10 +21,15 @@ sealed class Environment {
             throw new RuntimeError( name, $"Variable already defined '{name.Value}'" );
     }
 
+    public void Define( string name, object? value ) {
+        if( !identifiers_.TryAdd( name, value ) )
+            throw new RuntimeError( default, $"Variable already defined '{name}'" );
+    }
+
     public object? Get( Token name, int scope ) {
         // if not in the right scope, defer to parent
         if( scope > 0 ) {
-            if( null == parent_ ) throw new RuntimeError( name, $"variable scope exceeds global -- error in Resolver" );
+            if( null == parent_ ) throw new RuntimeError( name, $"variable scope for {name.Value} exceeds global -- error in Resolver" );
             return parent_?.Get( name, scope - 1 );
         }
 

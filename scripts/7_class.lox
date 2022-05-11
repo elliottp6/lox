@@ -1,5 +1,6 @@
 class Point {
     say_hi() { print( "hi!" ); }
+    say_this_X() { print( this.X ); }
 }
 
 var p = Point();
@@ -12,3 +13,4 @@ print( p.X ); // <-- getters
 print( p.Y );
 
 p.say_hi(); // <-- method call
+p.say_this_X(); // <-- method call that uses 'this'

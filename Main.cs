@@ -67,7 +67,7 @@ static class MainClass {
         // parse (syntactic analysis)
         ColorConsole.WriteLine( "--parse--", ConsoleColor.Magenta );
         Parser parser = new( tokens );
-        var statements = parser.Parse();
+        var statements = parser.Parse( catchParseErrors: false );
         new Printer().Print( statements );
         if( parser.Errors > 0 ) return;
 

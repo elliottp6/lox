@@ -26,16 +26,9 @@ sealed class Resolver : Visitor<object?> {
     // variable is in scope, but not yet able to be accessed b/c its initializer is not yet run
     // in this way, the initialize sees this variable, but cannot use it, so we can throw an error (cannot refer to self in initilaizer)
     // (alternatively, we could use the value of outer-scope version of this variable, or perhaps just use 'nil', but that's not how lox works)
-    void Declare( Token variable ) {
-        if( !scopes_.Peek().TryAdd( (string)variable.Value, false ) )
-            throw new Exception( $"variable already declared in this scope: {variable}" );
-    }
-    
-    // after the initializer is run, the variable has a value, and can safely be accessed
-    void Define( Token variable ) => scopes_.Peek()[(string)variable.Value] = true;
-
-    // do both at once
-    void DeclareDefine( Token variable ) { Declare( variable ); Define( variable ); }
+    void Declare( Token variable ) { if( !scopes_.Peek().TryAdd( (string)variable.Value, false ) ) throw new Exception( $"variable already declared in this scope: {variable}" ); }
+    void Define( string variable ) => scopes_.Peek()[variable] = true;
+    void Define( Token variable ) => Define( (string)variable.Value );
 
     // statement/expression resolution
     public void Resolve( List<Statement> statements ) { foreach( var s in statements ) Resolve( s ); }
@@ -60,8 +53,11 @@ sealed class Resolver : Visitor<object?> {
     }
 
     object? Visitor<object?>.VisitClassDeclarationStatement( ClassDeclarationStatement s ) {
-        DeclareDefine( s.Name );
+        Define( s.Name );
+        BeginScope();
+        Define( "this" );
         foreach( var m in s.Methods ) ResolveFunction( m, FunctionType.METHOD );
+        EndScope();
         return null;
     }
 
@@ -73,7 +69,7 @@ sealed class Resolver : Visitor<object?> {
     }
 
     object? Visitor<object?>.VisitFunctionDeclarationStatement( FunctionDeclarationStatement s ) {
-        DeclareDefine( s.Name ); // a function is allowed to refer to itself
+        Define( s.Name ); // a function is allowed to refer to itself
         ResolveFunction( s, FunctionType.FUNCTION );
         return null;
     }
@@ -82,7 +78,7 @@ sealed class Resolver : Visitor<object?> {
         var enclosingFunction = currentFunction;
         currentFunction = functionType;
         BeginScope();
-        foreach( var param in s.Parameters ) DeclareDefine( param );
+        foreach( var param in s.Parameters ) Define( param );
         Resolve( s.Body );
         EndScope();
         currentFunction = enclosingFunction;

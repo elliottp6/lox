@@ -46,17 +46,22 @@ sealed class Parser {
         }
     }
 
-    public List<Statement> Parse() {
+    public List<Statement> Parse( bool catchParseErrors ) {
         var statements = new List<Statement>();
         current_ = errors_ = 0;
         while( tokens_.Count > current_ ) {
-            try {
+            if( catchParseErrors ) {
+                try {
+                    var statement = Declaration();
+                    statements.Add( statement );
+                } catch( SyntaxError e ) {
+                    errors_++;
+                    ColorConsole.Error( e.Line, e.Message );
+                    Synchronize(); // i.e. move to the next statement
+                }
+            } else {
                 var statement = Declaration();
                 statements.Add( statement );
-            } catch( SyntaxError e ) {
-                errors_++;
-                ColorConsole.Error( e.Line, e.Message );
-                Synchronize(); // i.e. move to the next statement
             }
         }
         return statements;

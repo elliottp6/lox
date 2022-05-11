@@ -15,7 +15,7 @@ sealed class Scanner {
         { "or", OR },
         { "return", RETURN },
         { "super", SUPER },
-        { "this", THIS },
+        // TODO: put 'this' keyword back in! { "this", THIS },
         { "true", TRUE },
         { "var", VAR },
         { "while", WHILE },
