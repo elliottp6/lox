@@ -5,7 +5,7 @@ sealed class RuntimeError : Exception {
     public RuntimeError( Token token, string message ) : base( message ) { Token = token; }
 }
 
-delegate object? LoxCallable( Interpreter interpreter, object?[] args, Token closeParen );
+delegate object? LoxCallable( object?[] args, Token closeParen );
 
 sealed class Return : Exception {
     public readonly object? Value;
@@ -14,7 +14,8 @@ sealed class Return : Exception {
 
 sealed class LoxClass {
     public readonly string Name;
-    public LoxClass( string name ) { Name = name; }
+    public Dictionary<string,LoxCallable?> Methods;
+    public LoxClass( string name, Dictionary<string,LoxCallable?> methods ) { Name = name; Methods = methods; }
     public override string ToString() => Name;
 }
 
@@ -27,9 +28,9 @@ sealed class LoxInstance {
 
     // method
     public object? Get( Token name ) {
-        if( !Fields.TryGetValue( (string)name.Value, out var value ) )
-            throw new RuntimeError( name, $"Undefined property '{name.Value}'" );
-        return value;
+        if( Fields.TryGetValue( (string)name.Value, out var value ) ) return value;
+        if( Class.Methods.TryGetValue( (string)name.Value, out var method ) ) return method;
+        throw new RuntimeError( name, $"undefined field '{name.Value}'" );
     }
 
     public object? Set( Token name, object? value ) {

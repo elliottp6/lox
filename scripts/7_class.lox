@@ -1,4 +1,6 @@
-class Point {}
+class Point {
+    say_hi() { print( "hi!" ); }
+}
 
 var p = Point();
 print( p ); // <-- p = delegate for Point constructor
@@ -8,3 +10,5 @@ p.Y = 10;
 
 print( p.X ); // <-- getters
 print( p.Y );
+
+p.say_hi(); // <-- method call

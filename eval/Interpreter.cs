@@ -15,7 +15,7 @@ sealed class Interpreter : Visitor<object?> {
         // print function
         environment_.Define(
             new( TokenType.IDENTIFIER, "print", -1, -1, -1 ),
-            (LoxCallable)delegate( Interpreter interpreter, object?[] args, Token closeParen ) {
+            (LoxCallable)delegate( object?[] args, Token closeParen ) {
                 // check arity
                 if( args.Length != 1 ) throw new RuntimeError( closeParen, $"mismatch # of arguments: expected {0} but got {args.Length}" );
                 
@@ -28,7 +28,7 @@ sealed class Interpreter : Visitor<object?> {
         // define sleep function
         environment_.Define(
             new( TokenType.IDENTIFIER, "sleep", -1, -1, -1 ),
-            (LoxCallable)delegate( Interpreter interpreter, object?[] args, Token closeParen ) {
+            (LoxCallable)delegate( object?[] args, Token closeParen ) {
                 // check arity
                 if( args.Length != 1 ) throw new RuntimeError( closeParen, $"mismatch # of arguments: expected {0} but got {args.Length}" );
                 if( !(args[0] is double) ) throw new RuntimeError( closeParen, $"mismatch argument 1: expected double" );
@@ -76,7 +76,7 @@ sealed class Interpreter : Visitor<object?> {
         // call function
         var function = callee as LoxCallable;
         if( null == function ) throw new RuntimeError( e.CloseParen, "expected a function" );
-        return function( this, argValues, e.CloseParen );
+        return function( argValues, e.CloseParen );
     }
 
     object? Visitor<object?>.VisitGetExpression( GetExpression e ) {
@@ -139,12 +139,17 @@ sealed class Interpreter : Visitor<object?> {
     }
 
     object? Visitor<object?>.VisitClassDeclarationStatement( ClassDeclarationStatement s ) {
+        // bind methods
+        var methods = new Dictionary<string,LoxCallable?>();
+        foreach( var method in s.Methods )
+            methods.Add( (string)method.Name.Value, MakeCallable( method.Parameters, method.Body, environment_ ) );
+
         // create class
-        LoxClass c = new( (string)s.Name.Value );
+        LoxClass c = new( (string)s.Name.Value, methods );
 
         // define the class constructor
         environment_.Define( s.Name,
-            (LoxCallable)delegate( Interpreter interpreter, object?[] args, Token closeParen ) {
+            (LoxCallable)delegate( object?[] args, Token closeParen ) {
                 // check arigty
                 if( args.Length != 0 ) throw new RuntimeError( closeParen, $"constructor cannot take any arguments" );
 
@@ -176,22 +181,22 @@ sealed class Interpreter : Visitor<object?> {
     }
 
     object? Visitor<object?>.VisitFunctionDeclarationStatement( FunctionDeclarationStatement s ) {
-        var closure = environment_;
-        environment_.Define(
-            s.Name,
-            (LoxCallable)delegate( Interpreter interpreter, object?[] args, Token closeParen ) {
-                // put variables into scope
-                if( args.Length != s.Parameters.Count ) throw new RuntimeError( closeParen, $"mismatch # of arguments: expected {0} but got {args.Length}" );
-                Environment local = new( closure );
-                for( var i = 0; i < s.Parameters.Count; i++ ) local.Define( s.Parameters[i], args[i] );
-                
-                // execute
-                try { interpreter.ExecuteBlock( s.Body, local ); }
-                catch( Return r ) { return r.Value; }
-                return null;
-            });
+        environment_.Define( s.Name, MakeCallable( s.Parameters, s.Body, environment_ ) );
         return null;
     }
+
+    LoxCallable MakeCallable( List<Token> parameters, List<Statement> body, Environment environment ) =>
+        (LoxCallable)delegate( object?[] args, Token closeParen ) {
+                // put variables into local scope
+                if( args.Length != parameters.Count ) throw new RuntimeError( closeParen, $"mismatch # of arguments: expected {0} but got {args.Length}" );
+                Environment local = new( environment );
+                for( var i = 0; i < parameters.Count; i++ ) local.Define( parameters[i], args[i] );
+                
+                // execute
+                try { ExecuteBlock( body, local ); }
+                catch( Return r ) { return r.Value; }
+                return null;
+            };
 
     object? Visitor<object?>.VisitReturnStatement( ReturnStatement s ) =>
         throw new Return( null == s.Value ? null : s.Value!.Accept( this ) );

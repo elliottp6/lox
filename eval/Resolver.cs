@@ -10,7 +10,7 @@ sealed class Resolver : Visitor<object?> {
     readonly List<Dictionary<string,bool>> scopes_ = new();
     readonly Interpreter interpreter_;
     FunctionType currentFunction = FunctionType.NONE;
-    enum FunctionType { NONE, FUNCTION }
+    enum FunctionType { NONE, FUNCTION, METHOD }
 
     // constructor
     public Resolver( Interpreter interpreter ) {
@@ -61,6 +61,7 @@ sealed class Resolver : Visitor<object?> {
 
     object? Visitor<object?>.VisitClassDeclarationStatement( ClassDeclarationStatement s ) {
         DeclareDefine( s.Name );
+        foreach( var m in s.Methods ) ResolveFunction( m, FunctionType.METHOD );
         return null;
     }
 

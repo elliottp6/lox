@@ -78,7 +78,7 @@ static class MainClass {
 
         // evaluate
         ColorConsole.WriteLine( "--eval--", ConsoleColor.DarkYellow );
-        interpreter.Interpret( statements, catchRuntimeExceptions: true );
+        interpreter.Interpret( statements, catchRuntimeExceptions: false );
     }
 }
 
