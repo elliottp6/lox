@@ -7,6 +7,7 @@ static class MainClass {
             // this is for putting whatever code you want for debugging purposes
             case "debug": {
                 // put code here
+                Main( "eval", "scripts/7_make_class.lox" );
                 return;
             }
 

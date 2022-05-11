@@ -79,6 +79,12 @@ sealed class Interpreter : Visitor<object?> {
         return function( this, argValues, e.CloseParen );
     }
 
+    object? Visitor<object?>.VisitGetExpression( GetExpression e ) {
+        var inst = e.Object.Accept( this ) as LoxInstance;
+        if( null == inst ) throw new RuntimeError( e.Name, "Only object instances have properties" );
+        return inst.Get( e.Name );
+    }
+
     object? Visitor<object?>.VisitUnaryExpression( UnaryExpression e ) {
         var right = e.Right.Accept( this );
         return e.Operator.Type switch {

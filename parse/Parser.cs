@@ -259,11 +259,15 @@ sealed class Parser {
 
     Expression Call() {
         var expression = Primary();
-        while( Match( LEFT_PAREN ) ) expression = FinishCall( callee: expression );
+        while( true ) {
+            if( Match( LEFT_PAREN ) ) expression = FinishCall( callee: expression );
+            else if( Match( DOT ) ) expression = new GetExpression( @object: expression, name: Consume( IDENTIFIER, "Expected property name after '.'" ) );
+            else break;
+        }
         return expression;
 
         Expression FinishCall( Expression callee ) {
-            var args = new List<Expression>();
+            List<Expression> args = new();
             if( !Check( RIGHT_PAREN ) ) do args.Add( Expression() ); while( Match( COMMA ) );
             if( args.Count >= 255 ) throw new SyntaxError( Peek.Line, "cannot have more than 255 arguments" );
             return new CallExpression( callee, args, closeParen : Consume( RIGHT_PAREN, "Expect ')' after args" ) );

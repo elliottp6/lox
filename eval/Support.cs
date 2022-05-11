@@ -1,4 +1,4 @@
-using System; using Lox.Scan; namespace Lox.Eval {
+using System; using System.Collections.Generic; using Lox.Scan; namespace Lox.Eval {
 
 sealed class RuntimeError : Exception {
     public readonly Token Token;
@@ -20,7 +20,19 @@ sealed class LoxClass {
 
 sealed class LoxInstance {
     readonly LoxClass Class;
-    public LoxInstance( LoxClass c ) => Class = c;   
+    readonly Dictionary<string,object?> Fields = new();
+
+    // constructor
+    public LoxInstance( LoxClass c ) => Class = c;
+
+    // method
+    public object? Get( Token name ) {
+        if( !Fields.TryGetValue( (string)name.Value, out var value ) )
+            throw new RuntimeError( name, $"Undefined property '{name.Value}'" );
+        return value;
+    }
+
+    // overrides
     public override string ToString() => $"instance of {Class.Name}";
 }
 
