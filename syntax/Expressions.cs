@@ -43,6 +43,13 @@ sealed class GetExpression : Expression {
     public R Accept<R>( Visitor<R> v ) => v.VisitGetExpression( this );
 }
 
+sealed class SetExpression : Expression {
+    public readonly Expression Object, Value;
+    public readonly Token Name;
+    public SetExpression( Expression @object, Token name, Expression value ) { Object = @object; Name = name; Value = value; }
+    public R Accept<R>( Visitor<R> v ) => v.VisitSetExpression( this );
+}
+
 sealed class UnaryExpression : Expression {
     public readonly Token Operator;
     public readonly Expression Right;

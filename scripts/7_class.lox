@@ -1,0 +1,10 @@
+class Point {}
+
+var p = Point();
+print( p ); // <-- p = delegate for Point constructor
+
+p.X = 5; // <-- setter
+p.Y = 10;
+
+print( p.X ); // <-- getters
+print( p.Y );

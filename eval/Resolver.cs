@@ -147,6 +147,12 @@ sealed class Resolver : Visitor<object?> {
         return null;
     }
 
+    object? Visitor<object?>.VisitSetExpression( SetExpression e ) {
+        Resolve( e.Object );
+        Resolve( e.Value );
+        return null;
+    }
+
     object? Visitor<object?>.VisitGroupExpression( GroupExpression e ) {
         Resolve( e.Inside );
         return null;

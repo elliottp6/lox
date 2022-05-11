@@ -204,16 +204,15 @@ sealed class Parser {
     Expression Expression() => Assignment();
 
     Expression Assignment() {
-        var expression = Or();
+        var expr = Or();
         if( Match( EQUAL ) ) {
             var equals = Prior;
             var value = Assignment();
-            if( expression is VariableExpression ) {
-                var name = ((VariableExpression)expression).Name;
-                return new AssignmentExpression( name, value );
-            } else throw new SyntaxError( equals.Line, "Syntax error - invalid assignment target" );
+            if( expr is VariableExpression ) return new AssignmentExpression( ((VariableExpression)expr).Name, value );
+            else if( expr is GetExpression ) return new SetExpression( ((GetExpression)expr).Object, ((GetExpression)expr).Name, value );
+            else throw new SyntaxError( equals.Line, "Syntax error - invalid assignment target" );
         }
-        return expression;
+        return expr;
     }
 
     Expression Or() {

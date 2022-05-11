@@ -32,6 +32,11 @@ sealed class LoxInstance {
         return value;
     }
 
+    public object? Set( Token name, object? value ) {
+        Fields[(string)name.Value] = value;
+        return value;
+    }
+
     // overrides
     public override string ToString() => $"instance of {Class.Name}";
 }

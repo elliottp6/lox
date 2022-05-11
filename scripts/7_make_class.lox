@@ -1,4 +1,0 @@
-class Bagel {}
-var b = Bagel();
-print( b );
-print( b.MyField ); // <-- getter
