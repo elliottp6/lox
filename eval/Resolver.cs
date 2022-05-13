@@ -150,6 +150,11 @@ sealed class Resolver : Visitor<object?> {
         return null;
     }
 
+    object? Visitor<object?>.VisitThisExpression( ThisExpression e ) {
+        ResolveLocal( e, e.Keyword );
+        return null;
+    }
+
     object? Visitor<object?>.VisitGroupExpression( GroupExpression e ) {
         Resolve( e.Inside );
         return null;

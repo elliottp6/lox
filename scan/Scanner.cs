@@ -15,7 +15,7 @@ sealed class Scanner {
         { "or", OR },
         { "return", RETURN },
         { "super", SUPER },
-        // TODO: put 'this' keyword back in! { "this", THIS },
+        { "this", THIS },
         { "true", TRUE },
         { "var", VAR },
         { "while", WHILE },
@@ -28,12 +28,12 @@ sealed class Scanner {
 
         // for each line, for each token => scan!
         Token token;
-        for( var line = 0; line < source.Length; line++ )
-            for( var start = 0; start < source[line].Length; start+= token.Length.Max( 1 ) )
-                if( (token = ScanToken( line, start, source[line].AsSpan( start ) )).IsSyntax )
-                    tokens.Add( ScanToken( line, start, source[line].AsSpan( start ) ) );
+        for( var i = 0; i < source.Length; i++ )
+            for( var start = 0; start < source[i].Length; start+= token.Length.Max( 1 ) )
+                if( (token = ScanToken( line: i + 1, start, source[i].AsSpan( start ) )).IsSyntax )
+                    tokens.Add( ScanToken( line: i + 1, start, source[i].AsSpan( start ) ) );
                 else if( token.IsUnexpectedCharacter )
-                    ColorConsole.Error( line, $"unexpected character: {token.Value}" );
+                    ColorConsole.Error( line: i + 1, $"unexpected character: {token.Value}" );
         return tokens;
     }
 

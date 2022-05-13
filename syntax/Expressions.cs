@@ -50,6 +50,12 @@ sealed class SetExpression : Expression {
     public R Accept<R>( Visitor<R> v ) => v.VisitSetExpression( this );
 }
 
+sealed class ThisExpression : Expression {
+    public readonly Token Keyword;
+    public ThisExpression( Token keyword ) => Keyword = keyword;
+    public R Accept<R>( Visitor<R> v ) => v.VisitThisExpression( this );
+}
+
 sealed class UnaryExpression : Expression {
     public readonly Token Operator;
     public readonly Expression Right;

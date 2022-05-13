@@ -47,7 +47,7 @@ sealed class Parser {
     }
 
     public List<Statement> Parse( bool catchParseErrors ) {
-        var statements = new List<Statement>();
+        List<Statement> statements = new();
         current_ = errors_ = 0;
         while( tokens_.Count > current_ ) {
             if( catchParseErrors ) {
@@ -283,6 +283,7 @@ sealed class Parser {
         if( Match( FALSE ) ) return new LiteralExpression( false );
         if( Match( NIL ) ) return new LiteralExpression( null );
         if( Match( NUMBER ) || Match( STRING ) ) return new LiteralExpression( Prior.Value );
+        if( Match( THIS ) ) return new ThisExpression( Prior );
         if( Match( IDENTIFIER ) ) return new VariableExpression( Prior );
         if( Match( LEFT_PAREN ) ) {
             var leftParenToken = Prior;
@@ -290,7 +291,7 @@ sealed class Parser {
             if( !Match( RIGHT_PAREN ) ) throw new SyntaxError( leftParenToken.Line, "Syntax error - mismatched parenthesis" );
             return new GroupExpression( inner );
         }
-        throw new SyntaxError( Peek.Line, "Syntax error - expected expression" );
+        throw new SyntaxError( Peek.Line, "Syntax error - expected expression, but got: " + Peek );
     }
 }
 

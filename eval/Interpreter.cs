@@ -121,6 +121,9 @@ sealed class Interpreter : Visitor<object?> {
     object? Visitor<object?>.VisitVariableExpression( VariableExpression e ) =>
         environment_.Get( e.Name, locals_[e] );
 
+    object? Visitor<object?>.VisitThisExpression( ThisExpression e ) =>
+        environment_.Get( e.Keyword, locals_[e] );
+
     object? Visitor<object?>.VisitAssignmentExpression( AssignmentExpression e ) {
         var rvalue = e.Value.Accept( this );
         environment_.Set( e.Name, rvalue, locals_[e] );
