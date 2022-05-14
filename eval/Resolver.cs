@@ -9,8 +9,8 @@ using System; using System.Collections.Generic; using Lox.Scan; using Lox.Syntax
 sealed class Resolver : Visitor<object?> {
     readonly List<Dictionary<string,bool>> scopes_ = new();
     readonly Interpreter interpreter_;
-    FunctionType currentFunction = FunctionType.NONE;
-    enum FunctionType { NONE, FUNCTION, METHOD }
+    FunctionType currentFunction; enum FunctionType { NONE, FUNCTION, METHOD }
+    ClassType currentClass; enum ClassType { NONE, CLASS }
 
     // constructor
     public Resolver( Interpreter interpreter ) {
@@ -53,11 +53,14 @@ sealed class Resolver : Visitor<object?> {
     }
 
     object? Visitor<object?>.VisitClassDeclarationStatement( ClassDeclarationStatement s ) {
+        var enclosingClass = currentClass;
+        currentClass = ClassType.CLASS;
         Define( s.Name );
         BeginScope();
         Define( "this" );
         foreach( var m in s.Methods ) ResolveFunction( m, FunctionType.METHOD );
         EndScope();
+        currentClass = enclosingClass;
         return null;
     }
 
@@ -151,6 +154,7 @@ sealed class Resolver : Visitor<object?> {
     }
 
     object? Visitor<object?>.VisitThisExpression( ThisExpression e ) {
+        if( ClassType.CLASS != currentClass ) throw new Exception( "'this' keyword cannot be used outside of a class definition" );
         ResolveLocal( e, e.Keyword );
         return null;
     }
