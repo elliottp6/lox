@@ -90,6 +90,13 @@ sealed class Parser {
         // get class name
         var name = Consume( IDENTIFIER, "Expected class name" );
 
+        // get superclass
+        VariableExpression? superclass = null;
+        if( Match( LESS ) ) {
+            Consume( IDENTIFIER, "expect superclass name" );
+            superclass = new( Prior );
+        }
+
         // left brace
         Consume( TokenType.LEFT_BRACE, "Expected '{' before class body" );
 
@@ -100,7 +107,7 @@ sealed class Parser {
 
         // right brace
         Consume( TokenType.RIGHT_BRACE, "Expected '}' after class body" );
-        return new( name, methods );
+        return new( name, superclass, methods );
     }
 
     FunctionDeclarationStatement FunctionDeclarationStatement( string kind = "function" ) {

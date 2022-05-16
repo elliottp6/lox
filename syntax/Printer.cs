@@ -44,7 +44,8 @@ sealed class Printer : Visitor<string> {
     string Visitor<string>.VisitClassDeclarationStatement( ClassDeclarationStatement s ) {
         StringBuilder b = new();
         b.Append( "(class " );
-        b.Append( s.Name );
+        b.Append( s.Name.Value );
+        if( null != s.Superclass ) { b.Append( '<' ); b.Append( s.Superclass.Name.Value ); }
         foreach( var method in s.Methods ) { b.Append( ' ' ); b.Append( method.Accept( this ) ); }
         b.Append( ')' );
         return b.ToString();

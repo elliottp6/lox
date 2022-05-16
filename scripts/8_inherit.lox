@@ -1,0 +1,8 @@
+class PrintXY {
+
+}
+
+class Point < PrintXY {
+
+}
+

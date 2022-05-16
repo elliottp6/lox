@@ -4,8 +4,9 @@ interface Statement { R Accept<R>( Visitor<R> v ); }
 
 sealed class ClassDeclarationStatement : Statement {
     public readonly Token Name;
+    public readonly VariableExpression? Superclass;
     public readonly List<FunctionDeclarationStatement> Methods;
-    public ClassDeclarationStatement( Token name, List<FunctionDeclarationStatement> methods ) { Name = name; Methods = methods; }
+    public ClassDeclarationStatement( Token name, VariableExpression? superclass, List<FunctionDeclarationStatement> methods ) { Name = name; Superclass = superclass; Methods = methods; }
     public R Accept<R>( Visitor<R> v ) => v.VisitClassDeclarationStatement( this );
 }
 
