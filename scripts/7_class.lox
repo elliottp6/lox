@@ -14,3 +14,20 @@ print( p.Y );
 
 p.say_hi(); // <-- method call
 p.say_this_X(); // <-- method call that uses 'this'
+
+// test constructor
+class Point2 { // <-- had a scanner bug here, did not detect that '2' is part of 'Point'
+    init( x, y ) {
+        this.x = x;
+        this.y = y;
+    }
+
+    print() {
+        print( this.x );
+        print( this.y );
+    }
+}
+
+// invoke constructor
+var p1 = Point2( 3, 4 );
+p1.print();

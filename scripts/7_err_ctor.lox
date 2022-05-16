@@ -1,0 +1,11 @@
+class foo {
+    init() {
+        return; // this is OK
+    }
+}
+
+class point {
+    init() {
+        return "hello"; // should error in resolver, because cannot return a value!
+    }
+}

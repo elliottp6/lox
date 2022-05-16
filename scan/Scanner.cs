@@ -75,9 +75,9 @@ sealed class Scanner {
             line, start, slice.Length ),
 
         // keyword or identifier
-        _ when slice[0].IsAlphaOrUnderscore() =>
+        _ when slice[0].IsAlphanumericOrUnderscore() =>
             new(
-                keywords_.ContainsKey( (slice = slice.KeepWhile( c => c.IsAlphaOrUnderscore() ) ).ToString() ) ? keywords_[slice.ToString()] : IDENTIFIER,
+                keywords_.ContainsKey( (slice = slice.KeepWhile( c => c.IsAlphanumericOrUnderscore() | c.IsDigit() ) ).ToString() ) ? keywords_[slice.ToString()] : IDENTIFIER,
                 slice.ToString(), line, start, slice.Length ),
 
         // whitespace

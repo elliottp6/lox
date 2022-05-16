@@ -9,7 +9,7 @@ using System; using System.Collections.Generic; using Lox.Scan; using Lox.Syntax
 sealed class Resolver : Visitor<object?> {
     readonly List<Dictionary<string,bool>> scopes_ = new();
     readonly Interpreter interpreter_;
-    FunctionType currentFunction; enum FunctionType { NONE, FUNCTION, METHOD }
+    FunctionType currentFunction; enum FunctionType { NONE, FUNCTION, METHOD, INITIALIZER }
     ClassType currentClass; enum ClassType { NONE, CLASS }
 
     // constructor
@@ -58,7 +58,7 @@ sealed class Resolver : Visitor<object?> {
         Define( s.Name );
         BeginScope();
         Define( "this" );
-        foreach( var m in s.Methods ) ResolveFunction( m, FunctionType.METHOD );
+        foreach( var m in s.Methods ) ResolveFunction( m, "init" == (string)m.Name.Value ? FunctionType.INITIALIZER : FunctionType.METHOD );
         EndScope();
         currentClass = enclosingClass;
         return null;
@@ -107,7 +107,10 @@ sealed class Resolver : Visitor<object?> {
     // boring statements
     object? Visitor<object?>.VisitReturnStatement( ReturnStatement s ) {
         if( FunctionType.NONE == currentFunction ) throw new Exception( "cannot return from top-level code" );
-        if( null != s.Value ) Resolve( s.Value );
+        if( null != s.Value ) {
+            if( FunctionType.INITIALIZER == currentFunction ) throw new Exception( "cannot return a value from an initializer (aka constructor)" );
+            Resolve( s.Value );
+        }
         return null;
     }
     

@@ -144,8 +144,23 @@ sealed class Interpreter : Visitor<object?> {
     object? Visitor<object?>.VisitClassDeclarationStatement( ClassDeclarationStatement s ) {
         // bind methods
         Dictionary<string,LoxMethod> methods = new();
-        foreach( var method in s.Methods )
-            methods.Add( (string)method.Name.Value, MakeMethod( method.Parameters, method.Body, environment_ ) );
+        LoxMethod? constructor = null;
+        var constructorArity = 0;
+        foreach( var func in s.Methods ) {
+            // get name and method
+            var name = (string)func.Name.Value;
+            var method = MakeMethod( func.Parameters, func.Body, environment_ );
+            
+            // check for constructor
+            if( "init" == name ) {
+                constructor = method;
+                constructorArity = func.Parameters.Count;
+                continue;
+            }
+
+            // otherwise, it's a normal method
+            methods.Add( name, method );
+        }
 
         // create class
         LoxClass c = new( (string)s.Name.Value, methods );
@@ -153,11 +168,19 @@ sealed class Interpreter : Visitor<object?> {
         // define the class constructor
         environment_.Define( s.Name,
             (LoxFunction)delegate( object?[] args, Token closeParen ) {
-                // check arigty
-                if( args.Length != 0 ) throw new RuntimeError( closeParen, $"constructor cannot take any arguments" );
+                // check arity
+                if( args.Length != constructorArity )
+                    throw new RuntimeError( closeParen, $"constructor # of args mistmach: expected {constructorArity} args but got {args.Length} args" );
 
-                // construct instance using cached class
-                return new LoxInstance( c );
+                // allocate instance
+                LoxInstance instance = new( c );
+
+                // run constructor
+                if( null != constructor ) {
+                    var bound = constructor( instance );
+                    bound( args, closeParen );
+                }
+                return instance;
             });
         return null;
     }

@@ -17,7 +17,7 @@ static class StringExtensions {
 	public static double TryDouble( this ReadOnlySpan<char> s, double @default = double.NaN ) => double.TryParse( s, out var r ) ? r : @default;
 
 	// char
-    public static bool IsAlphaOrUnderscore( this char c ) => ((c >= 'a') & (c <= 'z')) | ((c >= 'A') & (c <= 'Z')) | (c == '_');
+    public static bool IsAlphanumericOrUnderscore( this char c ) => ((c >= 'a') & (c <= 'z')) | ((c >= 'A') & (c <= 'Z')) | (c == '_') | char.IsDigit( c );
 	public static bool IsDigit( this char c ) => char.IsDigit( c );
 	public static bool IsWhitespace( this char c ) => char.IsWhiteSpace( c );
 
