@@ -53,14 +53,25 @@ sealed class Resolver : Visitor<object?> {
     }
 
     object? Visitor<object?>.VisitClassDeclarationStatement( ClassDeclarationStatement s ) {
+        // define class
         var enclosingClass = currentClass;
         currentClass = ClassType.CLASS;
         Define( s.Name );
-        if( null != s.Superclass ) Resolve( s.Superclass );
+        
+        // resolve superclass
+        if( null != s.Superclass ) {
+            if( (string)s.Superclass.Name.Value == (string)s.Name.Value )
+                throw new Exception( "A class cannot inherit from itself" );
+            Resolve( s.Superclass );
+        }
+
+        // define 'this' and resolve methods
         BeginScope();
         Define( "this" );
         foreach( var m in s.Methods ) ResolveFunction( m, "init" == (string)m.Name.Value ? FunctionType.INITIALIZER : FunctionType.METHOD );
         EndScope();
+
+        // restore state
         currentClass = enclosingClass;
         return null;
     }
