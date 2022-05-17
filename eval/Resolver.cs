@@ -10,7 +10,7 @@ sealed class Resolver : Visitor<object?> {
     readonly List<Dictionary<string,bool>> scopes_ = new();
     readonly Interpreter interpreter_;
     FunctionType currentFunction; enum FunctionType { NONE, FUNCTION, METHOD, INITIALIZER }
-    ClassType currentClass; enum ClassType { NONE, CLASS }
+    ClassType currentClass; enum ClassType { NONE, CLASS, SUBCLASS }
 
     // constructor
     public Resolver( Interpreter interpreter ) {
@@ -26,10 +26,13 @@ sealed class Resolver : Visitor<object?> {
     // variable is in scope, but not yet able to be accessed b/c its initializer is not yet run
     // in this way, the initialize sees this variable, but cannot use it, so we can throw an error (cannot refer to self in initilaizer)
     // (alternatively, we could use the value of outer-scope version of this variable, or perhaps just use 'nil', but that's not how lox works)
-    void Declare( Token variable ) { if( !scopes_.Peek().TryAdd( (string)variable.Value, false ) ) throw new Exception( $"variable already declared in this scope: {variable}" ); }
-    void Define( string variable ) => scopes_.Peek()[variable] = true;
+    void Declare( Token variable ) {
+        if( !scopes_.Peek().TryAdd( (string)variable.Value, false ) )
+            throw new Exception( $"already declared in this scope: {variable}" );
+    }
     void Define( Token variable ) => Define( (string)variable.Value );
-
+    void Define( string variable ) => scopes_.Peek()[variable] = true;
+    
     // statement/expression resolution
     public void Resolve( List<Statement> statements ) { foreach( var s in statements ) Resolve( s ); }
     void Resolve( Expression e ) => e.Accept( this );
@@ -62,6 +65,7 @@ sealed class Resolver : Visitor<object?> {
         if( null != s.Superclass ) {
             if( (string)s.Superclass.Name.Value == (string)s.Name.Value )
                 throw new Exception( "A class cannot inherit from itself" );
+            currentClass = ClassType.SUBCLASS;
             Resolve( s.Superclass );
         }
 
@@ -176,6 +180,8 @@ sealed class Resolver : Visitor<object?> {
     }
 
     object? Visitor<object?>.VisitSuperExpression( SuperExpression e ) {
+        if( ClassType.NONE == currentClass ) throw new Exception( "can't use 'super' outside of a subclass" ); 
+        if( ClassType.CLASS == currentClass ) throw new Exception( "can't use 'super' in a class that is not a subclass" );
         ResolveLocal( e, e.Keyword );
         return null;
     }
