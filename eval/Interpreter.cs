@@ -74,9 +74,20 @@ sealed class Interpreter : Visitor<object?> {
         for( var i = 0; i < argValues.Length; i++ ) argValues[i] = e.Args[i].Accept( this );
 
         // call function
-        var function = callee as LoxFunction;
-        if( null == function ) throw new RuntimeError( e.CloseParen, "expected a function" );
-        return function( argValues, e.CloseParen );
+        var f = callee as LoxFunction;
+        if( null != f ) return f( argValues, e.CloseParen );
+
+        // otherwise, try to run class constructor
+        var c = callee as LoxClass;
+        if( null != c ) {
+            LoxInstance instance = new( c );
+            if( c.TryGetMethod( "init", out var unboundCtor, checkSuper: false ) ) {
+                var ctor = unboundCtor!( instance );
+                ctor( argValues, e.CloseParen );
+            }
+            return instance;
+        }
+        throw new RuntimeError( e.CloseParen, "expected a function" );
     }
 
     object? Visitor<object?>.VisitGetExpression( GetExpression e ) {
@@ -144,49 +155,20 @@ sealed class Interpreter : Visitor<object?> {
     object? Visitor<object?>.VisitClassDeclarationStatement( ClassDeclarationStatement s ) {
         // bind methods
         Dictionary<string,LoxMethod> methods = new();
-        LoxMethod? constructor = null;
-        var constructorArity = 0;
         foreach( var func in s.Methods ) {
             // get name and method
             var name = (string)func.Name.Value;
             var method = MakeMethod( func.Parameters, func.Body, environment_ );
-            
-            // check for constructor
-            if( "init" == name ) {
-                constructor = method;
-                constructorArity = func.Parameters.Count;
-                continue;
-            }
-
-            // otherwise, it's a normal method
             methods.Add( name, method );
         }
 
         // get superclass
-        var super = s.Superclass?.Accept( this );
-        if( null != super && !(super is LoxClass) )
+        LoxClass? super = null;
+        if( null != s.Superclass && null == (super = s.Superclass.Accept( this ) as LoxClass) )
             throw new RuntimeError( s.Superclass!.Name, "superclass must be a class" );
 
-        // create class
-        LoxClass c = new( (string)s.Name.Value, super as LoxClass, methods );
-
-        // define the class constructor
-        environment_.Define( s.Name,
-            (LoxFunction)delegate( object?[] args, Token closeParen ) {
-                // check arity
-                if( args.Length != constructorArity )
-                    throw new RuntimeError( closeParen, $"constructor # of args mistmach: expected {constructorArity} args but got {args.Length} args" );
-
-                // allocate instance
-                LoxInstance instance = new( c );
-
-                // run constructor
-                if( null != constructor ) {
-                    var bound = constructor( instance );
-                    bound( args, closeParen );
-                }
-                return instance;
-            });
+        // define the class
+        environment_.Define( s.Name, new LoxClass( (string)s.Name.Value, super, methods ) );
         return null;
     }
 
@@ -238,12 +220,12 @@ sealed class Interpreter : Visitor<object?> {
                 
                 // execute
                 try { ExecuteBlock( body, local ); }
-                catch( Return r ) { return r.Value; }
+                catch( LoxReturn r ) { return r.Value; }
                 return null;
             };
 
     object? Visitor<object?>.VisitReturnStatement( ReturnStatement s ) =>
-        throw new Return( null == s.Value ? null : s.Value!.Accept( this ) );
+        throw new LoxReturn( null == s.Value ? null : s.Value!.Accept( this ) );
 
     // utilities
     // TODO: reference equality vs value equality?

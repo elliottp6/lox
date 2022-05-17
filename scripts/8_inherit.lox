@@ -1,8 +1,8 @@
-class PrintXY {
-
+class Doughnut {
+    cook() { print( "Fried up!" ); }
 }
 
-class Point < PrintXY {
+class BostonCream < Doughnut {}
 
-}
-
+var b = BostonCream();
+b.cook();
