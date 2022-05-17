@@ -162,8 +162,13 @@ sealed class Interpreter : Visitor<object?> {
             methods.Add( name, method );
         }
 
+        // get superclass
+        var super = s.Superclass?.Accept( this );
+        if( null != super && !(super is LoxClass) )
+            throw new RuntimeError( s.Superclass!.Name, "superclass must be a class" );
+
         // create class
-        LoxClass c = new( (string)s.Name.Value, methods );
+        LoxClass c = new( (string)s.Name.Value, super as LoxClass, methods );
 
         // define the class constructor
         environment_.Define( s.Name,

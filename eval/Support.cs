@@ -16,8 +16,9 @@ sealed class Return : Exception {
 
 sealed class LoxClass {
     public readonly string Name;
+    public readonly LoxClass? Super;
     public Dictionary<string,LoxMethod> Methods;
-    public LoxClass( string name, Dictionary<string,LoxMethod> methods ) { Name = name; Methods = methods; }
+    public LoxClass( string name, LoxClass? super, Dictionary<string,LoxMethod> methods ) { Name = name; Super = super; Methods = methods; }
     public override string ToString() => Name;
 }
 
