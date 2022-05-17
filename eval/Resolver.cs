@@ -68,6 +68,7 @@ sealed class Resolver : Visitor<object?> {
         // define 'this' and resolve methods
         BeginScope();
         Define( "this" );
+        if( null != s.Superclass ) Define( "super" );
         foreach( var m in s.Methods ) ResolveFunction( m, "init" == (string)m.Name.Value ? FunctionType.INITIALIZER : FunctionType.METHOD );
         EndScope();
 
@@ -175,7 +176,7 @@ sealed class Resolver : Visitor<object?> {
     }
 
     object? Visitor<object?>.VisitSuperExpression( SuperExpression e ) {
-        // TODO
+        ResolveLocal( e, e.Keyword );
         return null;
     }
 

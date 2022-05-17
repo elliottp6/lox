@@ -33,7 +33,7 @@ sealed class LoxClass {
 }
 
 sealed class LoxInstance {
-    readonly LoxClass Class;
+    public readonly LoxClass Class;
     readonly Dictionary<string,object?> Fields = new();
 
     // constructor

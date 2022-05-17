@@ -135,8 +135,20 @@ sealed class Interpreter : Visitor<object?> {
     object? Visitor<object?>.VisitThisExpression( ThisExpression e ) =>
         environment_.Get( e.Keyword, locals_[e] );
 
-    object? Visitor<object?>.VisitSuperExpression( SuperExpression e ) =>
-        throw new NotImplementedException();
+    object? Visitor<object?>.VisitSuperExpression( SuperExpression e ) {
+        // get loxClass
+        var scope = locals_[e];
+        var loxClass = environment_.Get( e.Keyword, scope ) as LoxClass;
+        if( null == loxClass ) throw new RuntimeError( e.Keyword, "undefined super -- bug in resolver?" );
+        
+        // get method
+        if( !loxClass.TryGetMethod( (string)e.Method.Value, out var method ) )
+            throw new RuntimeError( e.Method, $"failed to find method: (string)e.Method.Value" );
+        
+        // bind method to 'this' instance
+        var @this = environment_.Get( new( TokenType.SUPER, "this", e.Keyword.Line, e.Keyword.Start, e.Keyword.Length ), scope ) as LoxInstance;
+        return method!( @this! );
+    }
 
     object? Visitor<object?>.VisitAssignmentExpression( AssignmentExpression e ) {
         var rvalue = e.Value.Accept( this );
@@ -207,6 +219,7 @@ sealed class Interpreter : Visitor<object?> {
         return (LoxMethod)delegate( LoxInstance instance ) {
             Environment thisEnvironment = new( environment );
             thisEnvironment.Define( "this", instance );
+            if( null != instance.Class.Super ) thisEnvironment.Define( "super", instance.Class.Super );
             return BindFunction( unboundFunction, thisEnvironment );
         };
     }

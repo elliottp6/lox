@@ -1,8 +1,15 @@
 class Doughnut {
     cook() { print( "Fried up!" ); }
+    eat() { print( "Eat doughnut!" ); }
 }
 
-class BostonCream < Doughnut {}
+class BostonCream < Doughnut {
+    eat() {
+        print( "Eat boston cream!" );
+        super.eat();
+    }
+}
 
 var b = BostonCream();
 b.cook();
+b.eat();
