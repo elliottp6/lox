@@ -56,6 +56,12 @@ sealed class ThisExpression : Expression {
     public R Accept<R>( Visitor<R> v ) => v.VisitThisExpression( this );
 }
 
+sealed class SuperExpression : Expression {
+    public readonly Token Keyword, Method;
+    public SuperExpression( Token keyword, Token method ) { Keyword = keyword; Method = method; }
+    public R Accept<R>( Visitor<R> v ) => v.VisitSuperExpression( this );
+}
+
 sealed class UnaryExpression : Expression {
     public readonly Token Operator;
     public readonly Expression Right;

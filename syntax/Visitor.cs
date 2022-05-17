@@ -10,6 +10,7 @@ interface Visitor<R> {
     R VisitGetExpression( GetExpression e );
     R VisitSetExpression( SetExpression e );
     R VisitThisExpression( ThisExpression e );
+    R VisitSuperExpression( SuperExpression e );
     R VisitUnaryExpression( UnaryExpression e );
     R VisitVariableExpression( VariableExpression e );
     R VisitAssignmentExpression( AssignmentExpression e );

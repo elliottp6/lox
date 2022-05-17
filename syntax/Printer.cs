@@ -28,6 +28,7 @@ sealed class Printer : Visitor<string> {
     string Visitor<string>.VisitGetExpression( GetExpression e ) => $"(get {e.Object.Accept( this )} {e.Name.Value})";
     string Visitor<string>.VisitSetExpression( SetExpression e ) => $"(set {e.Object.Accept( this )} {e.Name.Value} {e.Value.Accept( this )})";
     string Visitor<string>.VisitThisExpression( ThisExpression e ) => $"this";
+    string Visitor<string>.VisitSuperExpression( SuperExpression e ) => $"(get super {e.Method.Value})";
 
     // statements
     string Visitor<string>.VisitExpressionStatement( ExpressionStatement s ) => $"{s.Expression.Accept( this )}";

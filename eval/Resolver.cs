@@ -174,6 +174,11 @@ sealed class Resolver : Visitor<object?> {
         return null;
     }
 
+    object? Visitor<object?>.VisitSuperExpression( SuperExpression e ) {
+        // TODO
+        return null;
+    }
+
     object? Visitor<object?>.VisitGroupExpression( GroupExpression e ) {
         Resolve( e.Inside );
         return null;

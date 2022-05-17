@@ -292,6 +292,12 @@ sealed class Parser {
         if( Match( NUMBER ) || Match( STRING ) ) return new LiteralExpression( Prior.Value );
         if( Match( THIS ) ) return new ThisExpression( Prior );
         if( Match( IDENTIFIER ) ) return new VariableExpression( Prior );
+        if( Match( SUPER ) ) {
+            var keyword = Prior;
+            Consume( DOT, "Expect '.' after 'super'" );
+            var method = Consume( IDENTIFIER, "expect superclass method name" );
+            return new SuperExpression( keyword, method );
+        }
         if( Match( LEFT_PAREN ) ) {
             var leftParenToken = Prior;
             var inner = Expression();
