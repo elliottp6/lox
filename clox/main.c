@@ -16,7 +16,7 @@ int main( __attribute__((unused)) int argc, __attribute__((unused)) const char* 
     // disassemble
     disassembleChunk( &chunk, "test chunk" );
 
-    // free
+    // done
     freeChunk( &chunk );
     return 0;
 }
