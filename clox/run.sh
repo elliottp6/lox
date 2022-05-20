@@ -1,1 +1,1 @@
-make && bin/debug/main
+make && bin/debug/clox

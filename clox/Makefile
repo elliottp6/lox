@@ -7,7 +7,7 @@ DEBUG_FOLDER = bin/debug
 RELEASE_FOLDER = bin/release
 
 # exectuable
-EXE = main
+EXE = clox
 DEBUG_EXE = $(DEBUG_FOLDER)/$(EXE)
 RELEASE_EXE = $(RELEASE_FOLDER)/$(EXE)
 

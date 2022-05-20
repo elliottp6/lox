@@ -1,41 +1,126 @@
 #include <stdio.h>
-#include "chunk.h"
-#include "debug.h"
+#include <stdlib.h>
+#include <string.h>
 #include "vm.h"
+#include "debug.h"
 
-int main( __attribute__((unused)) int argc, __attribute__((unused)) const char* argv[] ) {
-    // init virtual machine
-    initVM();
+static void repl() {
+    char line[1024];
+    for(;;) {
+        printf( "> " );
+        if( !fgets( line, sizeof( line ), stdin ) ) { printf( "\n" ); break; }
+        interpret_source( line );
+    }
+}
+
+static char* readFile( const char* path ) {
+    // open file
+    FILE* file = fopen( path, "rb" );
+    if( NULL == file ) {
+        fprintf( stderr, "Could not open file \"%s\".\n", path );
+        return NULL;
+    }
+
+    // determine file size TODO: handle failure cases
+    fseek( file, 0L, SEEK_END );
+    size_t fileSize = ftell( file );
+    rewind( file );
+
+    // allocate buffer to hold file
+    char* buffer = (char*)malloc( fileSize + 1 );
+    if( NULL == buffer ) {
+        fclose( file );
+        fprintf( stderr, "Not enough memory to read \"%s\".\n", path );
+        return NULL;
+    }
+
+    // read entire file into buffer
+    size_t bytesRead = fread( buffer, sizeof( char ), fileSize, file );
+    if( bytesRead < fileSize ) {
+        free( buffer );
+        fclose( file );
+        fprintf( stderr, "Could not read file \"%s\".\n", path );
+        return NULL;
+    }
     
-    // init chunk
-    Chunk chunk;
-    initChunk( &chunk );
-    
-    // 1.2 + 3.4
-    writeChunk( &chunk, OP_CONSTANT, 123 );
-    writeChunk( &chunk, (uint8_t)addConstant( &chunk, 1.2 ), 123 );
-    writeChunk( &chunk, OP_CONSTANT, 123 );
-    writeChunk( &chunk, (uint8_t)addConstant( &chunk, 3.4 ), 123 );
-    writeChunk( &chunk, OP_ADD, 123 );
-    
-    // divide by 5.6
-    writeChunk( &chunk, OP_CONSTANT, 123 );
-    writeChunk( &chunk, (uint8_t)addConstant( &chunk, 5.6 ), 123 );
-    writeChunk( &chunk, OP_DIVIDE, 123 );
+    // mark buffer with null terminator
+    buffer[bytesRead] = '\0';
 
-    // negate
-    writeChunk( &chunk, OP_NEGATE, 123 );
-    writeChunk( &chunk, OP_RETURN, 123 );
+    // close file
+    fclose( file );
+    return buffer;
+}
 
-    // disassemble
-    disassembleChunk( &chunk, "disassemble chunk" );
+static int runFile( const char* path ) {
+    // read source file
+    char* source = readFile( path );
+    if( NULL == source ) return 74;
 
-    // interpret
-    printf( "== interpret chunk ==\n" );
-    interpret( &chunk );
+    // interpret source file
+    InterpretResult result = interpret_source( source );
 
     // done
-    freeChunk( &chunk );
-    freeVM();
-    return 0;
+    free( source );
+    return INTERPRET_COMPILE_ERROR == result ? 65 : INTERPRET_RUNTIME_ERROR == result ? 70 : 0;
+}
+
+int main( int argc, const char* argv[] ) {
+    // dispatch based on # of arguments
+    switch( argc ) {
+        // read-eval-print loop
+        case 1:
+            initVM();
+            repl();
+            freeVM();
+            return 0;
+
+        // run script
+        case 2:
+            initVM();
+            int result = runFile( argv[1] );
+            freeVM();
+            return result;
+
+        // demo mode
+        case 3: 
+            // init virtual machine
+            initVM();
+
+            // init chunk
+            Chunk chunk;
+            initChunk( &chunk );
+            
+            // 1.2 + 3.4
+            writeChunk( &chunk, OP_CONSTANT, 123 );
+            writeChunk( &chunk, (uint8_t)addConstant( &chunk, 1.2 ), 123 );
+            writeChunk( &chunk, OP_CONSTANT, 123 );
+            writeChunk( &chunk, (uint8_t)addConstant( &chunk, 3.4 ), 123 );
+            writeChunk( &chunk, OP_ADD, 123 );
+            
+            // divide by 5.6
+            writeChunk( &chunk, OP_CONSTANT, 123 );
+            writeChunk( &chunk, (uint8_t)addConstant( &chunk, 5.6 ), 123 );
+            writeChunk( &chunk, OP_DIVIDE, 123 );
+
+            // negate
+            writeChunk( &chunk, OP_NEGATE, 123 );
+            writeChunk( &chunk, OP_RETURN, 123 );
+
+            // disassemble
+            disassembleChunk( &chunk, "disassemble chunk" );
+
+            // interpret
+            printf( "== interpret chunk ==\n" );
+            interpret_chunk( &chunk );
+
+            // done
+            freeChunk( &chunk );
+            freeVM();
+            return 0;
+
+        // unrecognized command
+        default:
+            fprintf( stderr, "Usage: clox [path]\n" );
+            return 64;
+    }
 }
