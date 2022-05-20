@@ -3,14 +3,28 @@
 #include "debug.h"
 #include "vm.h"
 
-VM vm;
+VM vm; // global variable!
+
+static void resetStack() {
+    vm.stackTop = vm.stack;
+}
+
+void push( Value value ) {
+    *vm.stackTop = value;
+    vm.stackTop++;
+}
+
+Value pop() {
+    vm.stackTop--;
+    return *vm.stackTop;
+}
+
 
 void initVM() {
-
+    resetStack();
 }
 
 void freeVM() {
-
 }
 
 static InterpretResult run() {
@@ -20,8 +34,18 @@ static InterpretResult run() {
 
     // main loop
     for( uint8_t instruction;; ) {
-        // print instruction (if trading is enabled)
+        // trace execution
         #ifdef DEBUG_TRACE_EXECUTION
+            // print stack contents
+            printf( "          " );
+            for( Value* slot = vm.stack; slot < vm.stackTop; slot++ )  {
+                printf("[ ");   
+                printValue( *slot );
+                printf(" ]");
+            }
+            printf( "\n" );
+            
+            // print instruction info
             disassembleInstruction( vm.chunk, (size_t)(vm.ip - vm.chunk->code) );
         #endif
 
@@ -29,11 +53,12 @@ static InterpretResult run() {
         switch( instruction = READ_BYTE() ) {
             case OP_CONSTANT: {
                 Value constant = READ_CONSTANT();
-                printValue( constant );
-                printf( "\n" );
+                push( constant );
                 break;
             }
             case OP_RETURN: {
+                printValue( pop() );
+                printf( "\n" );
                 return INTERPRET_OK;
             }
         }
