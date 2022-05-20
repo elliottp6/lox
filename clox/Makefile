@@ -22,9 +22,9 @@ LIBS =
 DEBUG_FLAGS = -Wall -Wextra -Werror -DDEBUG -g
 RELEASE_FLAGS = -Wall -Wextra -Werror -DNDEBUG -Ofast -flto
 
-# top-level targets
-debug: $(DEBUG_EXE)
-release: $(RELEASE_EXE)
+# top-level targets (note that these CANNOT be the same name as any of the C files)
+debug_build: $(DEBUG_EXE)
+release_build: $(RELEASE_EXE)
 
 # link
 $(DEBUG_EXE): $(DEBUG_OBJECTS)
