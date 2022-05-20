@@ -5,15 +5,9 @@
 
 void compile( const char* source ) {
     initScanner( source );
-    for( int line = -1;; ) {
+    for(;;) {
         Token token = scanToken();
-        if( token.line != line ) {
-            printf( "%4d ", token.line );
-            line = token.line;
-        } else {
-            printf("   | ");
-        }
-        printf( "%2d '%.*s'\n", token.type, token.length, token.start ); 
+        printf( "%4d %2d '%.*s'\n", token.line, token.type, token.length, token.start ); 
         if( TOKEN_EOF == token.type ) break;
     }
 }
