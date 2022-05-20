@@ -11,10 +11,20 @@ int main( __attribute__((unused)) int argc, __attribute__((unused)) const char* 
     Chunk chunk;
     initChunk( &chunk );
     
-    // write data & code into chunk
-    size_t constantIndex = addConstant( &chunk, 1.2 );
+    // 1.2 + 3.4
     writeChunk( &chunk, OP_CONSTANT, 123 );
-    writeChunk( &chunk, (uint8_t)constantIndex, 123 );
+    writeChunk( &chunk, (uint8_t)addConstant( &chunk, 1.2 ), 123 );
+    writeChunk( &chunk, OP_CONSTANT, 123 );
+    writeChunk( &chunk, (uint8_t)addConstant( &chunk, 3.4 ), 123 );
+    writeChunk( &chunk, OP_ADD, 123 );
+    
+    // divide by 5.6
+    writeChunk( &chunk, OP_CONSTANT, 123 );
+    writeChunk( &chunk, (uint8_t)addConstant( &chunk, 5.6 ), 123 );
+    writeChunk( &chunk, OP_DIVIDE, 123 );
+
+    // negate
+    writeChunk( &chunk, OP_NEGATE, 123 );
     writeChunk( &chunk, OP_RETURN, 123 );
 
     // disassemble
