@@ -26,6 +26,9 @@ size_t disassembleInstruction( Chunk* chunk, size_t offset ) {
     // print instruction offset (padded with up to 4 leading zeros)
     printf( "%04zu ", offset );
 
+    // print line number
+    printf( "%4d ", chunk->lines[offset] );
+
     // get instruction
     uint8_t instruction = chunk->code[offset];
 
