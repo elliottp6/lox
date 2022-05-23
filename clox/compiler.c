@@ -112,9 +112,7 @@ static void endCompiler() {
 
     // disassemble code before running it
     #ifdef DEBUG_PRINT_CODE
-    if( !parser.hadError ) {
-        disassembleChunk( currentChunk(), "compiled bytecode" );
-    }
+    if( !parser.hadError ) disassembleChunk( currentChunk(), "compiled bytecode" );
     #endif
 }
 
@@ -166,7 +164,8 @@ static void binary() {
     // get parsing rule
     ParseRule* rule = getRule( operatorType );
 
-    // parse RHS w.r.t. precedence
+    // parse RHS w/ higher precedence than the binary operator
+    // this makes the operator left-associative
     parsePrecedence( (Precedence)(rule->precedence + 1) );
 
     // emit token for operator
@@ -229,14 +228,13 @@ static void parsePrecedence( Precedence precedence ) {
     // get next token
     advance();
     
-    // lookup the rule
+    // the 1st token MUST be a prefix expression (by definition)
     ParseFn prefixRule = getRule( parser.previous.type )->prefix;
-
-    // run prefixRule
     if( NULL == prefixRule ) { error( "Expect expression." ); return; }
     prefixRule();
 
-    // left associative: apply infix rules as long as their precedence is <= the prefix rule
+    // after parsing the left side, now we check the precedence of the next token
+    // (note that EOF has precedence lower than assignment even, so it will exit this loop)
     while( precedence <= getRule( parser.current.type )->precedence ) {
         // get next token
         advance();
