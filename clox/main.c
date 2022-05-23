@@ -5,15 +5,6 @@
 #include "debug.h"
 #include "scanner.h"
 
-static void repl( bool scanOnly ) {
-    char line[1024];
-    for(;;) {
-        printf( "> " );
-        if( !fgets( line, sizeof( line ), stdin ) ) { printf( "\n" ); break; }
-        if( scanOnly ) printTokens( line ); else interpret_source( line );
-    }
-}
-
 static char* readFile( const char* path ) {
     // open file
     FILE* file = fopen( path, "rb" );
@@ -68,22 +59,6 @@ static int runFile( const char* path ) {
 int main( int argc, const char* argv[] ) {
     // dispatch on command's 1st character
     switch( argc > 1 ? argv[1][0] : '\0' ) {
-        // scan
-        case 's': {
-            initVM();
-            repl( true );
-            freeVM();
-            return 0;
-        }
-
-        // interact
-        case 'i': {
-            initVM();
-            repl( false );
-            freeVM();
-            return 0;
-        }
-
         // run
         case 'r': {
             if( argc < 3 ) break;
@@ -91,6 +66,29 @@ int main( int argc, const char* argv[] ) {
             int result = runFile( argv[2] );
             freeVM();
             return result;
+        }
+
+
+        // shell
+        case 's': {
+            initVM();
+            char line[1024];
+            for(;;) {
+                printf( "> " );
+                if( !fgets( line, sizeof( line ), stdin ) ) { printf( "\n" ); break; }
+                interpret_source( line );
+            }
+            freeVM();
+            return 0;
+        }
+
+        // eval
+        case 'e': {
+            initVM();
+            if( argc < 3 ) break;
+            interpret_source( argv[2] );
+            freeVM();
+            return 0;
         }
 
         // test
@@ -122,7 +120,6 @@ int main( int argc, const char* argv[] ) {
             disassembleChunk( &chunk, "disassemble chunk" );
 
             // interpret
-            printf( "== interpret chunk ==\n" );
             interpret_chunk( &chunk );
 
             // done
@@ -133,6 +130,6 @@ int main( int argc, const char* argv[] ) {
     }
     
     // unrecognized command
-    fprintf( stderr, "Usage: clox [scan|interact|test|run {file}]\n" );
+    fprintf( stderr, "Usage: clox [run {file}|shell|eval|test]\n" );
     return 64;
 }

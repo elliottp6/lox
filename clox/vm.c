@@ -31,7 +31,7 @@ void freeVM() {
 static InterpretResult run() {
     // if we're tracing, show it
     #ifdef DEBUG_TRACE_EXECUTION
-    printf( "== trace ==\n" );
+    printf( "== execution trace ==\n" );
     #endif
 
     // macros

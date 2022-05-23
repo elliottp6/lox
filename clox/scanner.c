@@ -201,12 +201,3 @@ Token scanToken() {
             return errorToken( "Unexpected character" );
     }
 }
-
-void printTokens( const char* source ) {
-    initScanner( source );
-    for(;;) {
-        Token token = scanToken();
-        printf( "%4d %2d '%.*s'\n", token.line, token.type, token.length, token.start ); 
-        if( TOKEN_EOF == token.type ) break;
-    }
-}

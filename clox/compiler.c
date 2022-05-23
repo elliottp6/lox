@@ -83,8 +83,14 @@ static void advance() {
     parser.previous = parser.current;
 
     // scan tokens, reporting errors, until we hit a non-error token
-    while( TOKEN_ERROR == (parser.current = scanToken()).type )
+    for(;;) {
+        Token token = parser.current = scanToken();
+        #ifdef DEBUG_PRINT_SCAN
+        printf( "%4d %2d '%.*s'\n", token.line, token.type, token.length, token.start ); 
+        #endif
+        if( TOKEN_ERROR != token.type ) break;
         errorAtCurrent( parser.current.start );
+    }
 }
 
 static void consume( TokenType type, const char* message ) {
@@ -107,7 +113,7 @@ static void endCompiler() {
     // disassemble code before running it
     #ifdef DEBUG_PRINT_CODE
     if( !parser.hadError ) {
-        disassembleChunk( currentChunk(), "code" );
+        disassembleChunk( currentChunk(), "compiled bytecode" );
     }
     #endif
 }
@@ -230,7 +236,7 @@ static void parsePrecedence( Precedence precedence ) {
     if( NULL == prefixRule ) { error( "Expect expression." ); return; }
     prefixRule();
 
-    // apply infix rules as long as their precedence is less than the prefix rule
+    // left associative: apply infix rules as long as their precedence is <= the prefix rule
     while( precedence <= getRule( parser.current.type )->precedence ) {
         // get next token
         advance();
@@ -247,6 +253,9 @@ static void expression() { parsePrecedence( PRECEDENCE_ASSIGNMENT ); }
 // compiles source to chunk
 bool compile( const char* source, Chunk* chunk ) {
     // start scanner
+    #ifdef DEBUG_PRINT_SCAN
+    printf( "== scanned tokens ==\n" );
+    #endif
     initScanner( source );
 
     // set the chunk that we're compiling into
