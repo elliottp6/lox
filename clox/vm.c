@@ -29,6 +29,11 @@ void freeVM() {
 }
 
 static InterpretResult run() {
+    // if we're tracing, show it
+    #ifdef DEBUG_TRACE_EXECUTION
+    printf( "== trace ==\n" );
+    #endif
+
     // macros
     #define READ_BYTE() (*vm.ip++)
     #define READ_CONSTANT() (vm.chunk->constants.values[READ_BYTE()])
@@ -45,17 +50,21 @@ static InterpretResult run() {
     for( uint8_t instruction;; ) {
         // trace execution
         #ifdef DEBUG_TRACE_EXECUTION
-            // print stack contents
-            printf( "          " );
-            for( Value* slot = vm.stack; slot < vm.stackTop; slot++ )  {
-                printf("[ ");   
-                printValue( *slot );
-                printf(" ]");
-            }
-            printf( "\n" );
-            
             // print instruction info
             disassembleInstruction( vm.chunk, (size_t)(vm.ip - vm.chunk->code) );
+
+            // print stack contents
+            if( vm.stack < vm.stackTop ) {
+                printf( " [" );
+                for( Value* slot = vm.stack; slot < vm.stackTop; slot++ )  {
+                    if( slot != vm.stack ) printf( ", " );
+                    printValue( *slot );
+                }
+                printf( "]" );
+            }
+
+            // newline
+            printf( "\n" );
         #endif
 
         // interpret instruction

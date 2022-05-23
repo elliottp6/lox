@@ -3,6 +3,9 @@
 #include "common.h"
 #include "compiler.h"
 #include "scanner.h"
+#ifdef DEBUG_PRINT_CODE
+#include "debug.h"
+#endif
 
 // top-level parser object
 typedef struct {
@@ -96,7 +99,17 @@ static void emitBytes( uint8_t byte1, uint8_t byte2 ) { emitByte( byte1 ); emitB
 static void emitReturn() { emitByte( OP_RETURN ); }
 
 // ends a chunk
-static void endCompiler() { emitReturn(); }
+static void endCompiler() {
+    // return from our 'main' function
+    emitReturn();
+
+    // disassemble code before running it
+    #ifdef DEBUG_PRINT_CODE
+    if( !parser.hadError ) {
+        disassembleChunk( currentChunk(), "code" );
+    }
+    #endif
+}
 
 // adds a constant into the static data section of the chunk, and returns its handle
 static uint8_t makeConstant( Value value ) {

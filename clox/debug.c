@@ -3,7 +3,7 @@
 #include "value.h"
 
 static size_t simpleInstruction( const char* name, size_t offset ) {
-    printf( "%s\n", name );
+    printf( "%s", name );
     return offset + 1;
 }
 
@@ -12,22 +12,20 @@ static size_t constantInstruction( const char* name, Chunk* chunk, size_t offset
     uint8_t constantIndex = chunk->code[offset + 1];
     
     // tab over 16 spaces, then print constant index
-    printf( "%-16s %4d '", name, constantIndex );
+    printf( "%s<%d,", name, constantIndex );
     
     // print the constant value followed by a newline
     printValue( chunk->constants.values[constantIndex] );
-    printf( "'\n" );
+
+    printf( ">" );
 
     // advance code by two bytes
     return offset + 2;
 }
 
 size_t disassembleInstruction( Chunk* chunk, size_t offset ) {
-    // print instruction offset (padded with up to 4 leading zeros)
-    printf( "%04zu ", offset );
-
-    // print line number
-    printf( "%4d ", chunk->lines[offset] );
+    // print instruction offset & line number
+    printf( "%04zu %04d ", offset, chunk->lines[offset] );
 
     // get instruction
     uint8_t instruction = chunk->code[offset];
@@ -41,7 +39,9 @@ size_t disassembleInstruction( Chunk* chunk, size_t offset ) {
         case OP_DIVIDE: return simpleInstruction( "OP_DIVIDE", offset );
         case OP_NEGATE: return simpleInstruction( "OP_NEGATE", offset );
         case OP_RETURN: return simpleInstruction( "OP_RETURN", offset );
-        default: printf( "Unknown opcode %d\n", instruction ); return offset + 1;
+        default:
+            printf( "Unknown opcode %d", instruction );
+            return offset + 1;
     }
 }
 
@@ -50,6 +50,8 @@ void disassembleChunk( Chunk* chunk, const char* name ) {
     printf( "== %s ==\n", name );
 
     // disassemble instructions one-at-a-time
-    for( size_t offset = 0; offset < chunk->count; )
+    for( size_t offset = 0; offset < chunk->count; ) {
         offset = disassembleInstruction( chunk, offset );
+        printf( "\n" );
+    }
 }
