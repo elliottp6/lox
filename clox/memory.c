@@ -1,7 +1,7 @@
 #include <stdlib.h>
 #include "memory.h"
 
-void* reallocate( void* buffer, __attribute__((unused)) size_t oldSize, size_t newSize ) {
+void* reallocate( void* buffer, size_t oldSize, size_t newSize ) {
     // no bytes requested: free memory
     if( 0 == newSize ) {
         free( buffer );
