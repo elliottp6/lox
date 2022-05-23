@@ -14,6 +14,12 @@ typedef struct {
 // global parser object
 Parser parser;
 
+// global chunk that is being compiled
+Chunk* compilingChunk;
+
+// returns current chunk being compiled
+static Chunk* currentChunk() { return compilingChunk; }
+
 // reports parsing errors to stderr
 static void errorAt( Token* token, const char* message ) {
     // if we're already in panic mode, no need to report further errors
@@ -56,13 +62,27 @@ static void consume( TokenType type, const char* message ) {
     advance();
 }
 
+// emit byte(s) to the current chunk
+static void emitByte( uint8_t byte ) { writeChunk( currentChunk(), byte, parser.previous.line ); }
+__attribute__((unused)) static void emitBytes( uint8_t byte1, uint8_t byte2 ) { emitByte( byte1 ); emitByte( byte2 ); }
+
+// emit return opcode
+static void emitReturn() { emitByte( OP_RETURN ); }
+
+// ends a chunk
+static void endCompiler() { emitReturn(); }
+
+// compiles an expression
 static void expression() {
 
 }
 
-bool compile( const char* source, __attribute__((unused)) Chunk* chunk ) {
+bool compile( const char* source, Chunk* chunk ) {
     // start scanner
     initScanner( source );
+
+    // set the chunk that we're compiling into
+    compilingChunk = chunk;
 
     // initialize parser
     parser.hadError = false;
@@ -74,5 +94,6 @@ bool compile( const char* source, __attribute__((unused)) Chunk* chunk ) {
 
     // done
     consume( TOKEN_EOF, "expect end of expression" );
+    endCompiler();
     return !parser.hadError;
 }
