@@ -86,7 +86,8 @@ static void advance() {
     for(;;) {
         Token token = parser.current = scanToken();
         #ifdef DEBUG_PRINT_SCAN
-        printf( "%4d %2d '%.*s'\n", token.line, token.type, token.length, token.start ); 
+        if( TOKEN_EOF != token.type )
+            printf( "%4d %2d '%.*s'\n", token.line, token.type, token.length, token.start ); 
         #endif
         if( TOKEN_ERROR != token.type ) break;
         errorAtCurrent( parser.current.start );
