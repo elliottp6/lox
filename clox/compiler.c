@@ -11,6 +11,21 @@ typedef struct {
     bool panicMode;
 } Parser;
 
+// expression precedence
+typedef enum {
+  PRECEDENCE_NONE,
+  PRECEDENCE_ASSIGNMENT,  // =
+  PRECEDENCE_OR,          // or
+  PRECEDENCE_AND,         // and
+  PRECEDENCE_EQUALITY,    // == !=
+  PRECEDENCE_COMPARISON,  // < > <= >=
+  PRECEDENCE_TERM,        // + -
+  PRECEDENCE_FACTOR,      // * /
+  PRECEDENCE_UNARY,       // ! -
+  PRECEDENCE_CALL,        // . ()
+  PRECEDENCE_PRIMARY
+} Precedence;
+
 // global parser object
 Parser parser;
 
@@ -72,9 +87,74 @@ static void emitReturn() { emitByte( OP_RETURN ); }
 // ends a chunk
 static void endCompiler() { emitReturn(); }
 
+// adds a constant into the static data section of the chunk, and returns its handle
+static uint8_t makeConstant( Value value ) {
+    int constant = addConstant( currentChunk(), value );
+    if( constant > UINT8_MAX ) { error( "Too many constants in one chunk." ); return 0; }
+    return (uint8_t)constant;
+}
+
+static void emitConstant( Value value ) { emitBytes( OP_CONSTANT, makeConstant( value ) ); }
+
+// -- EXPRESSION PARSING --
+static void expression();
+static void parsePrecedence( Precedence precedence );
+
+// parses number
+static void number() {
+    double value = strtod( parser.previous.start, NULL );
+    emitConstant( value );
+}
+
+// parses grouping (prefix expression)
+static void grouping() {
+    expression();
+    consume( TOKEN_RIGHT_PAREN, "Expect ')' after expression." );
+}
+
+// prases unary (prefix expression)
+static void unary() {
+    // get the operator
+    TokenType operatorType = parser.previous.type;
+
+    // compile the operand
+    parsePrecedence( PRECEDENCE_UNARY );
+
+    // emit the operator instruction
+    switch( operatorType ) {
+        case TOKEN_MINUS: emitByte( OP_NEGATE ); return; // negation
+        default: return; // unreachable
+    }
+}
+
+static void parsePrecedence( Precedence precedence ) {
+    // What goes here?
+}
+
+/*
+static ParseRule* getRule( TokenType type ) {
+    // TODO: implement
+    return NULL;
+}*/
+
+static void binary() {
+    /*
+    TokenType operatorType = parser.previous.type;
+    ParseRule* rule = getRule( operatorType );
+    parsePrecedence( (Precedence)(rule->precedence + 1) );
+
+    switch( operatorType ) {
+        case TOKEN_PLUS: emitByte( OP_ADD ); break;
+        case TOKEN_MINUS: emitByte (OP_SUBTRACT ); break;
+        case TOKEN_STAR: emitByte( OP_MULTIPLY ); break;
+        case TOKEN_SLASH: emitByte( OP_DIVIDE ); break;
+        default: return; // unreachable
+    }*/
+}
+
 // compiles an expression
 static void expression() {
-
+    parsePrecedence( PRECEDENCE_ASSIGNMENT );
 }
 
 bool compile( const char* source, Chunk* chunk ) {

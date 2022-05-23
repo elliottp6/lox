@@ -19,8 +19,8 @@ RELEASE_OBJECTS = $(addprefix $(RELEASE_FOLDER)/, $(OBJECTS))
 
 # compilation flags
 LIBS =
-DEBUG_FLAGS = -Wall -Wextra -Werror -DDEBUG -g
-RELEASE_FLAGS = -Wall -Wextra -Werror -DNDEBUG -Ofast -flto
+DEBUG_FLAGS = -Wall -Wextra -Werror -DDEBUG -g -Wno-unused-function -Wno-unused-parameter
+RELEASE_FLAGS = -Wall -Wextra -Werror -DNDEBUG -Ofast -flto -march=native -Wno-unused-function -Wno-unused-parameter
 
 # top-level targets (note that these CANNOT be the same name as any of the C files)
 debug_build: $(DEBUG_EXE)
