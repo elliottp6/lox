@@ -83,6 +83,24 @@ InterpretResult interpret_chunk( Chunk* chunk ) {
 }
 
 InterpretResult interpret_source( const char* source ) {
-    compile( source );
-    return INTERPRET_OK;
+    // create chunk
+    Chunk chunk;
+    initChunk( &chunk );
+
+    // compile source into chunk
+    if( !compile( source, &chunk ) ) {
+        freeChunk( &chunk );
+        return INTERPRET_COMPILE_ERROR;
+    }
+
+    // put chunk into VM
+    vm.chunk = &chunk;
+    vm.ip = vm.chunk->code;
+
+    // run VM
+    InterpretResult result = run();
+
+    // done
+    freeChunk( &chunk );
+    return result;
 }

@@ -3,11 +3,20 @@
 #include "compiler.h"
 #include "scanner.h"
 
-void compile( const char* source ) {
-    initScanner( source );
-    for(;;) {
-        Token token = scanToken();
-        printf( "%4d %2d '%.*s'\n", token.line, token.type, token.length, token.start ); 
-        if( TOKEN_EOF == token.type ) break;
-    }
+bool compile( __attribute__((unused)) const char* source, __attribute__((unused)) Chunk* chunk ) {
+    // start scanner
+    //initScanner( source );
+
+    // "primes the pump" on the scanner???
+    //advance();
+
+    // compile the expression
+    //expression();
+
+    // the expression should be the only expression in the file
+    //consume( TOKEN_EOF, "expect end of expression" );
+
+    // done
+    printf( "compiler not yet implemented\n" );
+    return false;
 }

@@ -3,13 +3,14 @@
 #include <string.h>
 #include "vm.h"
 #include "debug.h"
+#include "scanner.h"
 
-static void repl() {
+static void repl( bool scanOnly ) {
     char line[1024];
     for(;;) {
         printf( "> " );
         if( !fgets( line, sizeof( line ), stdin ) ) { printf( "\n" ); break; }
-        interpret_source( line );
+        if( scanOnly ) printTokens( line ); else interpret_source( line );
     }
 }
 
@@ -65,24 +66,35 @@ static int runFile( const char* path ) {
 }
 
 int main( int argc, const char* argv[] ) {
-    // dispatch based on # of arguments
-    switch( argc ) {
-        // read-eval-print loop
-        case 1:
+    // dispatch on command's 1st character
+    switch( argc > 1 ? argv[1][0] : '\0' ) {
+        // scan
+        case 's': {
             initVM();
-            repl();
+            repl( true );
             freeVM();
             return 0;
+        }
 
-        // run script
-        case 2:
+        // interact
+        case 'i': {
             initVM();
-            int result = runFile( argv[1] );
+            repl( false );
+            freeVM();
+            return 0;
+        }
+
+        // run
+        case 'r': {
+            if( argc < 3 ) break;
+            initVM();
+            int result = runFile( argv[2] );
             freeVM();
             return result;
+        }
 
-        // demo mode
-        case 3: 
+        // test
+        case 't': {
             // init virtual machine
             initVM();
 
@@ -117,10 +129,10 @@ int main( int argc, const char* argv[] ) {
             freeChunk( &chunk );
             freeVM();
             return 0;
-
-        // unrecognized command
-        default:
-            fprintf( stderr, "Usage: clox [path]\n" );
-            return 64;
+        }
     }
+    
+    // unrecognized command
+    fprintf( stderr, "Usage: clox [scan|interact|test|run {file}]\n" );
+    return 64;
 }

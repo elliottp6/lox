@@ -7,7 +7,7 @@ DEBUG_FOLDER = bin/debug
 RELEASE_FOLDER = bin/release
 
 # exectuable
-EXE = clox
+EXE = main
 DEBUG_EXE = $(DEBUG_FOLDER)/$(EXE)
 RELEASE_EXE = $(RELEASE_FOLDER)/$(EXE)
 
@@ -26,11 +26,13 @@ RELEASE_FLAGS = -Wall -Wextra -Werror -DNDEBUG -Ofast -flto
 debug_build: $(DEBUG_EXE)
 release_build: $(RELEASE_EXE)
 
-# link
+# link & test
 $(DEBUG_EXE): $(DEBUG_OBJECTS)
 	gcc -o $@ $^ $(DEBUG_FLAGS) $(LIBS)
+	bin/debug/main test
 $(RELEASE_EXE): $(RELEASE_OBJECTS)
 	gcc -o $@ $^ $(RELEASE_FLAGS) $(LIBS)
+	bin/release/main test
 
 # compile
 $(DEBUG_FOLDER)/%.o: %.c
