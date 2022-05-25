@@ -21,6 +21,7 @@ struct ObjString {
 };
 
 void printObject( Obj* obj );
+bool objectsEqual( Obj* a, Obj* b );
 ObjString* makeStringObject( const char* chars, size_t len );
 
 static inline bool isObjType( Value value, ObjType type ) {
