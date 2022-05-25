@@ -179,6 +179,15 @@ static void binary() {
     }
 }
 
+static void literal() {
+    switch( parser.previous.type ) {
+        case TOKEN_FALSE: emitByte( OP_FALSE ); break;
+        case TOKEN_NIL: emitByte( OP_NIL ); break;
+        case TOKEN_TRUE: emitByte( OP_TRUE ); break;
+        default: return; // unreachable
+    }
+}
+
 // parsing rules
 ParseRule rules[] = {
     [TOKEN_LEFT_PAREN]    = {grouping, NULL,   PRECEDENCE_NONE},
@@ -206,17 +215,17 @@ ParseRule rules[] = {
     [TOKEN_AND]           = {NULL,     NULL,   PRECEDENCE_NONE},
     [TOKEN_CLASS]         = {NULL,     NULL,   PRECEDENCE_NONE},
     [TOKEN_ELSE]          = {NULL,     NULL,   PRECEDENCE_NONE},
-    [TOKEN_FALSE]         = {NULL,     NULL,   PRECEDENCE_NONE},
+    [TOKEN_FALSE]         = {literal,  NULL,   PRECEDENCE_NONE},
     [TOKEN_FOR]           = {NULL,     NULL,   PRECEDENCE_NONE},
     [TOKEN_FUN]           = {NULL,     NULL,   PRECEDENCE_NONE},
     [TOKEN_IF]            = {NULL,     NULL,   PRECEDENCE_NONE},
-    [TOKEN_NIL]           = {NULL,     NULL,   PRECEDENCE_NONE},
+    [TOKEN_NIL]           = {literal,  NULL,   PRECEDENCE_NONE},
     [TOKEN_OR]            = {NULL,     NULL,   PRECEDENCE_NONE},
     [TOKEN_PRINT]         = {NULL,     NULL,   PRECEDENCE_NONE},
     [TOKEN_RETURN]        = {NULL,     NULL,   PRECEDENCE_NONE},
     [TOKEN_SUPER]         = {NULL,     NULL,   PRECEDENCE_NONE},
     [TOKEN_THIS]          = {NULL,     NULL,   PRECEDENCE_NONE},
-    [TOKEN_TRUE]          = {NULL,     NULL,   PRECEDENCE_NONE},
+    [TOKEN_TRUE]          = {literal,  NULL,   PRECEDENCE_NONE},
     [TOKEN_VAR]           = {NULL,     NULL,   PRECEDENCE_NONE},
     [TOKEN_WHILE]         = {NULL,     NULL,   PRECEDENCE_NONE},
     [TOKEN_ERROR]         = {NULL,     NULL,   PRECEDENCE_NONE},

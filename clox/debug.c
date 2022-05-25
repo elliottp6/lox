@@ -33,6 +33,9 @@ size_t disassembleInstruction( Chunk* chunk, size_t offset ) {
     // dispatch on instruction
     switch( instruction ) {
         case OP_CONSTANT: return constantInstruction( "OP_CONSTANT", chunk, offset );
+        case OP_NIL: return simpleInstruction( "OP_NIL", offset );
+        case OP_TRUE: return simpleInstruction( "OP_TRUE", offset );
+        case OP_FALSE: return simpleInstruction( "OP_FALSE", offset );
         case OP_ADD: return simpleInstruction( "OP_ADD", offset );
         case OP_SUBTRACT: return simpleInstruction ("OP_SUBTRACT", offset );
         case OP_MULTIPLY: return simpleInstruction( "OP_MULTIPLY", offset );
