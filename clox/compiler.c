@@ -153,7 +153,8 @@ static void unary() {
 
     // emit the operator instruction
     switch( operatorType ) {
-        case TOKEN_MINUS: emitByte( OP_NEGATE ); return; // negation
+        case TOKEN_BANG: emitByte( OP_NOT ); return;
+        case TOKEN_MINUS: emitByte( OP_NEGATE ); return;
         default: return; // unreachable
     }
 }
@@ -201,7 +202,7 @@ ParseRule rules[] = {
     [TOKEN_SEMICOLON]     = {NULL,     NULL,   PRECEDENCE_NONE},
     [TOKEN_SLASH]         = {NULL,     binary, PRECEDENCE_FACTOR},
     [TOKEN_STAR]          = {NULL,     binary, PRECEDENCE_FACTOR},
-    [TOKEN_BANG]          = {NULL,     NULL,   PRECEDENCE_NONE},
+    [TOKEN_BANG]          = {unary,    NULL,   PRECEDENCE_NONE},
     [TOKEN_BANG_EQUAL]    = {NULL,     NULL,   PRECEDENCE_NONE},
     [TOKEN_EQUAL]         = {NULL,     NULL,   PRECEDENCE_NONE},
     [TOKEN_EQUAL_EQUAL]   = {NULL,     NULL,   PRECEDENCE_NONE},
