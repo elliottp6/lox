@@ -102,14 +102,14 @@ int main( int argc, const char* argv[] ) {
             
             // 1.2 + 3.4
             writeChunk( &chunk, OP_CONSTANT, 123 );
-            writeChunk( &chunk, (uint8_t)addConstant( &chunk, 1.2 ), 123 );
+            writeChunk( &chunk, (uint8_t)addConstant( &chunk, NUMBER_VAL( 1.2 ) ), 123 );
             writeChunk( &chunk, OP_CONSTANT, 123 );
-            writeChunk( &chunk, (uint8_t)addConstant( &chunk, 3.4 ), 123 );
+            writeChunk( &chunk, (uint8_t)addConstant( &chunk, NUMBER_VAL( 3.4 ) ), 123 );
             writeChunk( &chunk, OP_ADD, 123 );
             
             // divide by 5.6
             writeChunk( &chunk, OP_CONSTANT, 123 );
-            writeChunk( &chunk, (uint8_t)addConstant( &chunk, 5.6 ), 123 );
+            writeChunk( &chunk, (uint8_t)addConstant( &chunk, NUMBER_VAL( 5.6 ) ), 123 );
             writeChunk( &chunk, OP_DIVIDE, 123 );
 
             // negate
