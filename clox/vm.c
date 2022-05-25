@@ -4,7 +4,7 @@
 #include "debug.h"
 #include "vm.h"
 #include "compiler.h"
-#include "object.h"
+#include "memory.h"
 
 VM vm; // global variable!
 
@@ -41,9 +41,11 @@ static Value peek( int distance ) {
 
 void initVM() {
     resetStack();
+    vm.objects = NULL;
 }
 
 void freeVM() {
+    freeObjects();
 }
 
 static bool isFalsey( Value value ) {

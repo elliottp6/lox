@@ -21,7 +21,7 @@ void printObject( Obj* obj ) {
     switch( obj->type ) {
         case OBJ_STRING: {
             ObjString* str = (ObjString*)obj;
-            printf( "%.*s", (int)str->len, str->buf );
+            printf( "\"%.*s\"", (int)str->len, str->buf );
             return;
         }
         default:
@@ -30,8 +30,18 @@ void printObject( Obj* obj ) {
     }
 }
 
+static Obj* allocateObject( size_t size ) {
+    // allocate memory
+    Obj* obj = allocate( size );
+
+    // add to VM's global list (so we can release on call to freeVM)
+    obj->next = vm.objects;
+    vm.objects = obj;
+    return obj;
+}
+
 ObjString* makeString( const char* chars, size_t len ) {
-    ObjString* obj = allocate( sizeof( ObjString ) + len );
+    ObjString* obj = (ObjString*)allocateObject( sizeof( ObjString ) + len );
     obj->obj.type = OBJ_STRING;
     obj->len = len;
     memcpy( obj->buf, chars, len );
