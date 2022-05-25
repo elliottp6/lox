@@ -30,10 +30,20 @@ void printObject( Obj* obj ) {
     }
 }
 
-ObjString* makeStringObject( const char* chars, size_t len ) {
+ObjString* makeString( const char* chars, size_t len ) {
     ObjString* obj = allocate( sizeof( ObjString ) + len );
     obj->obj.type = OBJ_STRING;
     obj->len = len;
     memcpy( obj->buf, chars, len );
+    return obj;
+}
+
+ObjString* concatStrings( ObjString* a, ObjString* b ) {
+    size_t len = a->len + b->len;
+    ObjString* obj = allocate( sizeof( ObjString ) + len );
+    obj->obj.type = OBJ_STRING;
+    obj->len = len;
+    memcpy( obj->buf, a->buf, a->len );
+    memcpy( obj->buf + a->len, b->buf, b->len );
     return obj;
 }
