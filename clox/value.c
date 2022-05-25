@@ -27,18 +27,27 @@ void freeValueArray( ValueArray* array ) {
 
 void printValue( Value value ) {
     switch( value.type ) {
-        case VAL_BOOL: printf( AS_BOOL( value ) ? "true" : "false" ); break;
-        case VAL_NIL: printf( "nil" ); break;
-        case VAL_NUMBER: printf( "%g", AS_NUMBER( value ) ); break;
+        case VAL_BOOL: printf( AS_BOOL( value ) ? "true" : "false" ); return;
+        case VAL_NIL: printf( "nil" ); return;
+        case VAL_NUMBER: printf( "%g", AS_NUMBER( value ) ); return;
+        case VAL_OBJ: {
+            // TODO: print string, though for now, print the object address is good enough
+            printf( "obj<%p>", AS_OBJ( value ) );
+            return;
+        }
     }
 }
 
 bool valuesEqual( Value a, Value b ) {
     if( a.type != b.type ) return false;
     switch( a.type ) {
-        case VAL_BOOL:   return AS_BOOL(a) == AS_BOOL(b);
-        case VAL_NIL:    return true;
-        case VAL_NUMBER: return AS_NUMBER(a) == AS_NUMBER(b);
-        default:         return false; // unreachable
+        case VAL_BOOL:      return AS_BOOL(a) == AS_BOOL(b);
+        case VAL_NIL:       return true;
+        case VAL_NUMBER:    return AS_NUMBER(a) == AS_NUMBER(b);
+        case VAL_OBJ: {
+            // TODO: replace this with string comparison
+            return AS_OBJ(a) == AS_OBJ(b);
+        }
     }
+    return false; // unreachable
 }
