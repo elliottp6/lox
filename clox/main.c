@@ -121,9 +121,14 @@ int main( int argc, const char* argv[] ) {
 
             // interpret
             interpret_chunk( &chunk );
+            freeChunk( &chunk );
+
+            // now run something else
+            // this should print 'true'
+            InterpretResult result = interpret_source( "!(5 - 4 > 3 * 2 == !nil)" );
+            if( INTERPRET_OK != result ) fprintf( stderr, "test failed\n" );
 
             // done
-            freeChunk( &chunk );
             freeVM();
             return 0;
         }

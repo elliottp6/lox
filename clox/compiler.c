@@ -172,19 +172,25 @@ static void binary() {
 
     // emit token for operator
     switch( operatorType ) {
-        case TOKEN_PLUS: emitByte( OP_ADD ); break;
-        case TOKEN_MINUS: emitByte( OP_SUBTRACT ); break;
-        case TOKEN_STAR: emitByte( OP_MULTIPLY ); break;
-        case TOKEN_SLASH: emitByte( OP_DIVIDE ); break;
+        case TOKEN_BANG_EQUAL:      emitBytes( OP_EQUAL, OP_NOT ); break;
+        case TOKEN_EQUAL_EQUAL:     emitByte( OP_EQUAL ); break;
+        case TOKEN_GREATER:         emitByte( OP_GREATER ); break;
+        case TOKEN_GREATER_EQUAL:   emitBytes( OP_LESS, OP_NOT ); break;
+        case TOKEN_LESS:            emitByte( OP_LESS ); break;
+        case TOKEN_LESS_EQUAL:      emitBytes( OP_GREATER, OP_NOT ); break;
+        case TOKEN_PLUS:            emitByte( OP_ADD ); break;
+        case TOKEN_MINUS:           emitByte( OP_SUBTRACT ); break;
+        case TOKEN_STAR:            emitByte( OP_MULTIPLY ); break;
+        case TOKEN_SLASH:           emitByte( OP_DIVIDE ); break;
         default: return; // unreachable
     }
 }
 
 static void literal() {
     switch( parser.previous.type ) {
-        case TOKEN_FALSE: emitByte( OP_FALSE ); break;
-        case TOKEN_NIL: emitByte( OP_NIL ); break;
-        case TOKEN_TRUE: emitByte( OP_TRUE ); break;
+        case TOKEN_FALSE:   emitByte( OP_FALSE ); break;
+        case TOKEN_NIL:     emitByte( OP_NIL ); break;
+        case TOKEN_TRUE:    emitByte( OP_TRUE ); break;
         default: return; // unreachable
     }
 }
@@ -203,13 +209,13 @@ ParseRule rules[] = {
     [TOKEN_SLASH]         = {NULL,     binary, PRECEDENCE_FACTOR},
     [TOKEN_STAR]          = {NULL,     binary, PRECEDENCE_FACTOR},
     [TOKEN_BANG]          = {unary,    NULL,   PRECEDENCE_NONE},
-    [TOKEN_BANG_EQUAL]    = {NULL,     NULL,   PRECEDENCE_NONE},
+    [TOKEN_BANG_EQUAL]    = {NULL,     binary, PRECEDENCE_EQUALITY},
     [TOKEN_EQUAL]         = {NULL,     NULL,   PRECEDENCE_NONE},
-    [TOKEN_EQUAL_EQUAL]   = {NULL,     NULL,   PRECEDENCE_NONE},
-    [TOKEN_GREATER]       = {NULL,     NULL,   PRECEDENCE_NONE},
-    [TOKEN_GREATER_EQUAL] = {NULL,     NULL,   PRECEDENCE_NONE},
-    [TOKEN_LESS]          = {NULL,     NULL,   PRECEDENCE_NONE},
-    [TOKEN_LESS_EQUAL]    = {NULL,     NULL,   PRECEDENCE_NONE},
+    [TOKEN_EQUAL_EQUAL]   = {NULL,     binary, PRECEDENCE_EQUALITY},
+    [TOKEN_GREATER]       = {NULL,     binary, PRECEDENCE_COMPARISON},
+    [TOKEN_GREATER_EQUAL] = {NULL,     binary, PRECEDENCE_COMPARISON},
+    [TOKEN_LESS]          = {NULL,     binary, PRECEDENCE_COMPARISON},
+    [TOKEN_LESS_EQUAL]    = {NULL,     binary, PRECEDENCE_COMPARISON},
     [TOKEN_IDENTIFIER]    = {NULL,     NULL,   PRECEDENCE_NONE},
     [TOKEN_STRING]        = {NULL,     NULL,   PRECEDENCE_NONE},
     [TOKEN_NUMBER]        = {number,   NULL,   PRECEDENCE_NONE},
