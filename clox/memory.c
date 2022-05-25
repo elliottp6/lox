@@ -1,6 +1,8 @@
 #include <stdlib.h>
 #include "memory.h"
 
+void* allocate( size_t size ) { return reallocate( NULL, 0, size ); }
+
 void* reallocate( void* buffer, size_t oldSize, size_t newSize ) {
     // no bytes requested: free memory
     if( 0 == newSize ) {

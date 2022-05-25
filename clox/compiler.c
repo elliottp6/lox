@@ -4,6 +4,7 @@
 #include "common.h"
 #include "compiler.h"
 #include "scanner.h"
+#include "object.h"
 #ifdef DEBUG_PRINT_CODE
 #include "debug.h"
 #endif
@@ -195,6 +196,10 @@ static void literal() {
     }
 }
 
+static void string() {
+    emitConstant( OBJ_VAL( makeStringObject( parser.previous.start + 1, parser.previous.length - 2 ) ) );
+}
+
 // parsing rules
 ParseRule rules[] = {
     [TOKEN_LEFT_PAREN]    = {grouping, NULL,   PRECEDENCE_NONE},
@@ -217,7 +222,7 @@ ParseRule rules[] = {
     [TOKEN_LESS]          = {NULL,     binary, PRECEDENCE_COMPARISON},
     [TOKEN_LESS_EQUAL]    = {NULL,     binary, PRECEDENCE_COMPARISON},
     [TOKEN_IDENTIFIER]    = {NULL,     NULL,   PRECEDENCE_NONE},
-    [TOKEN_STRING]        = {NULL,     NULL,   PRECEDENCE_NONE},
+    [TOKEN_STRING]        = {string,   NULL,   PRECEDENCE_NONE},
     [TOKEN_NUMBER]        = {number,   NULL,   PRECEDENCE_NONE},
     [TOKEN_AND]           = {NULL,     NULL,   PRECEDENCE_NONE},
     [TOKEN_CLASS]         = {NULL,     NULL,   PRECEDENCE_NONE},

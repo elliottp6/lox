@@ -1,6 +1,7 @@
 #include <stdio.h>
 #include "memory.h"
 #include "value.h"
+#include "object.h"
 
 void initValueArray( ValueArray* array ) {
     array->capacity = 0;
@@ -30,11 +31,7 @@ void printValue( Value value ) {
         case VAL_BOOL: printf( AS_BOOL( value ) ? "true" : "false" ); return;
         case VAL_NIL: printf( "nil" ); return;
         case VAL_NUMBER: printf( "%g", AS_NUMBER( value ) ); return;
-        case VAL_OBJ: {
-            // TODO: print string, though for now, print the object address is good enough
-            printf( "obj<%p>", AS_OBJ( value ) );
-            return;
-        }
+        case VAL_OBJ: printObject( AS_OBJ( value ) ); return;
     }
 }
 
