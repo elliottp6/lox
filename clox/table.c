@@ -19,9 +19,24 @@ void freeTable( Table* table ) {
 // find entry via linear probing
 // this relies on string interning, since we're using reference equality for the keys (rather than calling stringsEqual)
 static Entry* findEntry( Entry* entries, size_t capacity, ObjString* key ) {
-    for( size_t i = key->hash % capacity;; i = (i + 1) % capacity) {
+    // 1st tombstone found
+    Entry* t = NULL;
+
+    // linear probe
+    for( size_t i = key->hash % capacity;; i = (i + 1) % capacity ) {
+        // get entry
         Entry* e = &entries[i];
-        if( e->key == key || e->key == NULL ) return e;
+
+        // check for available slot
+        if( NULL == e->key ) {
+            // if not tombstone: we know the value doesn't exist, so return first available slot
+            if( IS_NIL( e->value ) ) return NULL != t ? t : e;
+
+            // otherwise: save the tombstone
+            else if( NULL == t ) t = e;
+
+        // otherwise: check for a match
+        } else if( e->key == key ) return e;
     }
 }
 
@@ -85,5 +100,19 @@ bool tableGet( Table* table, ObjString* key, Value* value ) {
 
     // value found, so set it
     *value = entry->value;
+    return true;
+}
+
+bool tableDelete( Table* table, ObjString* key ) {
+    // this ensures we don't access the bucket array when it's NULL
+    if( 0 == table->count ) return false;
+
+    // otherwise, find the entry
+    Entry* entry = findEntry( table->entries, table->capacity, key );
+    if( NULL == entry->key ) return false;
+
+    // place a tombstone in the entry
+    entry->key = NULL;
+    entry->value = BOOL_VAL( true );
     return true;
 }
