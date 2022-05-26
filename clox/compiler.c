@@ -197,7 +197,7 @@ static void literal() {
 }
 
 static void string() {
-    emitConstant( OBJ_VAL( makeString( parser.previous.start + 1, parser.previous.length - 2 ) ) );
+    emitConstant( OBJ_VAL( makeString( parser.previous.start + 1, parser.previous.length - 2, NULL, 0 ) ) );
 }
 
 // parsing rules

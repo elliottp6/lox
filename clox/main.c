@@ -73,9 +73,11 @@ int main( int argc, const char* argv[] ) {
         case 's': {
             initVM();
             char line[1024];
+            printf( "Welcome to Lox. Type 'exit' to quit.\n" );
             for(;;) {
                 printf( "> " );
                 if( !fgets( line, sizeof( line ), stdin ) ) { printf( "\n" ); break; }
+                if( 0 == strcmp( "exit\n", line ) ) break;
                 interpret_source( line );
             }
             freeVM();
@@ -128,7 +130,37 @@ int main( int argc, const char* argv[] ) {
             InterpretResult result = interpret_source( "!(5 - 4 > 3 * 2 == !nil)" );
             if( INTERPRET_OK != result ) fprintf( stderr, "test failed\n" );
 
-            // done
+            // test string interning (should have some addresses)
+            ObjString* s1 = makeString( "hello", 5, " world", 6 );
+            printString( s1 );
+            printf( "\n" );
+
+            ObjString* s2 = makeString( "hello", 5, " world", 6 );
+            printString( s2 );
+            printf( "\n" );
+
+            ObjString* s3 = makeString( "hi", 2, NULL, 0 );
+            printString( s3 );
+            printf( "\n" );
+
+            // print table load (should be 2)
+            printf( "vm.strings.load: %ld\n", vm.strings.load );
+
+            // now delete 's3' and see what happens
+            tableDelete( &vm.strings, s3 );
+
+            // print table load (should be 2)
+            printf( "after deleting 'hi' - vm.strings.load: %ld\n", vm.strings.load ); 
+
+            // recreate string (new address because we removed it from the hash table)
+            ObjString* s4 = makeString( "hi", 2, NULL, 0 );
+            printString( s4 );
+            printf( "\n" );
+
+            // load is still 2
+            printf( "vm.strings.load: %ld\n", vm.strings.load ); 
+
+            // done - release all the objects, which will include both versions of 'hi'
             freeVM();
             return 0;
         }

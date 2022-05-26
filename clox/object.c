@@ -4,31 +4,16 @@
 #include "object.h"
 #include "value.h"
 #include "vm.h"
-
-bool stringsEqual( ObjString* a, ObjString* b ) {
-    return a->len == b->len && 0 == memcmp( a->buf, b->buf, a->len );
-}
-
-bool objectsEqual( Obj* a, Obj* b ) {
-    if( a->type != b->type ) return false;
-    switch( a->type ) {
-        case OBJ_STRING: return stringsEqual( (ObjString*)a, (ObjString*)b );
-        default: return a == b;
-    }
-}
+#include "table.h"
 
 void printObject( Obj* obj ) {
     switch( obj->type ) {
-        case OBJ_STRING: {
-            ObjString* str = (ObjString*)obj;
-            printf( "\"%.*s\"", (int)str->len, str->buf );
-            return;
-        }
-        default:
-            printf( "obj<%p>", obj );
-            return;
+        case OBJ_STRING: printString( (ObjString*)obj ); return;
+        default: printf( "obj<%p>", obj ); return;
     }
 }
+
+void printString( ObjString* str ) { printf( "\"%.*s\"@%p", (int)str->len, str->buf, str ); }
 
 static Obj* allocateObject( size_t size ) {
     // allocate memory
@@ -41,31 +26,32 @@ static Obj* allocateObject( size_t size ) {
 }
 
 // 32-bit fnv1a
-static uint32_t hashString( const char* key, size_t len ) {
-    uint32_t hash = 2166136261u;
+static uint32_t hashString( const char* key, size_t len, uint32_t hash ) {
     for( size_t i = 0; i < len; i++ ) {
         hash ^= (uint8_t)key[i];
-        hash *= 16777619;
+        hash *= HASH_PRIME;
     }
     return hash;
 }
 
-ObjString* makeString( const char* chars, size_t len ) {
-    ObjString* obj = (ObjString*)allocateObject( sizeof( ObjString ) + len );
-    obj->obj.type = OBJ_STRING;
-    obj->len = len;
-    obj->hash = hashString( chars, len );
-    memcpy( obj->buf, chars, len );
-    return obj;
-}
+ObjString* makeString( const char* s1, size_t len1, const char* s2, size_t len2 ) {
+    // compute hash
+    uint32_t hash = hashString( s2, len2, hashString( s1, len1, HASH_SEED ) );
 
-ObjString* concatStrings( ObjString* a, ObjString* b ) {
-    size_t len = a->len + b->len;
-    ObjString* obj = allocate( sizeof( ObjString ) + len );
+    // find string in table
+    ObjString* obj = tableFindString( &vm.strings, hash, s1, len1, s2, len2 );
+    if( NULL != obj ) return obj;
+
+    // otherwise, allocate a new string
+    int len = len1 + len2;
+    obj = (ObjString*)allocateObject( sizeof( ObjString ) + len );
     obj->obj.type = OBJ_STRING;
     obj->len = len;
-    memcpy( obj->buf, a->buf, a->len );
-    memcpy( obj->buf + a->len, b->buf, b->len );
-    obj->hash = hashString( obj->buf, len );
+    obj->hash = hash;
+    memcpy( obj->buf, s1, len1 );
+    memcpy( obj->buf + len1, s2, len2 );
+
+    // intern it
+    tableSet( &vm.strings, obj, NIL_VAL );
     return obj;
 }

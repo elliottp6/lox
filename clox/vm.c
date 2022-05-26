@@ -42,9 +42,11 @@ static Value peek( int distance ) {
 void initVM() {
     resetStack();
     vm.objects = NULL;
+    initTable( &vm.strings );
 }
 
 void freeVM() {
+    freeTable( &vm.strings );
     freeObjects();
 }
 
@@ -113,7 +115,7 @@ static InterpretResult run() {
                 if( IS_STRING( peek(0) ) && IS_STRING( peek(1) ) ) {
                     ObjString* b = AS_STRING( pop() );
                     ObjString* a = AS_STRING( pop() );
-                    push( OBJ_VAL( concatStrings( a, b ) ) );
+                    push( OBJ_VAL( makeString( a->buf, a->len, b->buf, b->len ) ) );
                 } else if( IS_NUMBER( peek(0) ) && IS_NUMBER( peek(1) ) ) {
                     double b = AS_NUMBER( pop() );
                     double a = AS_NUMBER( pop() );

@@ -1,5 +1,6 @@
 #include <stdlib.h>
 #include <string.h>
+#include <stdio.h>
 #include "memory.h"
 #include "object.h"
 #include "vm.h"
@@ -46,6 +47,12 @@ void freeArray( size_t typeSize, void* array, size_t capacity ) {
 }
 
 static void freeObject( Obj* obj ) {
+    // trace object freeing
+    printf( "freeObject: " );
+    printObject( obj );
+    printf( "\n" );
+    
+    // switch on type so we can track VM memory usage
     switch( obj->type ) {
         case OBJ_STRING: {
             ObjString* str = (ObjString*)obj;

@@ -106,6 +106,7 @@ bool tableGet( Table* table, ObjString* key, Value* value ) {
     return true;
 }
 
+// TODO: this should be 'remove', and probably should return the value removed to the caller so it can deal with deallocation (if needed)
 bool tableDelete( Table* table, ObjString* key ) {
     // this ensures we don't access the bucket array when it's NULL
     if( 0 == table->load ) return false;
@@ -118,4 +119,28 @@ bool tableDelete( Table* table, ObjString* key ) {
     entry->key = NULL;
     entry->value = BOOL_VAL( true );
     return true;
+}
+
+ObjString* tableFindString( Table* table, uint32_t hash, const char* s1, size_t len1, const char* s2, size_t len2 ) {
+    // combined length
+    size_t len = len1 + len2;
+    
+    // avoid null pointer access
+    if( 0 == table->load ) return NULL;
+
+    // linear probing
+    for( uint32_t i = hash % table->capacity;; i = (i + 1) % table->capacity ) {
+        // get entry
+        Entry* entry = &table->entries[i];
+               
+        // on null => return if true null
+        if( NULL == entry->key ) { if( IS_NIL( entry->value ) ) return NULL; }
+
+        // otherwise: check for a match
+        else if( entry->key->hash == hash &&
+                 entry->key->len == len &&
+                 0 == memcmp( entry->key->buf, s1, len1 ) &&
+                 0 == memcmp( entry->key->buf + len1, s2, len2 ) )
+            return entry->key;
+    }
 }

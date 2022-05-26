@@ -5,6 +5,8 @@
 #define OBJ_TYPE(value)     (AS_OBJ(value)->type)
 #define IS_STRING(value)    isObjType(value, OBJ_STRING)
 #define AS_STRING(value)    ((ObjString*)AS_OBJ(value))
+#define HASH_SEED 2166136261u
+#define HASH_PRIME 16777619
 
 typedef enum {
     OBJ_STRING,
@@ -18,15 +20,13 @@ struct Obj {
 struct ObjString {
     Obj obj;
     size_t len;
-    uint32_t hash;
+    uint32_t hash; // upgrade to 64-bit at some point
     char buf[]; // flexible array member
 };
 
 void printObject( Obj* obj );
-bool objectsEqual( Obj* a, Obj* b );
-bool stringsEqual( ObjString* a, ObjString* b );
-ObjString* makeString( const char* chars, size_t len );
-ObjString* concatStrings( ObjString* a, ObjString* b );
+void printString( ObjString* str );
+ObjString* makeString( const char* s1, size_t len1, const char* s2, size_t len2 );
 
 static inline bool isObjType( Value value, ObjType type ) {
     return IS_OBJ(value) && AS_OBJ(value)->type == type;
