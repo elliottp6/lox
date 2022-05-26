@@ -1,4 +1,5 @@
 #include <stdlib.h>
+#include <string.h>
 #include "memory.h"
 #include "object.h"
 #include "vm.h"
@@ -18,6 +19,12 @@ static void* reallocate( void* buffer, size_t oldSize, size_t newSize ) {
 
 void* allocate( size_t size ) {
     return reallocate( NULL, 0, size );
+}
+
+void* zallocate( size_t size ) {
+    void* buffer = allocate( size );
+    memset( buffer, 0, size );
+    return buffer;
 }
 
 void deallocate( void* buffer, size_t size ) {

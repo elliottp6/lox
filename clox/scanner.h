@@ -33,5 +33,6 @@ typedef struct {
     int line;
 } Token;
 
+// scanner is more commonly called a lexer
 void initScanner( const char* source );
 Token scanToken();

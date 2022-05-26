@@ -24,6 +24,7 @@ struct ObjString {
 
 void printObject( Obj* obj );
 bool objectsEqual( Obj* a, Obj* b );
+bool stringsEqual( ObjString* a, ObjString* b );
 ObjString* makeString( const char* chars, size_t len );
 ObjString* concatStrings( ObjString* a, ObjString* b );
 

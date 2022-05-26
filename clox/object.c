@@ -5,7 +5,7 @@
 #include "value.h"
 #include "vm.h"
 
-static bool stringsEqual( ObjString* a, ObjString* b ) {
+bool stringsEqual( ObjString* a, ObjString* b ) {
     return a->len == b->len && 0 == memcmp( a->buf, b->buf, a->len );
 }
 

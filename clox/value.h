@@ -2,8 +2,8 @@
 #include "common.h"
 
 typedef enum {
+    VAL_NIL, // NIL must be the 0th entry, so that a zeroed-out value is NIL (table.c depends on this behavior)
     VAL_BOOL,
-    VAL_NIL,
     VAL_NUMBER,
     VAL_OBJ,
 } ValueType;
