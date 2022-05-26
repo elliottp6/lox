@@ -123,9 +123,16 @@ int main( int argc, const char* argv[] ) {
             writeChunk( &chunk, (uint8_t)addConstant( &chunk, NUMBER_VAL( 6 ) ), 123 );
             writeChunk( &chunk, OP_POP, 123 );
 
-            // write a string and returnit
+            // write two strings
+            // TODO: there's a bug here! we intern the strings OK, but they get added to the constant table in two different slots
+            // (note that the same thing happens for numerical values, too)
             writeChunk( &chunk, OP_CONSTANT, 123 );
             writeChunk( &chunk, (uint8_t)addConstant( &chunk, OBJ_VAL( makeString( "hi", 2, NULL, 0 ) ) ), 123 );
+            writeChunk( &chunk, OP_CONSTANT, 123 );
+            writeChunk( &chunk, (uint8_t)addConstant( &chunk, OBJ_VAL( makeString( "hi", 2, NULL, 0 ) ) ), 123 );
+
+            // concat them
+            writeChunk( &chunk, OP_ADD, 123 );
             writeChunk( &chunk, OP_RETURN, 123 );
 
             // disassemble
