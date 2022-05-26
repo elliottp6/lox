@@ -28,8 +28,8 @@ void freeValueArray( ValueArray* array ) {
 
 void printValue( Value value ) {
     switch( value.type ) {
-        case VAL_BOOL: printf( AS_BOOL( value ) ? "true" : "false" ); return;
         case VAL_NIL: printf( "nil" ); return;
+        case VAL_BOOL: printf( AS_BOOL( value ) ? "true" : "false" ); return;
         case VAL_NUMBER: printf( "%g", AS_NUMBER( value ) ); return;
         case VAL_OBJ: printObject( AS_OBJ( value ) ); return;
     }

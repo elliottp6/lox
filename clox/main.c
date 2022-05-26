@@ -114,8 +114,18 @@ int main( int argc, const char* argv[] ) {
             writeChunk( &chunk, (uint8_t)addConstant( &chunk, NUMBER_VAL( 5.6 ) ), 123 );
             writeChunk( &chunk, OP_DIVIDE, 123 );
 
-            // negate
+            // negate & print
             writeChunk( &chunk, OP_NEGATE, 123 );
+            writeChunk( &chunk, OP_PRINT, 123 );
+            
+            // write a constant and then pop it
+            writeChunk( &chunk, OP_CONSTANT, 123 );
+            writeChunk( &chunk, (uint8_t)addConstant( &chunk, NUMBER_VAL( 6 ) ), 123 );
+            writeChunk( &chunk, OP_POP, 123 );
+
+            // write a string and returnit
+            writeChunk( &chunk, OP_CONSTANT, 123 );
+            writeChunk( &chunk, (uint8_t)addConstant( &chunk, OBJ_VAL( makeString( "hi", 2, NULL, 0 ) ) ), 123 );
             writeChunk( &chunk, OP_RETURN, 123 );
 
             // disassemble

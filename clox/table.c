@@ -36,6 +36,7 @@ static Entry* findEntry( Entry* entries, size_t capacity, ObjString* key ) {
             else if( NULL == t ) t = e;
 
         // otherwise: check for a match
+        // note that we can use reference equality here b/c all ObjString's are interned
         } else if( e->key == key ) return e;
     }
 }

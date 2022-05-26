@@ -12,12 +12,12 @@ static size_t constantInstruction( const char* name, Chunk* chunk, size_t offset
     uint8_t constantIndex = chunk->code[offset + 1];
     
     // tab over 16 spaces, then print constant index
-    printf( "%s<%d,", name, constantIndex );
+    printf( "%s<", name );
     
     // print the constant value followed by a newline
     printValue( chunk->constants.values[constantIndex] );
 
-    printf( ">" );
+    printf( "@%d>", constantIndex );
 
     // advance code by two bytes
     return offset + 2;
@@ -36,6 +36,7 @@ size_t disassembleInstruction( Chunk* chunk, size_t offset ) {
         case OP_NIL:        return simpleInstruction( "OP_NIL", offset );
         case OP_TRUE:       return simpleInstruction( "OP_TRUE", offset );
         case OP_FALSE:      return simpleInstruction( "OP_FALSE", offset );
+        case OP_POP:        return simpleInstruction( "OP_POP", offset );
         case OP_EQUAL:      return simpleInstruction( "OP_EQUAL", offset );
         case OP_GREATER:    return simpleInstruction( "OP_GREATER", offset );
         case OP_LESS:       return simpleInstruction( "OP_LESS", offset );
@@ -45,6 +46,7 @@ size_t disassembleInstruction( Chunk* chunk, size_t offset ) {
         case OP_DIVIDE:     return simpleInstruction( "OP_DIVIDE", offset );
         case OP_NOT:        return simpleInstruction( "OP_NOT", offset );
         case OP_NEGATE:     return simpleInstruction( "OP_NEGATE", offset );
+        case OP_PRINT:      return simpleInstruction( "OP_PRINT", offset );
         case OP_RETURN:     return simpleInstruction( "OP_RETURN", offset );
         default:
             printf( "Unknown opcode %d", instruction );
