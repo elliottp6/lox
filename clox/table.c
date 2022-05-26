@@ -6,7 +6,7 @@
 #include "value.h"
 
 void initTable( Table* table ) {
-    table->count = 0;
+    table->load = 0;
     table->capacity = 0;
     table->entries = NULL;
 }
@@ -47,10 +47,11 @@ void tableAddAll( Table* from, Table* to ) {
     }
 }
 
-static void adjustCapacity( Table* table, size_t capacity ) {
+static void adjustCapacity( Table* table, size_t newCapacity ) {
     // allocate a zeroed-out array of entries
     // this works because a zeroed-out Entry has a null key and a NIL value
-    Entry* entries = zallocate( sizeof( Entry ) * capacity );
+    Entry* newEntries = zallocate( sizeof( Entry ) * newCapacity );
+    size_t newLoad = 0;
 
     // insert existing entries into the new table
     for( size_t i = 0; i < table->capacity; i++ ) {
@@ -59,40 +60,42 @@ static void adjustCapacity( Table* table, size_t capacity ) {
         if( NULL == entry->key ) continue;
         
         // insert into new table
-        Entry* dest = findEntry( entries, capacity, entry->key );
-        dest->key = entry->key;
-        dest->value = entry->value;
+        Entry* newEntry = findEntry( newEntries, newCapacity, entry->key );
+        newEntry->key = entry->key;
+        newEntry->value = entry->value;
+        newLoad++;
     }
 
-    // free old entries buffer
+    // free old entries
     freeArray( sizeof( Entry ), table->entries, table->capacity );
 
     // set new entries buffer
-    table->entries = entries;
-    table->capacity = capacity;
+    table->load = newLoad;
+    table->capacity = newCapacity;
+    table->entries = newEntries;
 }
 
 bool tableSet( Table* table, ObjString* key, Value value ) {
     // grow the table if we exceed our max load
-    if( table->count + 1 > table->capacity * TABLE_MAX_LOAD )
+    if( table->load + 1 > table->capacity * TABLE_MAX_LOAD )
         adjustCapacity( table, growCapacity( table->capacity ) );
 
     // get table entry for this key
     Entry* entry = findEntry( table->entries, table->capacity, key );
 
+    // increment the table's load (but only if we didn't just replace a tombstone)
+    bool isNewKey = NULL == entry->key;
+    if( isNewKey && IS_NIL( entry->value ) ) table->load++;
+
     // set the entry
-    bool add = NULL == entry->key;
     entry->key = key;
     entry->value = value;
-
-    // return 'true' if we added a new entry
-    if( add ) table->count++;
-    return add;
+    return isNewKey;
 }
 
 bool tableGet( Table* table, ObjString* key, Value* value ) {
     // this ensures we don't access the bucket array when it's NULL
-    if( 0 == table->count ) return false;
+    if( 0 == table->load ) return false;
 
     // otherwise, find the entry
     Entry* entry = findEntry( table->entries, table->capacity, key );
@@ -105,7 +108,7 @@ bool tableGet( Table* table, ObjString* key, Value* value ) {
 
 bool tableDelete( Table* table, ObjString* key ) {
     // this ensures we don't access the bucket array when it's NULL
-    if( 0 == table->count ) return false;
+    if( 0 == table->load ) return false;
 
     // otherwise, find the entry
     Entry* entry = findEntry( table->entries, table->capacity, key );
