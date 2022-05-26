@@ -40,10 +40,21 @@ static Obj* allocateObject( size_t size ) {
     return obj;
 }
 
+// 32-bit fnv1a
+static uint32_t hashString( const char* key, size_t len ) {
+    uint32_t hash = 2166136261u;
+    for( size_t i = 0; i < len; i++ ) {
+        hash ^= (uint8_t)key[i];
+        hash *= 16777619;
+    }
+    return hash;
+}
+
 ObjString* makeString( const char* chars, size_t len ) {
     ObjString* obj = (ObjString*)allocateObject( sizeof( ObjString ) + len );
     obj->obj.type = OBJ_STRING;
     obj->len = len;
+    obj->hash = hashString( chars, len );
     memcpy( obj->buf, chars, len );
     return obj;
 }
@@ -55,5 +66,6 @@ ObjString* concatStrings( ObjString* a, ObjString* b ) {
     obj->len = len;
     memcpy( obj->buf, a->buf, a->len );
     memcpy( obj->buf + a->len, b->buf, b->len );
+    obj->hash = hashString( obj->buf, len );
     return obj;
 }
