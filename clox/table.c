@@ -26,7 +26,7 @@ static Entry* findEntry( Entry* entries, size_t capacity, ObjString* key ) {
 }
 
 void tableAddAll( Table* from, Table* to ) {
-    for( int i = 0; i < from->capacity; i++ ) {
+    for( size_t i = 0; i < from->capacity; i++ ) {
         Entry* entry = &from->entries[i];
         if( NULL != entry->key ) tableSet( to, entry->key, entry->value );
     }
@@ -38,7 +38,7 @@ static void adjustCapacity( Table* table, size_t capacity ) {
     Entry* entries = zallocate( sizeof( Entry ) * capacity );
 
     // insert existing entries into the new table
-    for( int i = 0; i < table->capacity; i++ ) {
+    for( size_t i = 0; i < table->capacity; i++ ) {
         // get old entry
         Entry* entry = &table->entries[i];
         if( NULL == entry->key ) continue;
