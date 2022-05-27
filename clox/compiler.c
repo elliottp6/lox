@@ -95,9 +95,16 @@ static void advance() {
     }
 }
 
-static void consume( TokenType type, const char* message ) {
-    if( parser.current.type != type ) { errorAtCurrent( message ); return; }
+static bool check( TokenType type ) { return parser.current.type == type; }
+
+static bool match( TokenType type ) {
+    if( !check( type ) ) return false;
     advance();
+    return true;
+}
+
+static void consume( TokenType type, const char* message ) {
+    if( !match( type ) ) errorAtCurrent( message );
 }
 
 // emit byte(s) to the current chunk
@@ -131,6 +138,8 @@ static void emitConstant( Value value ) { emitBytes( OP_CONSTANT, makeConstant( 
 static void expression();
 static ParseRule* getRule( TokenType type );
 static void parsePrecedence( Precedence precedence );
+static void statement();
+static void declaration();
 
 // parses number
 static void number() {
@@ -270,6 +279,57 @@ static void parsePrecedence( Precedence precedence ) {
 // compiles an expression
 static void expression() { parsePrecedence( PRECEDENCE_ASSIGNMENT ); }
 
+static void expressionStatement() {
+    expression();
+    consume( TOKEN_SEMICOLON, "Expect ';' after expression." );
+    emitByte( OP_POP );
+}
+
+// compilres a print statement
+static void printStatement() {
+    expression();
+    consume( TOKEN_SEMICOLON, "Expect ';' after value." );
+    emitByte( OP_PRINT );
+}
+
+static void synchronize() {
+    // we have a parser error, and we're in panicMode
+    // after we synchronize, however, we'll still have an error, but we won't be in panic mode
+    // this means we can keep parsing!
+    parser.panicMode = false;
+
+    // scan ahead to see where it is safe to continue parsing from
+    while( TOKEN_EOF != parser.current.type ) {
+        // if we just ended a statement (via a semicolon), then we're already synchronized!
+        if( TOKEN_SEMICOLON == parser.previous.type ) return;
+
+        // check if we're starting out a new statement
+        switch( parser.current.type ) {
+            case TOKEN_CLASS:
+            case TOKEN_FUN:
+            case TOKEN_VAR:
+            case TOKEN_FOR:
+            case TOKEN_IF:
+            case TOKEN_WHILE:
+            case TOKEN_PRINT:
+            case TOKEN_RETURN: return;
+            default: advance(); break; // otherwise, we must scan forward!
+        }
+    }
+}
+
+// compiles a statement
+static void statement() {
+    if( match( TOKEN_PRINT ) ) printStatement();
+    else expressionStatement();
+}
+
+// compiles a declaration
+static void declaration() {
+    statement();
+    if( parser.panicMode ) synchronize();
+}
+
 // compiles source to chunk
 bool compile( const char* source, Chunk* chunk ) {
     // start scanner
@@ -286,11 +346,10 @@ bool compile( const char* source, Chunk* chunk ) {
     parser.panicMode = false;
     advance();
 
-    // compile the expression
-    expression();
+    // compile each declaration
+    while( !match( TOKEN_EOF ) ) declaration();
 
-    // done
-    consume( TOKEN_EOF, "expect end of expression" );
+    // done (emit the return and print compiled bytecode)
     endCompiler();
     return !parser.hadError;
 }

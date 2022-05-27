@@ -133,6 +133,7 @@ int main( int argc, const char* argv[] ) {
 
             // concat them
             writeChunk( &chunk, OP_ADD, 123 );
+            writeChunk( &chunk, OP_POP, 123 );
             writeChunk( &chunk, OP_RETURN, 123 );
 
             // disassemble
@@ -144,7 +145,7 @@ int main( int argc, const char* argv[] ) {
 
             // now run something else
             // this should print 'true'
-            InterpretResult result = interpret_source( "!(5 - 4 > 3 * 2 == !nil)" );
+            InterpretResult result = interpret_source( "print !(5 - 4 > 3 * 2 == !nil);" );
             if( INTERPRET_OK != result ) fprintf( stderr, "test failed\n" );
 
             // test string interning (should have some addresses)
@@ -175,8 +176,8 @@ int main( int argc, const char* argv[] ) {
             printf( "\n" );
 
             // load is still 2
-            printf( "vm.strings.load: %ld\n", vm.strings.load ); 
-
+            printf( "vm.strings.load: %ld\n", vm.strings.load );
+           
             // done - release all the objects, which will include both versions of 'hi'
             freeVM();
             return 0;
