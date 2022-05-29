@@ -1,3 +1,4 @@
+#include <stdio.h>
 #include <stdlib.h>
 #include "chunk.h"
 #include "memory.h"
@@ -37,4 +38,15 @@ void freeChunk( Chunk* chunk ) {
 size_t addConstant( Chunk* chunk, Value value ) {
     writeValueArray( &chunk->constants, value );
     return chunk->constants.count - 1;
+}
+
+void printConstants( Chunk* chunk ) {
+    printf( "== chunk constants ==\n" );
+    size_t count = chunk->constants.count;
+    Value* values = chunk->constants.values;
+    for( size_t i = 0; i < count; i++ ) {
+        printf( "%zu: ", i );
+        printValue( values[i] );
+        printf( "\n" );
+    }
 }

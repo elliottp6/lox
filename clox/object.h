@@ -26,7 +26,8 @@ struct ObjString {
 
 void printObject( Obj* obj );
 void printString( ObjString* str );
-ObjString* makeString( const char* s1, size_t len1, const char* s2, size_t len2 );
+ObjString* makeString( const char* s, size_t len );
+ObjString* concatStrings( const char* s1, size_t len1, const char* s2, size_t len2 );
 
 static inline bool isObjType( Value value, ObjType type ) {
     return IS_OBJ(value) && AS_OBJ(value)->type == type;

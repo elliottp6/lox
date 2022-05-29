@@ -121,7 +121,10 @@ static void endCompiler() {
 
     // disassemble code before running it
     #ifdef DEBUG_PRINT_CODE
-    if( !parser.hadError ) disassembleChunk( currentChunk(), "compiled bytecode" );
+    if( !parser.hadError ) {
+        printConstants( currentChunk() );
+        disassembleChunk( currentChunk(), "compiled bytecode" );
+    }
     #endif
 }
 
@@ -206,7 +209,7 @@ static void literal() {
 }
 
 static void string() {
-    emitConstant( OBJ_VAL( makeString( parser.previous.start + 1, parser.previous.length - 2, NULL, 0 ) ) );
+    emitConstant( OBJ_VAL( makeString( parser.previous.start + 1, parser.previous.length - 2 ) ) );
 }
 
 // parsing rules
@@ -324,9 +327,42 @@ static void statement() {
     else expressionStatement();
 }
 
+static void defineVariable( uint8_t global ) {
+    emitBytes( OP_DEFINE_GLOBAL, global );
+}
+
+static uint8_t identifierConstant( Token* name ) {
+    return makeConstant( OBJ_VAL( makeString( name->start, name->length ) ) );
+}
+
+static uint8_t parseVariable( const char* errorMessage ) {
+    consume( TOKEN_IDENTIFIER, errorMessage );
+    return identifierConstant( &parser.previous );
+}
+
+// TODO: what if a user declares a global varible twice with the same name?
+//       right now, we'll create another identical constant, but the actual global in the VM will be overwritten
+static void varDeclaration() {
+    // create constant w/ name of variable
+    uint8_t global = parseVariable( "Expect variable name." );
+
+    // check for variable initializer
+    if( match( TOKEN_EQUAL )) expression(); else emitByte( OP_NIL );
+
+    // must terminate statement w/ semicolon
+    consume( TOKEN_SEMICOLON, "Expect ';' after variable declaration." );
+
+    // push instruction which causes VM to put an entry into its globals table
+    defineVariable( global );
+}
+
 // compiles a declaration
 static void declaration() {
-    statement();
+    // dispatch on declaration type
+    if( match( TOKEN_VAR ) ) varDeclaration();
+    else statement();
+
+    // deal with panics
     if( parser.panicMode ) synchronize();
 }
 

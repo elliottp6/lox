@@ -42,10 +42,12 @@ static Value peek( int distance ) {
 void initVM() {
     resetStack();
     vm.objects = NULL;
+    initTable( &vm.globals );
     initTable( &vm.strings );
 }
 
 void freeVM() {
+    freeTable( &vm.globals );
     freeTable( &vm.strings );
     freeObjects();
 }
@@ -63,6 +65,7 @@ static InterpretResult run() {
     // macros
     #define READ_BYTE() (*vm.ip++)
     #define READ_CONSTANT() (vm.chunk->constants.values[READ_BYTE()])
+    #define READ_STRING() AS_STRING(READ_CONSTANT())
 
     // this macro looks strange, but it's a way to define a block that permits a semicolon at the end
     #define BINARY_OP(valueType, op) \
@@ -104,6 +107,12 @@ static InterpretResult run() {
             case OP_TRUE:       push( BOOL_VAL( true ) ); break;
             case OP_FALSE:      push( BOOL_VAL( false ) ); break;
             case OP_POP:        pop(); break;
+            case OP_DEFINE_GLOBAL: {
+                ObjString* name = READ_STRING();
+                tableSet( &vm.globals, name, peek(0) );
+                pop(); // pop AFTER adding it, just in case a GC is triggered (we want to ensure that string still exists on the stack!)
+                break;
+            }
             case OP_EQUAL: {
                 Value b = pop();
                 Value a = pop();
@@ -114,9 +123,10 @@ static InterpretResult run() {
             case OP_LESS:       BINARY_OP(BOOL_VAL, <); break;
             case OP_ADD: {
                 if( IS_STRING( peek(0) ) && IS_STRING( peek(1) ) ) {
+                    // TODO: isn't this a potential GC problem since the strings won't exist on the stack (so a concurrent GC could collect them after pop, but before concat?)
                     ObjString* b = AS_STRING( pop() );
                     ObjString* a = AS_STRING( pop() );
-                    push( OBJ_VAL( makeString( a->buf, a->len, b->buf, b->len ) ) );
+                    push( OBJ_VAL( concatStrings( a->buf, a->len, b->buf, b->len ) ) );
                 } else if( IS_NUMBER( peek(0) ) && IS_NUMBER( peek(1) ) ) {
                     double b = AS_NUMBER( pop() );
                     double a = AS_NUMBER( pop() );
@@ -146,6 +156,7 @@ static InterpretResult run() {
     // undefine macros
     #undef READ_BYTE
     #undef READ_CONSTANT
+    #undef READ_STRING
     #undef BINARY_OP
 }
 

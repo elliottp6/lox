@@ -19,7 +19,7 @@ static Obj* allocateObject( size_t size ) {
     // allocate memory
     Obj* obj = allocate( size );
 
-    // add to VM's global list (so we can release on call to freeVM)
+    // insert into VM's object list
     obj->next = vm.objects;
     vm.objects = obj;
     return obj;
@@ -34,7 +34,11 @@ static uint32_t hashString( const char* key, size_t len, uint32_t hash ) {
     return hash;
 }
 
-ObjString* makeString( const char* s1, size_t len1, const char* s2, size_t len2 ) {
+ObjString* makeString( const char* s, size_t len ) {
+    return concatStrings( s, len, NULL, 0 );
+}
+
+ObjString* concatStrings( const char* s1, size_t len1, const char* s2, size_t len2 ) {
     // compute hash
     uint32_t hash = hashString( s2, len2, hashString( s1, len1, HASH_SEED ) );
 
