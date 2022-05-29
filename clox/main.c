@@ -127,9 +127,9 @@ int main( int argc, const char* argv[] ) {
             // TODO: there's a bug here! we intern the strings OK, but they get added to the constant table in two different slots
             // (note that the same thing happens for numerical values, too)
             writeChunk( &chunk, OP_CONSTANT, 123 );
-            writeChunk( &chunk, (uint8_t)addConstant( &chunk, OBJ_VAL( makeString( "hi", 2, NULL, 0 ) ) ), 123 );
+            writeChunk( &chunk, (uint8_t)addConstant( &chunk, OBJ_VAL( makeString( "hi", 2 ) ) ), 123 );
             writeChunk( &chunk, OP_CONSTANT, 123 );
-            writeChunk( &chunk, (uint8_t)addConstant( &chunk, OBJ_VAL( makeString( "hi", 2, NULL, 0 ) ) ), 123 );
+            writeChunk( &chunk, (uint8_t)addConstant( &chunk, OBJ_VAL( makeString( "hi", 2 ) ) ), 123 );
 
             // concat them
             writeChunk( &chunk, OP_ADD, 123 );
@@ -149,15 +149,15 @@ int main( int argc, const char* argv[] ) {
             if( INTERPRET_OK != result ) fprintf( stderr, "test failed\n" );
 
             // test string interning (should have some addresses)
-            ObjString* s1 = makeString( "hello", 5, " world", 6 );
+            ObjString* s1 = concatStrings( "hello", 5, " world", 6 );
             printString( s1 );
             printf( "\n" );
 
-            ObjString* s2 = makeString( "hello", 5, " world", 6 );
+            ObjString* s2 = concatStrings( "hello", 5, " world", 6 );
             printString( s2 );
             printf( "\n" );
 
-            ObjString* s3 = makeString( "hi", 2, NULL, 0 );
+            ObjString* s3 = makeString( "hi", 2 );
             printString( s3 );
             printf( "\n" );
 
@@ -171,7 +171,7 @@ int main( int argc, const char* argv[] ) {
             printf( "after deleting 'hi' - vm.strings.load: %ld\n", vm.strings.load ); 
 
             // recreate string (new address because we removed it from the hash table)
-            ObjString* s4 = makeString( "hi", 2, NULL, 0 );
+            ObjString* s4 = makeString( "hi", 2 );
             printString( s4 );
             printf( "\n" );
 
