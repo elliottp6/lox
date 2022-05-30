@@ -143,6 +143,7 @@ static ParseRule* getRule( TokenType type );
 static void parsePrecedence( Precedence precedence );
 static void statement();
 static void declaration();
+static uint8_t identifierConstant( Token* name );
 
 // parses number
 static void number() {
@@ -212,6 +213,15 @@ static void string() {
     emitConstant( OBJ_VAL( makeString( parser.previous.start + 1, parser.previous.length - 2 ) ) );
 }
 
+static void namedVariable( Token name ) {
+    uint8_t arg = identifierConstant( &name );
+    emitBytes( OP_GET_GLOBAL, arg );
+}
+
+static void variable() {
+    namedVariable( parser.previous );
+}
+
 // parsing rules
 ParseRule rules[] = {
     [TOKEN_LEFT_PAREN]    = {grouping, NULL,   PRECEDENCE_NONE},
@@ -233,7 +243,7 @@ ParseRule rules[] = {
     [TOKEN_GREATER_EQUAL] = {NULL,     binary, PRECEDENCE_COMPARISON},
     [TOKEN_LESS]          = {NULL,     binary, PRECEDENCE_COMPARISON},
     [TOKEN_LESS_EQUAL]    = {NULL,     binary, PRECEDENCE_COMPARISON},
-    [TOKEN_IDENTIFIER]    = {NULL,     NULL,   PRECEDENCE_NONE},
+    [TOKEN_IDENTIFIER]    = {variable, NULL,   PRECEDENCE_NONE},
     [TOKEN_STRING]        = {string,   NULL,   PRECEDENCE_NONE},
     [TOKEN_NUMBER]        = {number,   NULL,   PRECEDENCE_NONE},
     [TOKEN_AND]           = {NULL,     NULL,   PRECEDENCE_NONE},
