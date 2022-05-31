@@ -33,7 +33,7 @@ typedef enum {
 } Precedence;
 
 // function pointer for parsing expressions
-typedef void (*ParseFn)();
+typedef void (*ParseFn)( bool canAssign );
 
 // Pratt parser parsing rule
 typedef struct {
@@ -84,6 +84,8 @@ static void advance() {
     parser.previous = parser.current;
 
     // scan tokens, reporting errors, until we hit a non-error token
+    // TODO: instead of doing this here, we should have this be part of the scanner,
+    //       so we can print out debug info before entering the compiler
     for(;;) {
         Token token = parser.current = scanToken();
         #ifdef DEBUG_PRINT_SCAN
@@ -146,19 +148,19 @@ static void declaration();
 static uint8_t identifierConstant( Token* name );
 
 // parses number
-static void number() {
+static void number( bool canAssign ) {
     double value = strtod( parser.previous.start, NULL );
     emitConstant( NUMBER_VAL( value ) );
 }
 
 // parses grouping (prefix expression)
-static void grouping() {
+static void grouping( bool canAssign ) {
     expression();
     consume( TOKEN_RIGHT_PAREN, "Expect ')' after expression." );
 }
 
 // prases unary (prefix expression)
-static void unary() {
+static void unary( bool canAssign ) {
     // get the operator
     TokenType operatorType = parser.previous.type;
 
@@ -173,7 +175,7 @@ static void unary() {
     }
 }
 
-static void binary() {
+static void binary( bool canAssign ) {
     // get operator
     TokenType operatorType = parser.previous.type;
 
@@ -200,7 +202,7 @@ static void binary() {
     }
 }
 
-static void literal() {
+static void literal( bool canAssign ) {
     switch( parser.previous.type ) {
         case TOKEN_FALSE:   emitByte( OP_FALSE ); break;
         case TOKEN_NIL:     emitByte( OP_NIL ); break;
@@ -209,15 +211,15 @@ static void literal() {
     }
 }
 
-static void string() {
+static void string( bool canAssign ) {
     emitConstant( OBJ_VAL( makeString( parser.previous.start + 1, parser.previous.length - 2 ) ) );
 }
 
-static void namedVariable( Token name ) {
+static void namedVariable( Token name, bool canAssign ) {
     uint8_t arg = identifierConstant( &name );
 
     // check if this is a variable assignment
-    if( match( TOKEN_EQUAL ) ) {
+    if( canAssign && match( TOKEN_EQUAL ) ) {
         expression();
         emitBytes( OP_SET_GLOBAL, arg );
         return;
@@ -227,8 +229,8 @@ static void namedVariable( Token name ) {
     emitBytes( OP_GET_GLOBAL, arg );
 }
 
-static void variable() {
-    namedVariable( parser.previous );
+static void variable( bool canAssign ) {
+    namedVariable( parser.previous, canAssign );
 }
 
 // parsing rules
@@ -281,20 +283,21 @@ static void parsePrecedence( Precedence precedence ) {
     // get next token
     advance();
     
-    // the 1st token MUST be a prefix expression (by definition)
+    // prefix parser
     ParseFn prefixRule = getRule( parser.previous.type )->prefix;
     if( NULL == prefixRule ) { error( "Expect expression." ); return; }
-    prefixRule();
+    bool canAssign = precedence <= PRECEDENCE_ASSIGNMENT;
+    prefixRule( canAssign );
 
-    // after parsing the left side, now we check the precedence of the next token
-    // (note that EOF has precedence lower than assignment even, so it will exit this loop)
+    // if we didn't consume the '=' token before, then
+    // there must be an error where target is invalid
+    if( canAssign && match( TOKEN_EQUAL ) ) error( "Invalid assignment target." );
+
+    // infix parsing loop
     while( precedence <= getRule( parser.current.type )->precedence ) {
-        // get next token
         advance();
-
-        // run infixRule
         ParseFn infixRule = getRule( parser.previous.type )->infix;
-        infixRule();
+        infixRule( canAssign );
     }
 }
 
@@ -307,7 +310,7 @@ static void expressionStatement() {
     emitByte( OP_POP );
 }
 
-// compilres a print statement
+// compiles a print statement
 static void printStatement() {
     expression();
     consume( TOKEN_SEMICOLON, "Expect ';' after value." );

@@ -180,7 +180,9 @@ int main( int argc, const char* argv[] ) {
 
             // test variable assignment precedence
             // this should evaluate to 10, because it's (a * (b = c)) + d according to precedence rules
-            InterpretResult result2 = interpret_source( "var a = 2; var b = 2; var c = 3; var d = 4; print a * b = c + d;" );
+            // w/o proper precedence, we get: a * (b = (c + d)) which is 14
+            // TODO: BUG: this doesn't compile
+            InterpretResult result2 = interpret_source( "var x = 1; print 2 * x = 3;" );// print 2 * x = 3 + 4;" );
             if( INTERPRET_OK != result2 ) fprintf( stderr, "test2 failed\n" );
            
             // done - release all the objects, which will include both versions of 'hi'
