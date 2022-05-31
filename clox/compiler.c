@@ -215,6 +215,15 @@ static void string() {
 
 static void namedVariable( Token name ) {
     uint8_t arg = identifierConstant( &name );
+
+    // check if this is a variable assignment
+    if( match( TOKEN_EQUAL ) ) {
+        expression();
+        emitBytes( OP_SET_GLOBAL, arg );
+        return;
+    }
+
+    // otherwise, this is a regular get expression
     emitBytes( OP_GET_GLOBAL, arg );
 }
 

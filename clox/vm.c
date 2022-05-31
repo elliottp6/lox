@@ -107,6 +107,12 @@ static InterpretResult run() {
             case OP_TRUE:       push( BOOL_VAL( true ) ); break;
             case OP_FALSE:      push( BOOL_VAL( false ) ); break;
             case OP_POP:        pop(); break;
+            case OP_DEFINE_GLOBAL: {
+                ObjString* name = READ_STRING();
+                tableSet( &vm.globals, name, peek(0) );
+                pop(); // pop AFTER adding it, just in case a GC is triggered (we want to ensure that string still exists on the stack!)
+                break;
+            }
             case OP_GET_GLOBAL: {
                 ObjString* name = READ_STRING();
                 Value value;
@@ -117,10 +123,13 @@ static InterpretResult run() {
                 push( value );
                 break;
             }
-            case OP_DEFINE_GLOBAL: {
+            case OP_SET_GLOBAL: { // sets the global, but leaves the value on the stack (since setting a value is an expression)
                 ObjString* name = READ_STRING();
-                tableSet( &vm.globals, name, peek(0) );
-                pop(); // pop AFTER adding it, just in case a GC is triggered (we want to ensure that string still exists on the stack!)
+                if( tableSet( &vm.globals, name, peek(0) ) ) { // set value, but if it's a NEW value then...
+                    tableDelete( &vm.globals, name ); // mistake! must use 'DEFINE_GLOBAL' for that!
+                    runtimeError( "Undefined variable '%.*s'.", (int)name->len, name->buf );
+                    return INTERPRET_RUNTIME_ERROR;
+                }
                 break;
             }
             case OP_EQUAL: {
