@@ -38,8 +38,7 @@ typedef struct {
 #define AS_OBJ(value)     ((value).as.obj)
 
 typedef struct {
-    size_t capacity;
-    size_t count;
+    size_t capacity, count;
     Value* values;
 } ValueArray;
 

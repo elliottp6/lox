@@ -11,10 +11,8 @@
 
 // top-level parser object
 typedef struct {
-    Token current;
-    Token previous;
-    bool hadError;
-    bool panicMode;
+    Token current, previous;
+    bool hadError, panicMode;
 } Parser;
 
 // expression precedence
@@ -37,8 +35,7 @@ typedef void (*ParseFn)( bool canAssign );
 
 // Pratt parser parsing rule
 typedef struct {
-    ParseFn prefix;
-    ParseFn infix;
+    ParseFn prefix, infix;
     Precedence precedence;
 } ParseRule;
 

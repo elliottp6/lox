@@ -14,8 +14,7 @@ typedef struct {
 // the simplest form of which is called linear probing
 // this just means if there's a collision, move ahead until a valid slot is found
 typedef struct {
-    size_t load; // # of entries (including tombstones)
-    size_t capacity;
+    size_t load, capacity; // load = # of entries (including tombstones)
     Entry* entries;
 } Table;
 
