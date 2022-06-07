@@ -215,6 +215,7 @@ static void namedVariable( Token name, bool canAssign ) {
     uint8_t constantIndex = identifierConstant( &name );
 
     // check if this is a variable assignment
+    // note: we could instead check for TOKEN_EQUAL, and report "Invalid assignment target." (for example, 2 * x = 3 would hit this), but we don't have to, b/c the expression would end at 'x', and therefore expect ';' instead of '=', so we get an error anyway
     if( canAssign && match( TOKEN_EQUAL ) ) {
         expression();
         emitBytes( OP_SET_GLOBAL, constantIndex );
@@ -285,8 +286,7 @@ static void parsePrecedence( Precedence precedence ) {
     bool canAssign = precedence <= PRECEDENCE_ASSIGNMENT;
     prefixRule( canAssign );
 
-    // if we didn't consume the '=' token before, then
-    // there must be an error where target is invalid
+    // if we didn't consume the '=' token before, but we can assign, then it must be an expression like "5 = 3", because we didn't hit a variable to assign
     if( canAssign && match( TOKEN_EQUAL ) ) error( "Invalid assignment target." );
 
     // infix parsing loop
