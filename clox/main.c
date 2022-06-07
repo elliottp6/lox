@@ -179,12 +179,10 @@ int main( int argc, const char* argv[] ) {
             printf( "vm.strings.load: %ld\n", vm.strings.load );
 
             // test variable assignment precedence
-            // this should evaluate to 10, because it's (a * (b = c)) + d according to precedence rules
-            // w/o proper precedence, we get: a * (b = (c + d)) which is 14
-            // TODO: BUG: this doesn't compile
-            InterpretResult result2 = interpret_source( "var x = 1; print 2 * x = 3;" );// print 2 * x = 3 + 4;" );
-            if( INTERPRET_OK != result2 ) fprintf( stderr, "test2 failed\n" );
-           
+            InterpretResult result2 = interpret_source( "var x = 1; print x = 3 + 4;" ); // should be fine since 'print' is PRECEDENCE_NONE which is above assignment
+            InterpretResult result3 = interpret_source( "var x = 1; print 2 * x = 3 + 4;" ); // should give a compiler error since 2 * x calls variable with PRECEDENCE_UNARY but "=" is PREDENCE_ASSIGNMENT
+            if( INTERPRET_OK != result2 || INTERPRET_COMPILE_ERROR != result3 ) fprintf( stderr, "test2 failed\n" );
+
             // done - release all the objects, which will include both versions of 'hi'
             freeVM();
             return 0;

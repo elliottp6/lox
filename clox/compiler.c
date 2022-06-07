@@ -17,17 +17,17 @@ typedef struct {
 
 // expression precedence
 typedef enum {
-  PRECEDENCE_NONE,
-  PRECEDENCE_ASSIGNMENT,  // =
-  PRECEDENCE_OR,          // or
-  PRECEDENCE_AND,         // and
-  PRECEDENCE_EQUALITY,    // == !=
-  PRECEDENCE_COMPARISON,  // < > <= >=
-  PRECEDENCE_TERM,        // + -
-  PRECEDENCE_FACTOR,      // * /
-  PRECEDENCE_UNARY,       // ! -
-  PRECEDENCE_CALL,        // . ()
-  PRECEDENCE_PRIMARY
+    PRECEDENCE_NONE,
+    PRECEDENCE_ASSIGNMENT,  // =
+    PRECEDENCE_OR,          // or
+    PRECEDENCE_AND,         // and
+    PRECEDENCE_EQUALITY,    // == !=
+    PRECEDENCE_COMPARISON,  // < > <= >=
+    PRECEDENCE_TERM,        // + -
+    PRECEDENCE_FACTOR,      // * /
+    PRECEDENCE_UNARY,       // ! -
+    PRECEDENCE_CALL,        // . ()
+    PRECEDENCE_PRIMARY
 } Precedence;
 
 // function pointer for parsing expressions
@@ -173,14 +173,12 @@ static void unary( bool canAssign ) {
 }
 
 static void binary( bool canAssign ) {
-    // get operator
+    // get operator & parsing rule
     TokenType operatorType = parser.previous.type;
-
-    // get parsing rule
     ParseRule* rule = getRule( operatorType );
 
     // parse RHS w/ higher precedence than the binary operator
-    // this makes the operator left-associative
+    // (this makes the operator left-associative)
     parsePrecedence( (Precedence)(rule->precedence + 1) );
 
     // emit token for operator
@@ -213,17 +211,18 @@ static void string( bool canAssign ) {
 }
 
 static void namedVariable( Token name, bool canAssign ) {
-    uint8_t arg = identifierConstant( &name );
+    // get constant index
+    uint8_t constantIndex = identifierConstant( &name );
 
     // check if this is a variable assignment
     if( canAssign && match( TOKEN_EQUAL ) ) {
         expression();
-        emitBytes( OP_SET_GLOBAL, arg );
+        emitBytes( OP_SET_GLOBAL, constantIndex );
         return;
     }
 
     // otherwise, this is a regular get expression
-    emitBytes( OP_GET_GLOBAL, arg );
+    emitBytes( OP_GET_GLOBAL, constantIndex );
 }
 
 static void variable( bool canAssign ) {
