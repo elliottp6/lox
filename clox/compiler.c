@@ -9,12 +9,6 @@
 #include "debug.h"
 #endif
 
-// top-level parser object
-typedef struct {
-    Token current, previous;
-    bool hadError, panicMode;
-} Parser;
-
 // expression precedence
 typedef enum {
     PRECEDENCE_NONE,
@@ -30,6 +24,12 @@ typedef enum {
     PRECEDENCE_PRIMARY
 } Precedence;
 
+// top-level parser object
+typedef struct {
+    Token current, previous;
+    bool hadError, panicMode;
+} Parser;
+
 // function pointer for parsing expressions
 typedef void (*ParseFn)( bool canAssign );
 
@@ -39,11 +39,29 @@ typedef struct {
     Precedence precedence;
 } ParseRule;
 
-// global parser object
-Parser parser;
+// local variable
+typedef struct {
+    Token name;
+    int depth;
+} Local;
 
-// global chunk that is being compiled
+// compiler state
+typedef struct {
+    Local locals[UINT8_COUNT];
+    int localCount, scopeDepth;
+} Compiler;
+
+// globals 
+Parser parser;
+Compiler* current = NULL;
 Chunk* compilingChunk;
+
+// initializes the compiler state
+static void initCompiler( Compiler* compiler ) {
+    compiler->localCount = 0;
+    compiler->scopeDepth = 0;
+    current = compiler;
+}
 
 // returns current chunk being compiled
 static Chunk* currentChunk() { return compilingChunk; }
@@ -391,6 +409,10 @@ bool compile( const char* source, Chunk* chunk ) {
     printf( "== scanned tokens ==\n" );
     #endif
     initScanner( source );
+
+    // initialize the compiler state
+    Compiler compiler;
+    initCompiler( &compiler );
 
     // set the chunk that we're compiling into
     compilingChunk = chunk;
