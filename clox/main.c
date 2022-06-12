@@ -195,6 +195,10 @@ int main( int argc, const char* argv[] ) {
             result = interpret_source( "{ var x = 8; print x; }" );
             if( INTERPRET_OK != result ) fprintf( stderr, "accessing local varible test failed\n" );
 
+            // test accessing variable within its own initializer
+            result = interpret_source( "{ var x = x; }" );
+            if( INTERPRET_COMPILE_ERROR != result ) fprintf( stderr, "error - variable allowed to access itself within its initializer! (reads stale value from stack, which is leftover from VM's last execution)\n" );
+
             // done - release all the objects, which will include both versions of 'hi'
             freeVM();
             return 0;
