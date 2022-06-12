@@ -200,3 +200,9 @@ Token scanToken() {
             return errorToken( "Unexpected character" );
     }
 }
+
+// this is a utility method that is used by the compiler
+bool lexemesEqual( Token* a, Token* b ) {
+    if( a->length != b->length ) return false;
+    return 0 == memcmp( a->start, b->start, a->length );
+}

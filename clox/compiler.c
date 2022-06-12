@@ -153,6 +153,13 @@ static void beginScope() {
 // pops scope for compiler
 static void endScope() {
     current->scopeDepth--;
+
+    // pop locals TODO: add a POPN instruction so we don't need so many individual pops
+    while( current->localCount > 0 &&
+           current->locals[current->localCount - 1].depth > current->scopeDepth ) {
+        emitByte( OP_POP );
+        current->localCount--;
+    }
 }
 
 // adds a constant into the static data section of the chunk, and returns its handle
@@ -383,7 +390,48 @@ static void statement() {
     else expressionStatement();
 }
 
+// creates a new local variable
+static void addLocal( Token name ) {
+    // ensure we don't overflow our maximum # of locals
+    if( UINT8_COUNT == current->localCount ) {
+        error( "Too many local variables in function." );
+        return;
+    }
+    
+    // otherwise, create the local
+    Local* local = &current->locals[current->localCount++];
+    local->name = name;
+    local->depth = current->scopeDepth;
+}
+
+static void declareVariable() {
+    // globals do not need to be declared (they're late bound, so we don't track them)
+    if( 0 == current->scopeDepth ) return;
+
+    // get the name of the local variable
+    Token* name = &parser.previous;
+    
+    // check backwards up the stack of local variables to see if another variable within this same scope has the same name
+    for( int i = current->localCount - 1; i >= 0; i-- ) {
+        // get the local variable
+        Local* local = &current->locals[i];
+
+        // if we escape the current scope, bail
+        if( -1 != local->depth && local->depth < current->scopeDepth ) break;
+
+        // otherwise, check if the variable's name matches another varible that's in this same scope
+        if( lexemesEqual( name, &local->name ) ) error( "Already a variable with this name in this scope." );
+    }
+
+    // create the new local variable
+    addLocal( *name );
+}
+
 static void defineVariable( uint8_t global ) {
+    // define local variable: no OPCODE required to define variable, b/c we just let the value sit in the stack AS the local variable
+    if( current->scopeDepth > 0 ) return;
+
+    // define global varible
     emitBytes( OP_DEFINE_GLOBAL, global );
 }
 
@@ -392,7 +440,16 @@ static uint8_t identifierConstant( Token* name ) {
 }
 
 static uint8_t parseVariable( const char* errorMessage ) {
+    // consume the identifier
     consume( TOKEN_IDENTIFIER, errorMessage );
+    
+    // declare the varible (but don't define it yet)
+    declareVariable();
+
+    // if it's a local varible, we do NOT put the identifier into the global constant table
+    if( current->scopeDepth > 0 ) return 0;
+
+    // turn token into a constant (for global variables only)
     return identifierConstant( &parser.previous );
 }
 

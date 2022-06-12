@@ -183,6 +183,14 @@ int main( int argc, const char* argv[] ) {
             InterpretResult result3 = interpret_source( "var x = 1; print 2 * x = 3 + 4;" ); // should give a compiler error since 2 * x calls variable with PRECEDENCE_UNARY but "=" is PREDENCE_ASSIGNMENT
             if( INTERPRET_OK != result2 || INTERPRET_COMPILE_ERROR != result3 ) fprintf( stderr, "test2 failed\n" );
 
+            // test creation of local variables
+            result = interpret_source( "{ var x = 5; var y = 6; }" );
+            if( INTERPRET_OK != result ) fprintf( stderr, "local varible test failed\n" );
+
+            // test re-definition of local variable
+            result = interpret_source( "{ var x = 5; var x = 6; }" );
+            if( INTERPRET_COMPILE_ERROR != result ) fprintf( stderr, "variable redefinition test failed\n" );
+
             // done - release all the objects, which will include both versions of 'hi'
             freeVM();
             return 0;

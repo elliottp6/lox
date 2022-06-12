@@ -36,3 +36,4 @@ typedef struct {
 // scanner is more commonly called a lexer
 void initScanner( const char* source );
 Token scanToken();
+bool lexemesEqual( Token* a, Token* b ); // true if two tokens have the same lexeme
