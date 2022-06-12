@@ -245,20 +245,37 @@ static void string( bool canAssign ) {
     emitConstant( OBJ_VAL( makeString( parser.previous.start + 1, parser.previous.length - 2 ) ) );
 }
 
-static void namedVariable( Token name, bool canAssign ) {
-    // get constant index
-    uint8_t constantIndex = identifierConstant( &name );
+// figure out the stack index for the local. note that this goes backwards to inner scoped variables shadow those of outer scopes.
+static int resolveLocal( Compiler* compiler, Token* name ) {
+    for( int i = compiler->localCount - 1; i >= 0; i-- ) {
+        Local* local = &compiler->locals[i];
+        if( lexemesEqual( name, &local->name ) ) return i;
+    }
+    return -1; // we couldn't find it, so it must be a global variable
+}
 
-    // check if this is a variable assignment
-    // note: we could instead check for TOKEN_EQUAL, and report "Invalid assignment target." (for example, 2 * x = 3 would hit this), but we don't have to, b/c the expression would end at 'x', and therefore expect ';' instead of '=', so we get an error anyway
+static void namedVariable( Token name, bool canAssign ) {
+    // see if this is a local variable
+    int arg = resolveLocal( current, &name );
+    uint8_t getOp, setOp;
+    if( -1 != arg ) {
+        getOp = OP_GET_LOCAL;
+        setOp = OP_SET_LOCAL;
+    } else {
+        getOp = OP_GET_GLOBAL;
+        setOp = OP_SET_GLOBAL;
+        arg = identifierConstant( &name ); // get index for embedded constant
+    }
+
+    // check if this is a variable assignment -- note: we could instead check for TOKEN_EQUAL, and report "Invalid assignment target." (for example, 2 * x = 3 would hit this), but we don't have to, b/c the expression would end at 'x', and therefore expect ';' instead of '=', so we get an error anyway
     if( canAssign && match( TOKEN_EQUAL ) ) {
         expression();
-        emitBytes( OP_SET_GLOBAL, constantIndex );
+        emitBytes( setOp, (uint8_t)arg );
         return;
     }
 
     // otherwise, this is a regular get expression
-    emitBytes( OP_GET_GLOBAL, constantIndex );
+    emitBytes( getOp, (uint8_t)arg );
 }
 
 static void variable( bool canAssign ) {
