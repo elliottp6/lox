@@ -107,9 +107,19 @@ static InterpretResult run() {
             case OP_TRUE:       push( BOOL_VAL( true ) ); break;
             case OP_FALSE:      push( BOOL_VAL( false ) ); break;
             case OP_POP:        pop(); break;
+            case OP_GET_LOCAL: {
+                uint8_t slot = READ_BYTE(); // get the local's slot
+                push( vm.stack[slot] ); // read the local, and push it onto the stack (for other instructions to use)
+                break;
+            }
+            case OP_SET_LOCAL: {
+                uint8_t slot = READ_BYTE(); // get the local's slot
+                vm.stack[slot] = peek( 0 ); // set the slot to the value that's on the top of the stack (don't pop it, because it's an expression, and so it should return a value which is itself)
+                break;
+            }
             case OP_DEFINE_GLOBAL: {
                 ObjString* name = READ_STRING();
-                tableSet( &vm.globals, name, peek(0) );
+                tableSet( &vm.globals, name, peek( 0 ) );
                 pop(); // pop AFTER adding it, just in case a GC is triggered (we want to ensure that string still exists on the stack!)
                 break;
             }

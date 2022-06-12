@@ -7,16 +7,26 @@ static size_t simpleInstruction( const char* name, size_t offset ) {
     return offset + 1;
 }
 
+static int byteInstruction( const char* name, Chunk* chunk, int offset ) {
+    // get the slot that the instruction refers to
+    uint8_t slot = chunk->code[offset + 1];
+    
+    // tab over 16 spaces, then print slot index
+    printf( "%s<%d>", name, slot );
+    
+    // advance code by two bytes
+    return offset + 2; 
+}
+
 static size_t constantInstruction( const char* name, Chunk* chunk, size_t offset ) {
     // get constant index
     uint8_t constantIndex = chunk->code[offset + 1];
     
-    // tab over 16 spaces, then print constant index
+    // print constant index
     printf( "%s<", name );
     
     // print the constant value followed by a newline
     printValue( chunk->constants.values[constantIndex] );
-
     printf( "@%d>", constantIndex );
 
     // advance code by two bytes
@@ -40,6 +50,8 @@ size_t disassembleInstruction( Chunk* chunk, size_t offset ) {
         case OP_DEFINE_GLOBAL: return constantInstruction( "OP_DEFINE_GLOBAL", chunk, offset );
         case OP_GET_GLOBAL: return constantInstruction( "OP_GET_GLOBAL", chunk, offset );
         case OP_SET_GLOBAL: return constantInstruction( "OP_SET_GLOBAL", chunk, offset );
+        case OP_GET_LOCAL:  return byteInstruction( "OP_GET_LOCAL", chunk, offset );
+        case OP_SET_LOCAL:  return byteInstruction( "OP_SET_LOCAL", chunk, offset );
         case OP_EQUAL:      return simpleInstruction( "OP_EQUAL", offset );
         case OP_GREATER:    return simpleInstruction( "OP_GREATER", offset );
         case OP_LESS:       return simpleInstruction( "OP_LESS", offset );

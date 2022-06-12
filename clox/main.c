@@ -191,6 +191,10 @@ int main( int argc, const char* argv[] ) {
             result = interpret_source( "{ var x = 5; var x = 6; }" );
             if( INTERPRET_COMPILE_ERROR != result ) fprintf( stderr, "variable redefinition test failed\n" );
 
+            // test accessing local variable
+            result = interpret_source( "{ var x = 8; print x; }" );
+            if( INTERPRET_OK != result ) fprintf( stderr, "accessing local varible test failed\n" );
+
             // done - release all the objects, which will include both versions of 'hi'
             freeVM();
             return 0;
