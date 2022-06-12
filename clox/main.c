@@ -199,6 +199,11 @@ int main( int argc, const char* argv[] ) {
             result = interpret_source( "{ var x = x; }" );
             if( INTERPRET_COMPILE_ERROR != result ) fprintf( stderr, "error - variable allowed to access itself within its initializer! (reads stale value from stack, which is leftover from VM's last execution)\n" );
 
+            // test initializing variable with a variable of same name but higher scope
+            // note that LOX does not support this (at the moment), but it probably should eventually
+            result = interpret_source( "var x = 1; { var x = x; print x; }" );
+            if( INTERPRET_COMPILE_ERROR != result ) fprintf( stderr, "error - was able to initialize varible with a same-named higher-scoped variable\n" );
+
             // done - release all the objects, which will include both versions of 'hi'
             freeVM();
             return 0;
