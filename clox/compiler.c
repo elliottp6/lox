@@ -145,6 +145,16 @@ static void endCompiler() {
     #endif
 }
 
+// pushes new scope for compiler
+static void beginScope() {
+    current->scopeDepth++;    
+}
+
+// pops scope for compiler
+static void endScope() {
+    current->scopeDepth--;
+}
+
 // adds a constant into the static data section of the chunk, and returns its handle
 static uint8_t makeConstant( Value value ) {
     int constant = addConstant( currentChunk(), value );
@@ -324,6 +334,15 @@ static void expressionStatement() {
     emitByte( OP_POP );
 }
 
+// compile a block statement
+static void block() {
+    // until the block closes, parse declarations (i.e. top level statements)
+    while( !check( TOKEN_RIGHT_BRACE ) && !check( TOKEN_EOF ) ) declaration();
+
+    // consume the right brace if we hit EOF
+    consume( TOKEN_RIGHT_BRACE, "Expect '}' after block." );
+}
+
 // compiles a print statement
 static void printStatement() {
     expression();
@@ -357,9 +376,10 @@ static void synchronize() {
     }
 }
 
-// compiles a statement
+// compiles a statement TODO: could use a switch here instead
 static void statement() {
     if( match( TOKEN_PRINT ) ) printStatement();
+    else if( match( TOKEN_LEFT_BRACE ) ) { beginScope(); block(); endScope(); }
     else expressionStatement();
 }
 
