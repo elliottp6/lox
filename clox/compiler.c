@@ -249,7 +249,13 @@ static void string( bool canAssign ) {
 static int resolveLocal( Compiler* compiler, Token* name ) {
     for( int i = compiler->localCount - 1; i >= 0; i-- ) {
         Local* local = &compiler->locals[i];
-        if( lexemesEqual( name, &local->name ) ) return i;
+
+        // we found a match!
+        if( lexemesEqual( name, &local->name ) ) {
+            // if the variable is undefined, then we must be reading it within its own initializer
+            if( -1 == local->depth ) error( "Can't read local variable in its own initializer." );
+            return i;
+        }
     }
     return -1; // we couldn't find it, so it must be a global variable
 }
@@ -418,7 +424,7 @@ static void addLocal( Token name ) {
     // otherwise, create the local
     Local* local = &current->locals[current->localCount++];
     local->name = name;
-    local->depth = current->scopeDepth;
+    local->depth = -1; // special value which indicates that the variable is declared but undefined
 }
 
 static void declareVariable() {
@@ -434,6 +440,7 @@ static void declareVariable() {
         Local* local = &current->locals[i];
 
         // if we escape the current scope, bail
+        // (note that '-1' depth means the local is undefined)
         if( -1 != local->depth && local->depth < current->scopeDepth ) break;
 
         // otherwise, check if the variable's name matches another varible that's in this same scope
@@ -446,7 +453,10 @@ static void declareVariable() {
 
 static void defineVariable( uint8_t global ) {
     // define local variable: no OPCODE required to define variable, b/c we just let the value sit in the stack AS the local variable
-    if( current->scopeDepth > 0 ) return;
+    if( current->scopeDepth > 0 ) {
+        current->locals[current->localCount - 1].depth = current->scopeDepth; // give the variable a depth value, which marks it as "defined"
+        return;
+    }
 
     // define global varible
     emitBytes( OP_DEFINE_GLOBAL, global );
@@ -483,6 +493,7 @@ static void varDeclaration() {
     consume( TOKEN_SEMICOLON, "Expect ';' after variable declaration." );
 
     // push instruction which causes VM to put an entry into its globals table
+    // or, if it's a local variable, then just mark it as defined
     defineVariable( global );
 }
 
