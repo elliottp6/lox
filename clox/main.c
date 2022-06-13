@@ -204,6 +204,10 @@ int main( int argc, const char* argv[] ) {
             result = interpret_source( "var x = 1; { var x = x; print x; }" );
             if( INTERPRET_COMPILE_ERROR != result ) fprintf( stderr, "error - was able to initialize varible with a same-named higher-scoped variable\n" );
 
+            // test a simple if statement
+            result = interpret_source( "if( true ) print \"CORRECT!\"; if( false ) print \"ERROR!\";" );
+            if( INTERPRET_OK != result ) fprintf( stderr, "error - could not compile a set of if statements\n" );
+
             // done - release all the objects, which will include both versions of 'hi'
             freeVM();
             return 0;

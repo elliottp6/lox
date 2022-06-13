@@ -7,12 +7,19 @@ static size_t simpleInstruction( const char* name, size_t offset ) {
     return offset + 1;
 }
 
+static int jumpInstruction( const char* name, int sign, Chunk* chunk, int offset ) {
+    uint16_t jump = (uint16_t)(chunk->code[offset + 1] << 8);
+    jump |= chunk->code[offset + 2];
+    printf( "%s(%d->%d)", name, offset, offset + 3 + sign * jump );
+    return offset + 3;
+}
+
 static int byteInstruction( const char* name, Chunk* chunk, int offset ) {
     // get the slot that the instruction refers to
     uint8_t slot = chunk->code[offset + 1];
     
     // tab over 16 spaces, then print slot index
-    printf( "%s<%d>", name, slot );
+    printf( "%s(%d)", name, slot );
     
     // advance code by two bytes
     return offset + 2; 
@@ -23,11 +30,11 @@ static size_t constantInstruction( const char* name, Chunk* chunk, size_t offset
     uint8_t constantIndex = chunk->code[offset + 1];
     
     // print constant index
-    printf( "%s<", name );
+    printf( "%s(", name );
     
     // print the constant value followed by a newline
     printValue( chunk->constants.values[constantIndex] );
-    printf( "@%d>", constantIndex );
+    printf( "@%d)", constantIndex );
 
     // advance code by two bytes
     return offset + 2;
@@ -62,6 +69,7 @@ size_t disassembleInstruction( Chunk* chunk, size_t offset ) {
         case OP_NOT:        return simpleInstruction( "OP_NOT", offset );
         case OP_NEGATE:     return simpleInstruction( "OP_NEGATE", offset );
         case OP_PRINT:      return simpleInstruction( "OP_PRINT", offset );
+        case OP_JUMP_IF_FALSE: return jumpInstruction( "OP_JUMP_IF_FALSE", 1, chunk, offset );
         case OP_RETURN:     return simpleInstruction( "OP_RETURN", offset );
         default:
             printf( "Unknown opcode %d", instruction );

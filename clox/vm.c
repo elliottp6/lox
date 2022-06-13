@@ -64,6 +64,7 @@ static InterpretResult run() {
 
     // macros
     #define READ_BYTE() (*vm.ip++)
+    #define READ_USHORT() (vm.ip += 2, (uint16_t)((vm.ip[-2] << 8) | vm.ip[-1]))
     #define READ_CONSTANT() (vm.chunk->constants.values[READ_BYTE()])
     #define READ_STRING() AS_STRING(READ_CONSTANT())
 
@@ -178,12 +179,20 @@ static InterpretResult run() {
                 push( NUMBER_VAL( -AS_NUMBER( pop() ) ) );
                 break;
             case OP_PRINT: printValue( pop() ); printf( "\n" ); break;
+            case OP_JUMP_IF_FALSE: {
+                uint16_t offset = READ_USHORT();
+                //if( isFalsey( peek( 0 ) ) ) vm.ip += offset;
+                vm.ip += offset * isFalsey( peek( 0 ) ); // no branching version of above
+                // TODO: warning: we have the value still on the stack! need to pop it.
+                break;
+            }
             case OP_RETURN: return INTERPRET_OK; // exit interpreter
         }
     }
 
     // undefine macros
     #undef READ_BYTE
+    #undef READ_USHORT
     #undef READ_CONSTANT
     #undef READ_STRING
     #undef BINARY_OP

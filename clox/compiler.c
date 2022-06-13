@@ -127,9 +127,25 @@ static void consume( TokenType type, const char* message ) {
 // emit byte(s) to the current chunk
 static void emitByte( uint8_t byte ) { writeChunk( currentChunk(), byte, parser.previous.line ); }
 static void emitBytes( uint8_t byte1, uint8_t byte2 ) { emitByte( byte1 ); emitByte( byte2 ); }
-
-// emit return opcode
 static void emitReturn() { emitByte( OP_RETURN ); }
+
+static int emitJump( uint8_t jumpInstruction ) {
+    emitByte( jumpInstruction );
+    emitBytes( 0xff, 0xff ); // placeholder for jump
+    return currentChunk()->count - 2; // address of jump instruction
+}
+
+static void patchJumpToCurrentLocation( int jumpInstructionAddress ) {
+    // -2 to adjust for the bytecode for the jump offset itself
+    int jumpOffset = currentChunk()->count - jumpInstructionAddress - 2;
+
+    // see if the offset we're jumping is too large for a 16-bit short jump
+    if( jumpOffset > UINT16_MAX ) error( "Too much code to jump over for a 16-bit jump." );
+
+    // encode the 'jumpOffset' into the bytecode as a 16-bit big-endian value
+    currentChunk()->code[jumpInstructionAddress] = (jumpOffset >> 8) & 0xff;
+    currentChunk()->code[jumpInstructionAddress + 1] = jumpOffset & 0xff;
+}
 
 // ends a chunk
 static void endCompiler() {
@@ -373,6 +389,23 @@ static void block() {
     consume( TOKEN_RIGHT_BRACE, "Expect '}' after block." );
 }
 
+// compiles an if statement
+static void ifStatement() {
+    // parse the condition expression
+    consume( TOKEN_LEFT_PAREN, "Expect '(' after 'if'." );
+    expression();
+    consume( TOKEN_RIGHT_PAREN, "Expect ')' after condition." ); 
+
+    // emit the jump instruction w/ a placeholder offset (b/c we don't know how far to jump yet)
+    int jumpInstructionAddress = emitJump( OP_JUMP_IF_FALSE );
+
+    // parse the statement that follows the condition
+    statement();
+
+    // backpatch the jump instruction to jump past the statement
+    patchJumpToCurrentLocation( jumpInstructionAddress );
+}
+
 // compiles a print statement
 static void printStatement() {
     expression();
@@ -409,6 +442,7 @@ static void synchronize() {
 // compiles a statement TODO: could use a switch here instead
 static void statement() {
     if( match( TOKEN_PRINT ) ) printStatement();
+    else if( match( TOKEN_IF ) ) ifStatement();
     else if( match( TOKEN_LEFT_BRACE ) ) { beginScope(); block(); endScope(); }
     else expressionStatement();
 }
