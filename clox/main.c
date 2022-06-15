@@ -220,6 +220,10 @@ int main( int argc, const char* argv[] ) {
             result = interpret_source( "if( true or false ) print \"CORRECT!\"; else print \"ERROR\";" );
             if( INTERPRET_OK != result ) fprintf( stderr, "error - could not compile logical or\n" );
 
+            // while
+            result = interpret_source( "{ var i = 0; while( i < 3 ) { print i; i = i + 1; } }" );
+            if( INTERPRET_OK != result ) fprintf( stderr, "error - could not compile while statement\n" );
+
             // done - release all the objects, which will include both versions of 'hi'
             freeVM();
             return 0;

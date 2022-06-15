@@ -190,6 +190,11 @@ static InterpretResult run() {
                 vm.ip += offset * isFalsey( peek( 0 ) ); // no branching version of above
                 break;
             }
+            case OP_LOOP: {
+                uint16_t offset = READ_USHORT();
+                vm.ip -= offset;
+                break;
+            }
             case OP_RETURN: return INTERPRET_OK; // exit interpreter
         }
     }

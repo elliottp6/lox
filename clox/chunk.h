@@ -24,8 +24,9 @@ typedef enum {
     OP_NOT,
     OP_NEGATE,
     OP_PRINT,
-    OP_JUMP,
-    OP_JUMP_IF_FALSE,
+    OP_JUMP, // forward branch
+    OP_JUMP_IF_FALSE, // forward branch
+    OP_LOOP, // backward branch
     OP_RETURN,
 } OpCode;
 

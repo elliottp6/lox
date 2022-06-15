@@ -135,8 +135,8 @@ static int emitJump( uint8_t jumpInstruction ) {
     return currentChunk()->count - 2; // address of jump instruction
 }
 
-static void patchJumpToHere( int jump ) {
-    // -2 to adjust for the bytecode for the jump offset itself
+static void patchJump( int jump ) {
+    // -2 to adjust for jump instruction itself
     int jumpOffset = currentChunk()->count - jump - 2;
 
     // see if the offset we're jumping is too large for a 16-bit short jump
@@ -145,6 +145,18 @@ static void patchJumpToHere( int jump ) {
     // encode the 'jumpOffset' into the bytecode as a 16-bit big-endian value
     currentChunk()->code[jump] = (jumpOffset >> 8) & 0xff;
     currentChunk()->code[jump + 1] = jumpOffset & 0xff;
+}
+
+static void emitLoop( int loopStart ) {
+    // emit the loop instruction
+    emitByte( OP_LOOP );
+
+    // offset must include the LOOP instruction itself
+    int offset = currentChunk()->count - loopStart + 2;
+    if( offset > UINT16_MAX ) error( "Loop body too large for a 16-bit jump." );
+
+    // emit the offset parameter
+    emitBytes( (offset >> 8) & 0xff, offset & 0xff );
 }
 
 // ends a chunk
@@ -313,7 +325,7 @@ static void and( bool canAssign ) {
     parsePrecedence( PRECEDENCE_AND );
 
     // location to skip to
-    patchJumpToHere( endJump );
+    patchJump( endJump );
 }
 
 static void or( bool canAssign ) {
@@ -321,12 +333,12 @@ static void or( bool canAssign ) {
     int elseJump = emitJump( OP_JUMP_IF_FALSE ), endJump = emitJump( OP_JUMP );
 
     // parse RHS
-    patchJumpToHere( elseJump );
+    patchJump( elseJump );
     emitByte( OP_POP );
     parsePrecedence( PRECEDENCE_OR );
 
     // location to skip to
-    patchJumpToHere( endJump );
+    patchJump( endJump );
 }
 
 // parsing rules
@@ -428,12 +440,12 @@ static void ifStatement() {
     int jumpPastElse = emitJump( OP_JUMP );
 
     // "else" block
-    patchJumpToHere( jumpPastIf );
+    patchJump( jumpPastIf );
     emitByte( OP_POP ); // pop condition
     if( match( TOKEN_ELSE ) ) statement();
 
     // "end-if"
-    patchJumpToHere( jumpPastElse );
+    patchJump( jumpPastElse );
 }
 
 // compiles a print statement
@@ -441,6 +453,28 @@ static void printStatement() {
     expression();
     consume( TOKEN_SEMICOLON, "Expect ';' after value." );
     emitByte( OP_PRINT );
+}
+
+static void whileStatement() {
+    // save start
+    int loopStart = currentChunk()->count;
+
+    // condition
+    consume( TOKEN_LEFT_PAREN, "Expect '(' after 'while'." );
+    expression();
+    consume( TOKEN_RIGHT_PAREN, "Expect ')' after condition." );
+
+    // if false, goto exit
+    int exitJump = emitJump( OP_JUMP_IF_FALSE );
+
+    // while block
+    emitByte( OP_POP );
+    statement();
+    emitLoop( loopStart ); // ...could just use a signed integer jump instead?
+
+    // exit
+    patchJump( exitJump );
+    emitByte( OP_POP );
 }
 
 static void synchronize() {
@@ -473,6 +507,7 @@ static void synchronize() {
 static void statement() {
     if( match( TOKEN_PRINT ) ) printStatement();
     else if( match( TOKEN_IF ) ) ifStatement();
+    else if( match( TOKEN_WHILE ) ) whileStatement();
     else if( match( TOKEN_LEFT_BRACE ) ) { beginScope(); block(); endScope(); }
     else expressionStatement();
 }
