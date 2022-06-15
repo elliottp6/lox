@@ -179,11 +179,15 @@ static InterpretResult run() {
                 push( NUMBER_VAL( -AS_NUMBER( pop() ) ) );
                 break;
             case OP_PRINT: printValue( pop() ); printf( "\n" ); break;
+            case OP_JUMP: {
+                uint16_t offset = READ_USHORT();
+                vm.ip += offset;
+                break;
+            }
             case OP_JUMP_IF_FALSE: {
                 uint16_t offset = READ_USHORT();
                 //if( isFalsey( peek( 0 ) ) ) vm.ip += offset;
                 vm.ip += offset * isFalsey( peek( 0 ) ); // no branching version of above
-                // TODO: warning: we have the value still on the stack! need to pop it.
                 break;
             }
             case OP_RETURN: return INTERPRET_OK; // exit interpreter

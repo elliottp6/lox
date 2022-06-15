@@ -135,16 +135,16 @@ static int emitJump( uint8_t jumpInstruction ) {
     return currentChunk()->count - 2; // address of jump instruction
 }
 
-static void patchJumpToCurrentLocation( int jumpInstructionAddress ) {
+static void patchJumpToHere( int jump ) {
     // -2 to adjust for the bytecode for the jump offset itself
-    int jumpOffset = currentChunk()->count - jumpInstructionAddress - 2;
+    int jumpOffset = currentChunk()->count - jump - 2;
 
     // see if the offset we're jumping is too large for a 16-bit short jump
     if( jumpOffset > UINT16_MAX ) error( "Too much code to jump over for a 16-bit jump." );
 
     // encode the 'jumpOffset' into the bytecode as a 16-bit big-endian value
-    currentChunk()->code[jumpInstructionAddress] = (jumpOffset >> 8) & 0xff;
-    currentChunk()->code[jumpInstructionAddress + 1] = jumpOffset & 0xff;
+    currentChunk()->code[jump] = (jumpOffset >> 8) & 0xff;
+    currentChunk()->code[jump + 1] = jumpOffset & 0xff;
 }
 
 // ends a chunk
@@ -391,19 +391,24 @@ static void block() {
 
 // compiles an if statement
 static void ifStatement() {
-    // parse the condition expression
+    // condition
     consume( TOKEN_LEFT_PAREN, "Expect '(' after 'if'." );
     expression();
     consume( TOKEN_RIGHT_PAREN, "Expect ')' after condition." ); 
 
-    // emit the jump instruction w/ a placeholder offset (b/c we don't know how far to jump yet)
-    int jumpInstructionAddress = emitJump( OP_JUMP_IF_FALSE );
-
-    // parse the statement that follows the condition
+    // "if" block
+    int jumpPastIf = emitJump( OP_JUMP_IF_FALSE );
+    emitByte( OP_POP ); // pop condition
     statement();
+    int jumpPastElse = emitJump( OP_JUMP );
 
-    // backpatch the jump instruction to jump past the statement
-    patchJumpToCurrentLocation( jumpInstructionAddress );
+    // "else" block
+    patchJumpToHere( jumpPastIf );
+    emitByte( OP_POP ); // pop condition
+    if( match( TOKEN_ELSE ) ) statement();
+
+    // "end-if"
+    patchJumpToHere( jumpPastElse );
 }
 
 // compiles a print statement
