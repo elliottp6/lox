@@ -467,7 +467,7 @@ static void whileStatement() {
     // if false, goto exit
     int exitJump = emitJump( OP_JUMP_IF_FALSE );
 
-    // while block
+    // body
     emitByte( OP_POP );
     statement();
     emitLoop( loopStart ); // ...could just use a signed integer jump instead?
@@ -475,6 +475,22 @@ static void whileStatement() {
     // exit
     patchJump( exitJump );
     emitByte( OP_POP );
+}
+
+static void forStatement() {
+    consume( TOKEN_LEFT_PAREN, "Expect '(' after 'for'." );
+
+    // initialize statement
+    consume( TOKEN_SEMICOLON, "Expect ';'." );
+
+    // condition & iteration
+    int loopStart = currentChunk()->count;
+    consume( TOKEN_SEMICOLON, "Expect ';'." );
+    consume( TOKEN_RIGHT_PAREN, "Expect ')' after for clauses." );
+
+    // body
+    statement();
+    emitLoop( loopStart );
 }
 
 static void synchronize() {
@@ -506,9 +522,11 @@ static void synchronize() {
 // compiles a statement TODO: could use a switch here instead
 static void statement() {
     if( match( TOKEN_PRINT ) ) printStatement();
+    else if( match( TOKEN_FOR ) ) forStatement();
     else if( match( TOKEN_IF ) ) ifStatement();
     else if( match( TOKEN_WHILE ) ) whileStatement();
     else if( match( TOKEN_LEFT_BRACE ) ) { beginScope(); block(); endScope(); }
+    else if( match( TOKEN_RETURN ) ) { consume( TOKEN_SEMICOLON, "Expect ';' after 'return'" ); emitByte( OP_RETURN ); } // TEMPORARY HACK! so we can quit the program early
     else expressionStatement();
 }
 

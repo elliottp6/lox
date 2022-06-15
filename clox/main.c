@@ -224,6 +224,10 @@ int main( int argc, const char* argv[] ) {
             result = interpret_source( "{ var i = 0; while( i < 3 ) { print i; i = i + 1; } }" );
             if( INTERPRET_OK != result ) fprintf( stderr, "error - could not compile while statement\n" );
 
+            // for loop (no content)
+            result = interpret_source( "{ var i = 0; for(;;) { if( i >= 3 ) return; print i; i = i + 1; } }" );
+            if( INTERPRET_OK != result ) fprintf( stderr, "error - could not compile for statement\n" );
+
             // done - release all the objects, which will include both versions of 'hi'
             freeVM();
             return 0;
