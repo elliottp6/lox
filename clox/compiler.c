@@ -206,6 +206,7 @@ static void parsePrecedence( Precedence precedence );
 static void statement();
 static void declaration();
 static uint8_t identifierConstant( Token* name );
+static void varDeclaration();
 
 // parses number
 static void number( bool canAssign ) {
@@ -478,10 +479,14 @@ static void whileStatement() {
 }
 
 static void forStatement() {
-    consume( TOKEN_LEFT_PAREN, "Expect '(' after 'for'." );
+    // begin scope for initializer variables
+    beginScope();
 
-    // initialize statement
-    consume( TOKEN_SEMICOLON, "Expect ';'." );
+    // initializer clause
+    consume( TOKEN_LEFT_PAREN, "Expect '(' after 'for'." );
+    if( match( TOKEN_SEMICOLON ) ); // no initializer
+    else if( match( TOKEN_VAR ) ) varDeclaration(); // declare variable
+    else expressionStatement(); // expression
 
     // condition & iteration
     int loopStart = currentChunk()->count;
@@ -491,6 +496,9 @@ static void forStatement() {
     // body
     statement();
     emitLoop( loopStart );
+    
+    // end scope for initializer variables
+    endScope();
 }
 
 static void synchronize() {

@@ -225,7 +225,7 @@ int main( int argc, const char* argv[] ) {
             if( INTERPRET_OK != result ) fprintf( stderr, "error - could not compile while statement\n" );
 
             // for loop (no content)
-            result = interpret_source( "{ var i = 0; for(;;) { if( i >= 3 ) return; print i; i = i + 1; } }" );
+            result = interpret_source( "for( var i = 0;;) { if( i >= 3 ) return; print i; i = i + 1; }" );
             if( INTERPRET_OK != result ) fprintf( stderr, "error - could not compile for statement\n" );
 
             // done - release all the objects, which will include both versions of 'hi'
