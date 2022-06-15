@@ -316,6 +316,19 @@ static void and( bool canAssign ) {
     patchJumpToHere( endJump );
 }
 
+static void or( bool canAssign ) {
+    // if !LHS, then jump to RHS
+    int elseJump = emitJump( OP_JUMP_IF_FALSE ), endJump = emitJump( OP_JUMP );
+
+    // parse RHS
+    patchJumpToHere( elseJump );
+    emitByte( OP_POP );
+    parsePrecedence( PRECEDENCE_OR );
+
+    // location to skip to
+    patchJumpToHere( endJump );
+}
+
 // parsing rules
 ParseRule rules[] = {
     [TOKEN_LEFT_PAREN]    = {grouping, NULL,   PRECEDENCE_NONE},
@@ -348,7 +361,7 @@ ParseRule rules[] = {
     [TOKEN_FUN]           = {NULL,     NULL,   PRECEDENCE_NONE},
     [TOKEN_IF]            = {NULL,     NULL,   PRECEDENCE_NONE},
     [TOKEN_NIL]           = {literal,  NULL,   PRECEDENCE_NONE},
-    [TOKEN_OR]            = {NULL,     NULL,   PRECEDENCE_NONE},
+    [TOKEN_OR]            = {NULL,     or,   PRECEDENCE_OR},
     [TOKEN_PRINT]         = {NULL,     NULL,   PRECEDENCE_NONE},
     [TOKEN_RETURN]        = {NULL,     NULL,   PRECEDENCE_NONE},
     [TOKEN_SUPER]         = {NULL,     NULL,   PRECEDENCE_NONE},

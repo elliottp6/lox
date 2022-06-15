@@ -216,6 +216,10 @@ int main( int argc, const char* argv[] ) {
             result = interpret_source( "if( true and false ) print \"ERROR!\"; else print \"CORRECT\";" );
             if( INTERPRET_OK != result ) fprintf( stderr, "error - could not compile logical and\n" );
 
+            // logical or
+            result = interpret_source( "if( true or false ) print \"CORRECT!\"; else print \"ERROR\";" );
+            if( INTERPRET_OK != result ) fprintf( stderr, "error - could not compile logical or\n" );
+
             // done - release all the objects, which will include both versions of 'hi'
             freeVM();
             return 0;
