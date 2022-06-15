@@ -212,6 +212,10 @@ int main( int argc, const char* argv[] ) {
             result = interpret_source( "if( true ) print \"CORRECT!\"; else print \"ERROR!\"; if( false ) print \"ERROR!\"; else print \"CORRECT!\";" );
             if( INTERPRET_OK != result ) fprintf( stderr, "error - could not compile a set of if-else statements\n" );
 
+            // logical and
+            result = interpret_source( "if( true and false ) print \"ERROR!\"; else print \"CORRECT\";" );
+            if( INTERPRET_OK != result ) fprintf( stderr, "error - could not compile logical and\n" );
+
             // done - release all the objects, which will include both versions of 'hi'
             freeVM();
             return 0;

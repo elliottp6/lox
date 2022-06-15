@@ -304,6 +304,18 @@ static void variable( bool canAssign ) {
     namedVariable( parser.previous, canAssign );
 }
 
+static void and( bool canAssign ) {
+    // don't evaluate RHS if LHS was false
+    int endJump = emitJump( OP_JUMP_IF_FALSE ); // <-- OP_JUMP_IF_FALSE leaves value on stack precisely for this case
+
+    // parse RHS (also pops stack, b/c RHS becomes the new stack value)
+    emitByte( OP_POP );
+    parsePrecedence( PRECEDENCE_AND );
+
+    // location to skip to
+    patchJumpToHere( endJump );
+}
+
 // parsing rules
 ParseRule rules[] = {
     [TOKEN_LEFT_PAREN]    = {grouping, NULL,   PRECEDENCE_NONE},
@@ -328,7 +340,7 @@ ParseRule rules[] = {
     [TOKEN_IDENTIFIER]    = {variable, NULL,   PRECEDENCE_NONE},
     [TOKEN_STRING]        = {string,   NULL,   PRECEDENCE_NONE},
     [TOKEN_NUMBER]        = {number,   NULL,   PRECEDENCE_NONE},
-    [TOKEN_AND]           = {NULL,     NULL,   PRECEDENCE_NONE},
+    [TOKEN_AND]           = {NULL,     and,   PRECEDENCE_AND},
     [TOKEN_CLASS]         = {NULL,     NULL,   PRECEDENCE_NONE},
     [TOKEN_ELSE]          = {NULL,     NULL,   PRECEDENCE_NONE},
     [TOKEN_FALSE]         = {literal,  NULL,   PRECEDENCE_NONE},
