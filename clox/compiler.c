@@ -495,8 +495,27 @@ static void forStatement() {
         emitByte( OP_POP ); // pop condition
     }
     
+    // increment
+    if( !match( TOKEN_RIGHT_PAREN ) ) {
+        // increment doesn't run on first loop iteration, so jump over it
+        int bodyJump = emitJump( OP_JUMP ), incrementStart = currentChunk()->count;
+        
+        // increment body
+        expression();
+        emitByte( OP_POP );
+        consume( TOKEN_RIGHT_PAREN, "Expect ')' after for clauses." );
+
+        // go back to the top of the for loop
+        emitLoop( loopStart );
+
+        // now, change the loopStart to incrementStart, so that the body will loop back to the increment
+        loopStart = incrementStart;
+
+        // jump here to skip the initializer
+        patchJump( bodyJump );
+    }
+
     // body
-    consume( TOKEN_RIGHT_PAREN, "Expect ')' after for clauses." );
     statement();
     emitLoop( loopStart );
 
