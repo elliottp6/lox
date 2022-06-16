@@ -479,25 +479,34 @@ static void whileStatement() {
 }
 
 static void forStatement() {
-    // begin scope for initializer variables
-    beginScope();
-
-    // initializer clause
+    // begin scope
     consume( TOKEN_LEFT_PAREN, "Expect '(' after 'for'." );
-    if( match( TOKEN_SEMICOLON ) ); // no initializer
-    else if( match( TOKEN_VAR ) ) varDeclaration(); // declare variable
-    else expressionStatement(); // expression
+    beginScope();
+    
+    // initializer
+    if( match( TOKEN_SEMICOLON ) ); else if( match( TOKEN_VAR ) ) varDeclaration(); else expressionStatement();
 
-    // condition & iteration
-    int loopStart = currentChunk()->count;
-    consume( TOKEN_SEMICOLON, "Expect ';'." );
-    consume( TOKEN_RIGHT_PAREN, "Expect ')' after for clauses." );
-
+    // condition
+    int loopStart = currentChunk()->count, exitJump = -1;
+    if( !match( TOKEN_SEMICOLON ) ) {
+        expression();
+        consume( TOKEN_SEMICOLON, "Expect ';' after loop condition." );
+        exitJump = emitJump( OP_JUMP_IF_FALSE ); // leave the loop if the condition is false
+        emitByte( OP_POP ); // pop condition
+    }
+    
     // body
+    consume( TOKEN_RIGHT_PAREN, "Expect ')' after for clauses." );
     statement();
     emitLoop( loopStart );
+
+    // exit
+    if( -1 != exitJump ) {
+        patchJump( exitJump );
+        emitByte( OP_POP ); // pop condition
+    }
     
-    // end scope for initializer variables
+    // end scope
     endScope();
 }
 
