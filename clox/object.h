@@ -1,5 +1,6 @@
 #pragma once
 #include "common.h"
+#include "chunk.h"
 #include "value.h"
 
 #define OBJ_TYPE(value)     (AS_OBJ(value)->type)
@@ -22,6 +23,13 @@ struct ObjString {
     size_t len;
     uint32_t hash; // upgrade to 64-bit at some point
     char buf[]; // flexible array member
+};
+
+struct ObjFunction {
+    Obj obj;
+    int arity;
+    Chunk chunk;
+    ObjString* name;
 };
 
 void printObject( Obj* obj );
