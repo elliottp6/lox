@@ -214,24 +214,18 @@ InterpretResult interpret_chunk( Chunk* chunk ) {
 }
 
 InterpretResult interpret_source( const char* source ) {
-    // create chunk
-    Chunk chunk;
-    initChunk( &chunk );
-
-    // compile source into chunk
-    if( !compile( source, &chunk ) ) {
-        freeChunk( &chunk );
-        return INTERPRET_COMPILE_ERROR;
-    }
+    // compile source into function
+    ObjFunction* function = compile( source );
+    if( NULL == function ) return INTERPRET_COMPILE_ERROR;
 
     // put chunk into VM
-    vm.chunk = &chunk;
+    vm.chunk = &function->chunk;
     vm.ip = vm.chunk->code;
 
     // run VM
     InterpretResult result = run();
 
     // done
-    freeChunk( &chunk );
+    freeChunk( &function->chunk );
     return result;
 }

@@ -14,8 +14,14 @@ void printObject( Obj* obj ) {
     }
 }
 
-void printString( ObjString* str ) { printf( "\"%.*s\"@%p", (int)str->len, str->buf, str ); }
-void printFunction( ObjFunction* f ) { printf( "<fn %.*s>@%p", (int)f->name->len, f->name->buf, f ); }
+void printString( ObjString* s ) {
+    printf( "\"%.*s\"@%p", (int)s->len, s->buf, s );
+}
+
+void printFunction( ObjFunction* f ) {
+    if( f->name ) printf( "<fn %.*s>@%p", (int)f->name->len, f->name->buf, f );
+    else printf( "<fn>@%p", f );
+}
 
 static Obj* allocateObject( size_t size ) {
     // allocate memory

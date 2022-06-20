@@ -137,7 +137,8 @@ int main( int argc, const char* argv[] ) {
             writeChunk( &chunk, OP_RETURN, 123 );
 
             // disassemble
-            disassembleChunk( &chunk, "disassemble chunk" );
+            printf( "== bytecode ==\n" );
+            disassembleChunk( &chunk );
 
             // interpret
             interpret_chunk( &chunk );

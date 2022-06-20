@@ -79,10 +79,7 @@ size_t disassembleInstruction( Chunk* chunk, size_t offset ) {
     }
 }
 
-void disassembleChunk( Chunk* chunk, const char* name ) {
-    // print chunk name
-    printf( "== %s ==\n", name );
-
+void disassembleChunk( Chunk* chunk ) {
     // disassemble instructions one-at-a-time
     for( size_t offset = 0; offset < chunk->count; ) {
         offset = disassembleInstruction( chunk, offset );

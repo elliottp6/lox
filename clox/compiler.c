@@ -64,10 +64,26 @@ Parser parser;
 Compiler* current = NULL;
 
 // initializes the compiler state
-static void initCompiler( Compiler* compiler ) {
+static void initCompiler( Compiler* compiler, FunctionType type ) {
+    // setup variable tracking
     compiler->localCount = 0;
-    compiler->scopeDepth = 0;
+    compiler->scopeDepth = 0;    
+    
+    // setup current function
+    compiler->type = type;
+    compiler->function = NULL;
+    compiler->function = newFunction();
+   
+    // set current compiler
     current = compiler;
+
+    // TODO: create a local named "" @ stack slot 0 (reserved for VM's internal use)
+    // WARNING: cannot do this YET until the VM knows to push something to slot 0
+    // otherwise, all slots get mis-referenced b/c the compiler says something is @ slot 1 but it's at slot 0
+    //Local* local = &current->locals[current->localCount++];
+    //local->depth = 0;
+    //local->name.start = "";
+    //local->name.length = 0;
 }
 
 // returns current chunk being compiled
@@ -167,17 +183,26 @@ static void emitLoop( int loopStart ) {
 }
 
 // ends a chunk
-static void endCompiler() {
+static ObjFunction* endCompiler() {
     // return from our 'main' function
     emitReturn();
+
+    // get the compiled function
+    ObjFunction* function = current->function;
 
     // disassemble code before running it
     #ifdef DEBUG_PRINT_CODE
     if( !parser.hadError ) {
         printConstants( currentChunk() );
-        disassembleChunk( currentChunk(), "compiled bytecode" );
+        printf( "== bytecode for: " );
+        printFunction( function );
+        printf( " ==\n" );
+        disassembleChunk( currentChunk() );
     }
     #endif
+
+    // done
+    return function;
 }
 
 // pushes new scope for compiler
@@ -668,25 +693,16 @@ static void declaration() {
 }
 
 // compiles source to chunk
-bool compile( const char* source, Chunk* chunk ) {
+ObjFunction* compile( const char* source ) {
     // start scanner
     #ifdef DEBUG_PRINT_SCAN
     printf( "== scanned tokens ==\n" );
     #endif
     initScanner( source );
 
-    // initialize the compiler state
+    // initialize the compiler
     Compiler compiler;
-    initCompiler( &compiler );
-
-    // copy the chunk into the current function that we're compiling
-    ObjFunction function;
-    function.obj.type = OBJ_FUNCTION;
-    function.obj.next = NULL;
-    function.arity = 0;
-    function.name = NULL;
-    function.chunk = *chunk;
-    current->function = &function;
+    initCompiler( &compiler, TYPE_SCRIPT );
 
     // initialize parser
     parser.hadError = false;
@@ -696,12 +712,7 @@ bool compile( const char* source, Chunk* chunk ) {
     // compile each declaration
     while( !match( TOKEN_EOF ) ) declaration();
 
-    // done (emit the return and print compiled bytecode)
-    endCompiler();
-
-    // copy the compiled chunk back
-    *chunk = current->function->chunk;
-
-    // done
-    return !parser.hadError;
+    // return the compiled function
+    ObjFunction* function = endCompiler();
+    return parser.hadError ? NULL : function; // <-- TODO: shouldn't we delete the function on error?
 }

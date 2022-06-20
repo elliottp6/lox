@@ -40,7 +40,7 @@ void printObject( Obj* obj );
 static inline bool isObjType( Value value, ObjType type ) { return IS_OBJ(value) && AS_OBJ(value)->type == type; }
 
 // strings
-void printString( ObjString* str );
+void printString( ObjString* s );
 ObjString* makeString( const char* s, size_t len );
 ObjString* concatStrings( const char* s1, size_t len1, const char* s2, size_t len2 );
 
