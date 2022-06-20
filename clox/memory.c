@@ -58,6 +58,14 @@ static void freeObject( Obj* obj ) {
             deallocate( str, sizeof( ObjString ) + str->len );
             break;
         }
+
+        case OBJ_FUNCTION: {
+            ObjFunction* function = (ObjFunction*)obj;
+            freeChunk( &function->chunk );
+            deallocate( function, sizeof( ObjFunction ) );
+            break;
+        }
+
         default:
             break; // unreachable
     }

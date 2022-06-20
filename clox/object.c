@@ -9,11 +9,13 @@
 void printObject( Obj* obj ) {
     switch( obj->type ) {
         case OBJ_STRING: printString( (ObjString*)obj ); return;
+        case OBJ_FUNCTION: printFunction( (ObjFunction*)obj ); return;
         default: printf( "obj<%p>", obj ); return;
     }
 }
 
 void printString( ObjString* str ) { printf( "\"%.*s\"@%p", (int)str->len, str->buf, str ); }
+void printFunction( ObjFunction* f ) { printf( "<fn %.*s>@%p", (int)f->name->len, f->name->buf, f ); }
 
 static Obj* allocateObject( size_t size ) {
     // allocate memory
@@ -25,8 +27,16 @@ static Obj* allocateObject( size_t size ) {
     return obj;
 }
 
-// 32-bit fnv1a
-static uint32_t hashString( const char* key, size_t len, uint32_t hash ) {
+ObjFunction* newFunction() {
+    ObjFunction* function = (ObjFunction*)allocateObject( sizeof( ObjFunction ) );
+    function->obj.type = OBJ_FUNCTION;
+    function->arity = 0;
+    function->name = NULL;
+    initChunk( &function->chunk );
+    return function;
+}
+
+static uint32_t hashStringFNV1a32( const char* key, size_t len, uint32_t hash ) {
     for( size_t i = 0; i < len; i++ ) {
         hash ^= (uint8_t)key[i];
         hash *= HASH_PRIME;
@@ -40,7 +50,7 @@ ObjString* makeString( const char* s, size_t len ) {
 
 ObjString* concatStrings( const char* s1, size_t len1, const char* s2, size_t len2 ) {
     // compute hash
-    uint32_t hash = hashString( s2, len2, hashString( s1, len1, HASH_SEED ) );
+    uint32_t hash = hashStringFNV1a32( s2, len2, hashStringFNV1a32( s1, len1, HASH_SEED ) );
 
     // find string in table
     ObjString* obj = tableFindString( &vm.strings, hash, s1, len1, s2, len2 );
