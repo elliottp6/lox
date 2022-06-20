@@ -45,8 +45,16 @@ typedef struct {
     int depth;
 } Local;
 
+// type of function the compiler is compiling
+typedef enum {
+    TYPE_FUNCTION,
+    TYPE_SCRIPT
+} FunctionType;
+
 // compiler state
 typedef struct {
+    ObjFunction* function; // current function being compiled
+    FunctionType type; // type of current function being compiled
     Local locals[UINT8_COUNT];
     int localCount, scopeDepth;
 } Compiler;
@@ -54,7 +62,6 @@ typedef struct {
 // globals 
 Parser parser;
 Compiler* current = NULL;
-Chunk* compilingChunk;
 
 // initializes the compiler state
 static void initCompiler( Compiler* compiler ) {
@@ -64,7 +71,7 @@ static void initCompiler( Compiler* compiler ) {
 }
 
 // returns current chunk being compiled
-static Chunk* currentChunk() { return compilingChunk; }
+static Chunk* currentChunk() { return &current->function->chunk; }
 
 // reports parsing errors to stderr
 static void errorAt( Token* token, const char* message ) {
@@ -672,8 +679,14 @@ bool compile( const char* source, Chunk* chunk ) {
     Compiler compiler;
     initCompiler( &compiler );
 
-    // set the chunk that we're compiling into
-    compilingChunk = chunk;
+    // copy the chunk into the current function that we're compiling
+    ObjFunction function;
+    function.obj.type = OBJ_FUNCTION;
+    function.obj.next = NULL;
+    function.arity = 0;
+    function.name = NULL;
+    function.chunk = *chunk;
+    current->function = &function;
 
     // initialize parser
     parser.hadError = false;
@@ -685,5 +698,10 @@ bool compile( const char* source, Chunk* chunk ) {
 
     // done (emit the return and print compiled bytecode)
     endCompiler();
+
+    // copy the compiled chunk back
+    *chunk = current->function->chunk;
+
+    // done
     return !parser.hadError;
 }

@@ -35,7 +35,6 @@ typedef struct { // TODO: why do we ahve to make this a typedef? otherwise compi
     ObjString* name;
 } ObjFunction;
 
-
 // objects
 void printObject( Obj* obj );
 static inline bool isObjType( Value value, ObjType type ) { return IS_OBJ(value) && AS_OBJ(value)->type == type; }
