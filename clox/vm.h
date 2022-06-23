@@ -16,8 +16,6 @@ typedef struct {
 typedef struct {
     CallFrame frames[FRAMES_MAX]; // one frame for every function call
     int frameCount; // the call depth
-    Chunk* chunk; // current chunk that we're executing
-    uint8_t* ip; // pointer to the current instruction in the chunk
     Value stack[STACK_MAX]; // our value stack
     Value* stackTop; // pointer to the latest value in the stack
     Table globals, strings; // for global variables, for string interning
@@ -34,7 +32,7 @@ extern VM vm; // vm variable exposed to entire app
 
 void initVM();
 void freeVM();
+InterpretResult interpret( const char* source );
 InterpretResult interpret_chunk( Chunk* chunk );
-InterpretResult interpret_source( const char* source );
 void push( Value value );
 Value pop();

@@ -49,7 +49,7 @@ static int runFile( const char* path ) {
     if( NULL == source ) return 74;
 
     // interpret source file
-    InterpretResult result = interpret_source( source );
+    InterpretResult result = interpret( source );
 
     // done
     free( source );
@@ -78,7 +78,7 @@ int main( int argc, const char* argv[] ) {
                 printf( "> " );
                 if( !fgets( line, sizeof( line ), stdin ) ) { printf( "\n" ); break; }
                 if( 0 == strcmp( "exit\n", line ) ) break;
-                interpret_source( line );
+                interpret( line );
             }
             freeVM();
             return 0;
@@ -88,7 +88,7 @@ int main( int argc, const char* argv[] ) {
         case 'e': {
             initVM();
             if( argc < 3 ) break;
-            interpret_source( argv[2] );
+            interpret( argv[2] );
             freeVM();
             return 0;
         }
@@ -146,7 +146,7 @@ int main( int argc, const char* argv[] ) {
 
             // now run something else
             // this should print 'true'
-            InterpretResult result = interpret_source( "print !(5 - 4 > 3 * 2 == !nil);" );
+            InterpretResult result = interpret( "print !(5 - 4 > 3 * 2 == !nil);" );
             if( INTERPRET_OK != result ) fprintf( stderr, "test failed\n" );
 
             // test string interning (should have some addresses)
@@ -180,53 +180,53 @@ int main( int argc, const char* argv[] ) {
             printf( "vm.strings.load: %ld\n", vm.strings.load );
 
             // test variable assignment precedence
-            InterpretResult result2 = interpret_source( "var x = 1; print x = 3 + 4;" ); // should be fine since 'print' is PRECEDENCE_NONE which is above assignment
-            InterpretResult result3 = interpret_source( "var x = 1; print 2 * x = 3 + 4;" ); // should give a compiler error since 2 * x calls variable with PRECEDENCE_UNARY but "=" is PREDENCE_ASSIGNMENT
+            InterpretResult result2 = interpret( "var x = 1; print x = 3 + 4;" ); // should be fine since 'print' is PRECEDENCE_NONE which is above assignment
+            InterpretResult result3 = interpret( "var x = 1; print 2 * x = 3 + 4;" ); // should give a compiler error since 2 * x calls variable with PRECEDENCE_UNARY but "=" is PREDENCE_ASSIGNMENT
             if( INTERPRET_OK != result2 || INTERPRET_COMPILE_ERROR != result3 ) fprintf( stderr, "test2 failed\n" );
 
             // test creation of local variables
-            result = interpret_source( "{ var x = 5; var y = 6; }" );
+            result = interpret( "{ var x = 5; var y = 6; }" );
             if( INTERPRET_OK != result ) fprintf( stderr, "local varible test failed\n" );
 
             // test re-definition of local variable
-            result = interpret_source( "{ var x = 5; var x = 6; }" );
+            result = interpret( "{ var x = 5; var x = 6; }" );
             if( INTERPRET_COMPILE_ERROR != result ) fprintf( stderr, "variable redefinition test failed\n" );
 
             // test accessing local variable
-            result = interpret_source( "{ var x = 8; print x; }" );
+            result = interpret( "{ var x = 8; print x; }" );
             if( INTERPRET_OK != result ) fprintf( stderr, "accessing local varible test failed\n" );
 
             // test accessing variable within its own initializer
-            result = interpret_source( "{ var x = x; }" );
+            result = interpret( "{ var x = x; }" );
             if( INTERPRET_COMPILE_ERROR != result ) fprintf( stderr, "error - variable allowed to access itself within its initializer! (reads stale value from stack, which is leftover from VM's last execution)\n" );
 
             // test initializing variable with a variable of same name but higher scope
             // note that LOX does not support this (at the moment), but it probably should eventually
-            result = interpret_source( "var x = 1; { var x = x; print x; }" );
+            result = interpret( "var x = 1; { var x = x; print x; }" );
             if( INTERPRET_COMPILE_ERROR != result ) fprintf( stderr, "error - was able to initialize varible with a same-named higher-scoped variable\n" );
 
             // test a simple if statement
-            result = interpret_source( "if( true ) print \"CORRECT!\"; if( false ) print \"ERROR!\";" );
+            result = interpret( "if( true ) print \"CORRECT!\"; if( false ) print \"ERROR!\";" );
             if( INTERPRET_OK != result ) fprintf( stderr, "error - could not compile a set of if statements\n" );
 
             // test if-else statements
-            result = interpret_source( "if( true ) print \"CORRECT!\"; else print \"ERROR!\"; if( false ) print \"ERROR!\"; else print \"CORRECT!\";" );
+            result = interpret( "if( true ) print \"CORRECT!\"; else print \"ERROR!\"; if( false ) print \"ERROR!\"; else print \"CORRECT!\";" );
             if( INTERPRET_OK != result ) fprintf( stderr, "error - could not compile a set of if-else statements\n" );
 
             // logical and
-            result = interpret_source( "if( true and false ) print \"ERROR!\"; else print \"CORRECT\";" );
+            result = interpret( "if( true and false ) print \"ERROR!\"; else print \"CORRECT\";" );
             if( INTERPRET_OK != result ) fprintf( stderr, "error - could not compile logical and\n" );
 
             // logical or
-            result = interpret_source( "if( true or false ) print \"CORRECT!\"; else print \"ERROR\";" );
+            result = interpret( "if( true or false ) print \"CORRECT!\"; else print \"ERROR\";" );
             if( INTERPRET_OK != result ) fprintf( stderr, "error - could not compile logical or\n" );
 
             // while
-            result = interpret_source( "{ var i = 0; while( i < 3 ) { print i; i = i + 1; } }" );
+            result = interpret( "{ var i = 0; while( i < 3 ) { print i; i = i + 1; } }" );
             if( INTERPRET_OK != result ) fprintf( stderr, "error - could not compile while statement\n" );
 
             // for loop (no content)
-            result = interpret_source( "for( var i = 0; i < 3; i = i + 1 ) print i;" );
+            result = interpret( "for( var i = 0; i < 3; i = i + 1 ) print i;" );
             if( INTERPRET_OK != result ) fprintf( stderr, "error - could not compile for statement\n" );
 
             // done - release all the objects, which will include both versions of 'hi'

@@ -15,12 +15,11 @@ void printObject( Obj* obj ) {
 }
 
 void printString( ObjString* s ) {
-    printf( "\"%.*s\"@%p", (int)s->len, s->buf, s );
+    printf( "\"%.*s\"", (int)s->len, s->buf );
 }
 
 void printFunction( ObjFunction* f ) {
-    if( f->name ) printf( "<fn %.*s>@%p", (int)f->name->len, f->name->buf, f );
-    else printf( "<fn>@%p", f );
+    if( f->name ) printf( "%.*s()", (int)f->name->len, f->name->buf ); else printf( "()" );
 }
 
 static Obj* allocateObject( size_t size ) {

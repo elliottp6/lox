@@ -77,13 +77,11 @@ static void initCompiler( Compiler* compiler, FunctionType type ) {
     // set current compiler
     current = compiler;
 
-    // TODO: create a local named "" @ stack slot 0 (reserved for VM's internal use)
-    // WARNING: cannot do this YET until the VM knows to push something to slot 0
-    // otherwise, all slots get mis-referenced b/c the compiler says something is @ slot 1 but it's at slot 0
-    //Local* local = &current->locals[current->localCount++];
-    //local->depth = 0;
-    //local->name.start = "";
-    //local->name.length = 0;
+    // reserve the 1st stack slot for the main function object (without a name so we cannot refer to it within the code)
+    Local* local = &current->locals[current->localCount++];
+    local->depth = 0;
+    local->name.start = "";
+    local->name.length = 0;
 }
 
 // returns current chunk being compiled

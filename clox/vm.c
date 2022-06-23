@@ -14,14 +14,17 @@ static void resetStack() {
 }
 
 static void runtimeError( const char* format, ... ) {
+    // print error message
     va_list args;
     va_start( args, format );
     vfprintf( stderr, format, args );
     va_end( args );
     fputs( "\n", stderr );
 
-    size_t instruction = vm.ip - vm.chunk->code - 1;
-    int line = vm.chunk->lines[instruction];
+    // print line # where error occurred
+    CallFrame* frame = &vm.frames[vm.frameCount - 1];
+    size_t instruction = frame->ip - frame->function->chunk.code - 1;
+    int line = frame->function->chunk.lines[instruction];
     fprintf( stderr, "[line %d] in script\n", line );
     resetStack();
 }
@@ -63,10 +66,13 @@ static InterpretResult run() {
     printf( "== execution trace ==\n" );
     #endif
 
+    // get the current call frame
+    CallFrame* frame = &vm.frames[vm.frameCount - 1];
+
     // macros
-    #define READ_BYTE() (*vm.ip++)
-    #define READ_USHORT() (vm.ip += 2, (uint16_t)((vm.ip[-2] << 8) | vm.ip[-1]))
-    #define READ_CONSTANT() (vm.chunk->constants.values[READ_BYTE()])
+    #define READ_BYTE() (*frame->ip++)
+    #define READ_USHORT() (frame->ip += 2, (uint16_t)((frame->ip[-2] << 8) | frame->ip[-1]))
+    #define READ_CONSTANT() (frame->function->chunk.constants.values[READ_BYTE()])
     #define READ_STRING() AS_STRING(READ_CONSTANT())
 
     // this macro looks strange, but it's a way to define a block that permits a semicolon at the end
@@ -86,7 +92,7 @@ static InterpretResult run() {
         // trace execution
         #ifdef DEBUG_TRACE_EXECUTION
             // print instruction info
-            disassembleInstruction( vm.chunk, (size_t)(vm.ip - vm.chunk->code) );
+            disassembleInstruction( &frame->function->chunk, (size_t)(frame->ip - frame->function->chunk.code) );
 
             // print stack contents
             if( vm.stack < vm.stackTop ) {
@@ -111,12 +117,12 @@ static InterpretResult run() {
             case OP_POP:        pop(); break;
             case OP_GET_LOCAL: {
                 uint8_t slot = READ_BYTE(); // get the local's slot
-                push( vm.stack[slot] ); // read the local, and push it onto the stack (for other instructions to use)
+                push( frame->slots[slot] ); // read the local, and push it onto the stack (for other instructions to use)
                 break;
             }
             case OP_SET_LOCAL: {
                 uint8_t slot = READ_BYTE(); // get the local's slot
-                vm.stack[slot] = peek( 0 ); // set the slot to the value that's on the top of the stack (don't pop it, because it's an expression, and so it should return a value which is itself)
+                frame->slots[slot] = peek( 0 ); // set the slot to the value that's on the top of the stack (don't pop it, because it's an expression, and so it should return a value which is itself)
                 break;
             }
             case OP_DEFINE_GLOBAL: {
@@ -182,18 +188,18 @@ static InterpretResult run() {
             case OP_PRINT: printValue( pop() ); printf( "\n" ); break;
             case OP_JUMP: {
                 uint16_t offset = READ_USHORT();
-                vm.ip += offset;
+                frame->ip += offset;
                 break;
             }
             case OP_JUMP_IF_FALSE: {
                 uint16_t offset = READ_USHORT();
                 //if( isFalsey( peek( 0 ) ) ) vm.ip += offset;
-                vm.ip += offset * isFalsey( peek( 0 ) ); // no branching version of above
+                frame->ip += offset * isFalsey( peek( 0 ) ); // no branching version of above
                 break;
             }
             case OP_LOOP: {
                 uint16_t offset = READ_USHORT();
-                vm.ip -= offset;
+                frame->ip -= offset;
                 break;
             }
             case OP_RETURN: return INTERPRET_OK; // exit interpreter
@@ -208,25 +214,34 @@ static InterpretResult run() {
     #undef BINARY_OP
 }
 
-InterpretResult interpret_chunk( Chunk* chunk ) {
-    vm.chunk = chunk;
-    vm.ip = vm.chunk->code;
+static InterpretResult interpret_main( ObjFunction* main ) {
+    // validate args
+    if( NULL == main ) return INTERPRET_COMPILE_ERROR;
+
+    // stack should only contain the main function
+    resetStack();
+    push( OBJ_VAL( main ) );
+
+    // create a call frame for main
+    CallFrame* frame = &vm.frames[vm.frameCount++];
+    frame->function = main;
+    frame->ip = main->chunk.code;
+    frame->slots = vm.stack; // function slots begin @ top of stack
+
+    // run VM
     return run();
 }
 
-InterpretResult interpret_source( const char* source ) {
-    // compile source into function
-    ObjFunction* function = compile( source );
-    if( NULL == function ) return INTERPRET_COMPILE_ERROR;
+InterpretResult interpret( const char* source ) {
+    return interpret_main( compile( source ) );
+}
 
-    // put chunk into VM
-    vm.chunk = &function->chunk;
-    vm.ip = vm.chunk->code;
-
-    // run VM
-    InterpretResult result = run();
-
-    // done
-    freeChunk( &function->chunk );
-    return result;
+InterpretResult interpret_chunk( Chunk* chunk ) {
+    ObjFunction main;
+    main.arity = 0;
+    main.chunk = *chunk;
+    main.name = NULL;
+    main.obj.next = NULL;
+    main.obj.type = OBJ_FUNCTION;
+    return interpret_main( &main );
 }
