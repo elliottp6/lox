@@ -52,7 +52,8 @@ typedef enum {
 } FunctionType;
 
 // compiler state
-typedef struct {
+typedef struct Compiler {
+    struct Compiler* enclosing; // the parent function's compiler
     ObjFunction* function; // current function being compiled
     FunctionType type; // type of current function being compiled
     Local locals[UINT8_COUNT];
@@ -74,8 +75,13 @@ static void initCompiler( Compiler* compiler, FunctionType type ) {
     compiler->function = NULL;
     compiler->function = newFunction();
    
-    // set current compiler
+    // push new compiler
+    compiler->enclosing = current;
     current = compiler;
+
+    // give the function a name (unless it's a top-level script)
+    if( TYPE_SCRIPT != type )
+        current->function->name = makeString( parser.previous.start, parser.previous.length );
 
     // reserve the 1st stack slot for the main function object (without a name so we cannot refer to it within the code)
     Local* local = &current->locals[current->localCount++];
@@ -199,7 +205,8 @@ static ObjFunction* endCompiler() {
     }
     #endif
 
-    // done
+    // restore enclosing function's compiler
+    current = current->enclosing;
     return function;
 }
 
@@ -634,10 +641,15 @@ static void declareVariable() {
     addLocal( *name );
 }
 
+static void markInitialized() { // give the variable a depth value, which marks it as "defined"
+    if( 0 == current->scopeDepth ) return; // global variables are not locals
+    current->locals[current->localCount - 1].depth = current->scopeDepth;
+}
+
 static void defineVariable( uint8_t global ) {
     // define local variable: no OPCODE required to define variable, b/c we just let the value sit in the stack AS the local variable
     if( current->scopeDepth > 0 ) {
-        current->locals[current->localCount - 1].depth = current->scopeDepth; // give the variable a depth value, which marks it as "defined"
+        markInitialized();
         return;
     }
 
@@ -680,10 +692,42 @@ static void varDeclaration() {
     defineVariable( global );
 }
 
+static void function( FunctionType type ) {
+    // creates sub-compiler for this function
+    Compiler compiler;
+    initCompiler( &compiler, type );
+
+    // this function has its own scope for variables (no need to call endScope, b/c we endCompiler)
+    beginScope();
+
+    // parse function TODO: right now it's parameterless
+    consume( TOKEN_LEFT_PAREN, "Expect '(' after function name." );
+    consume( TOKEN_RIGHT_PAREN, "Expect ')' after parameters." );
+    consume( TOKEN_LEFT_BRACE, "Expect '{' before function body." );
+    block();
+
+    // push function onto stack
+    ObjFunction* function = endCompiler();
+    emitBytes( OP_CONSTANT, makeConstant( OBJ_VAL( function ) ) );
+}
+
+static void funDeclaration() {
+    // declare a variable for the function. mark it initialized b/c it's legal for the function to self-reference
+    uint8_t global = parseVariable( "Expect function name." );
+    markInitialized();
+    
+    // parse the function body
+    function( TYPE_FUNCTION );
+
+    // emit opcode which defines the function based on what's on the stack (which is the function object itself)
+    defineVariable( global );
+}
+
 // compiles a declaration
 static void declaration() {
     // dispatch on declaration type
-    if( match( TOKEN_VAR ) ) varDeclaration();
+    if( match( TOKEN_FUN ) ) funDeclaration();
+    else if( match( TOKEN_VAR ) ) varDeclaration();
     else statement();
 
     // deal with panics

@@ -229,6 +229,10 @@ int main( int argc, const char* argv[] ) {
             result = interpret( "for( var i = 0; i < 3; i = i + 1 ) print i;" );
             if( INTERPRET_OK != result ) fprintf( stderr, "error - could not compile for statement\n" );
 
+            // function declaration
+            result = interpret( "fun say_hi() { print \"hi\"; }" );
+            if( INTERPRET_OK != result ) fprintf( stderr, "error - could not compile function declaration\n" );
+
             // done - release all the objects, which will include both versions of 'hi'
             freeVM();
             return 0;
