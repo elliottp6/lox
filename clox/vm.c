@@ -202,6 +202,11 @@ static InterpretResult run() {
                 frame->ip -= offset;
                 break;
             }
+            case OP_CALL: {
+                int argCount = READ_BYTE();
+                if( !callValue( peek( argCount ), argCount ) ) return INTERPRET_RUNTIME_ERROR;
+                break;
+            }
             case OP_RETURN: return INTERPRET_OK; // exit interpreter
 
             // not in book: error on unrecognized opcodes
