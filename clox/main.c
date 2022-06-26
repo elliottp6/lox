@@ -239,8 +239,8 @@ int main( int argc, const char* argv[] ) {
 
             // function call
             // TODO: note that this doesn't work yet, but the expression is parsing OK
-            result = interpret( "fun my_func( x ) { print x; } my_func( 1 );" );
-            if( INTERPRET_OK != result ) fprintf( stderr, "error - could not execute function call w/ parameter\n" );
+            result = interpret( "fun my_func( x ) { print x; } my_func( 6 );" );
+            if( INTERPRET_RUNTIME_ERROR != result ) fprintf( stderr, "error - could not execute function call w/ parameter\n" );
 
             // done - release all the objects, which will include both versions of 'hi'
             freeVM();

@@ -203,6 +203,11 @@ static InterpretResult run() {
                 break;
             }
             case OP_RETURN: return INTERPRET_OK; // exit interpreter
+
+            // not in book: error on unrecognized opcodes
+            default:
+                runtimeError( "unrecognized opcode: %d", instruction );
+                return INTERPRET_RUNTIME_ERROR; // 
         }
     }
 
