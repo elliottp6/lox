@@ -27,6 +27,7 @@ typedef enum {
     OP_JUMP, // forward branch
     OP_JUMP_IF_FALSE, // forward branch
     OP_LOOP, // backward branch
+    OP_CALL, // function call
     OP_RETURN,
 } OpCode;
 

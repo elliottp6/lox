@@ -237,6 +237,11 @@ int main( int argc, const char* argv[] ) {
             result = interpret( "fun say_hi( text1, text2 ) { print text1; print text2; } print say_hi;" );
             if( INTERPRET_OK != result ) fprintf( stderr, "error - could not compile function declaration w/ parameters\n" );
 
+            // function call
+            // TODO: note that this doesn't work yet, but the expression is parsing OK
+            result = interpret( "fun my_func( x ) { print x; } my_func( 1 );" );
+            if( INTERPRET_OK != result ) fprintf( stderr, "error - could not execute function call w/ parameter\n" );
+
             // done - release all the objects, which will include both versions of 'hi'
             freeVM();
             return 0;
