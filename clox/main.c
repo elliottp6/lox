@@ -230,8 +230,12 @@ int main( int argc, const char* argv[] ) {
             if( INTERPRET_OK != result ) fprintf( stderr, "error - could not compile for statement\n" );
 
             // function declaration
-            result = interpret( "fun say_hi() { print \"hi\"; }" );
+            result = interpret( "fun say_hi() { print \"hi\"; } print say_hi;" );
             if( INTERPRET_OK != result ) fprintf( stderr, "error - could not compile function declaration\n" );
+
+            // function declaration w/ parameters
+            result = interpret( "fun say_hi( text1, text2 ) { print text1; print text2; } print say_hi;" );
+            if( INTERPRET_OK != result ) fprintf( stderr, "error - could not compile function declaration w/ parameters\n" );
 
             // done - release all the objects, which will include both versions of 'hi'
             freeVM();

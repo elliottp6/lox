@@ -700,9 +700,19 @@ static void function( FunctionType type ) {
     // this function has its own scope for variables (no need to call endScope, b/c we endCompiler)
     beginScope();
 
-    // parse function TODO: right now it's parameterless
+    // parse parameters
     consume( TOKEN_LEFT_PAREN, "Expect '(' after function name." );
+    if( !check( TOKEN_RIGHT_PAREN ) ) {
+        do {
+            current->function->arity++;
+            if( current->function->arity > 255 ) errorAtCurrent( "Cannot have more than 255 parameters." );
+            uint8_t constant = parseVariable( "Expect parameter name." );
+            defineVariable( constant );
+        } while( match( TOKEN_COMMA ) );
+    }
     consume( TOKEN_RIGHT_PAREN, "Expect ')' after parameters." );
+    
+    // parse body
     consume( TOKEN_LEFT_BRACE, "Expect '{' before function body." );
     block();
 
