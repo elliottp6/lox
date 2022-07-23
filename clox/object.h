@@ -41,6 +41,7 @@ static inline bool isObjType( Value value, ObjType type ) { return IS_OBJ(value)
 
 // strings
 void printString( ObjString* s );
+void printStringToErr( ObjString* s );
 ObjString* makeString( const char* s, size_t len );
 ObjString* concatStrings( const char* s1, size_t len1, const char* s2, size_t len2 );
 

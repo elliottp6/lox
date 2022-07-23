@@ -245,6 +245,17 @@ int main( int argc, const char* argv[] ) {
             result = interpret( "fun my_func( x ) { print x; } my_func( 6, 7 );" );
             if( INTERPRET_RUNTIME_ERROR != result ) fprintf( stderr, "error - wrong # of function params should throw an error, but did not\n" );
 
+            // broken program for testing stack-trace printing
+            result = interpret(
+                "fun a() { b(); }\n"
+                "fun b() { c(); }\n"
+                "fun c() {\n"
+                "   c(\"too\", \"many\");\n"
+                "}\n"
+                "\n"
+                "a();\n" );
+            if( INTERPRET_RUNTIME_ERROR != result ) fprintf( stderr, "error - should have crashed due too a nested call w/ too many args" );
+
             // done - release all the objects, which will include both versions of 'hi'
             freeVM();
             return 0;

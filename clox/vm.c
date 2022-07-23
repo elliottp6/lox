@@ -21,11 +21,24 @@ static void runtimeError( const char* format, ... ) {
     va_end( args );
     fputs( "\n", stderr );
 
-    // print line # where error occurred
-    CallFrame* frame = &vm.frames[vm.frameCount - 1];
-    size_t instruction = frame->ip - frame->function->chunk.code - 1;
-    int line = frame->function->chunk.lines[instruction];
-    fprintf( stderr, "[line %d] in script\n", line );
+    // print stack trace
+    for( int i = vm.frameCount - 1; i >= 0; i-- ) {
+        // print line # for stack frame
+        CallFrame* frame = &vm.frames[i];
+        ObjFunction* function = frame->function;
+        size_t instruction = frame->ip - function->chunk.code - 1;
+        fprintf( stderr, "[line %d] in ", function->chunk.lines[instruction] );
+
+        // print function name
+        if ( NULL == function->name ) {
+            fprintf( stderr, "script\n" );
+        } else {
+            printStringToErr( function->name );
+            fprintf( stderr, "\n" );
+        }
+    }
+
+    // reset the stack
     resetStack();
 }
 

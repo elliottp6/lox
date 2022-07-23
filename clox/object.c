@@ -14,9 +14,8 @@ void printObject( Obj* obj ) {
     }
 }
 
-void printString( ObjString* s ) {
-    printf( "\"%.*s\"", (int)s->len, s->buf );
-}
+void printString( ObjString* s ) { printf( "\"%.*s\"", (int)s->len, s->buf ); }
+void printStringToErr( ObjString* s ) { fprintf( stderr, "\"%.*s\"", (int)s->len, s->buf ); }
 
 void printFunction( ObjFunction* f ) {
     if( f->name ) printf( "%.*s()", (int)f->name->len, f->name->buf ); else printf( "()" );
