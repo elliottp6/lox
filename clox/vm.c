@@ -39,8 +39,25 @@ Value pop() {
     return *vm.stackTop;
 }
 
-static Value peek( int distance ) {
-    return vm.stackTop[-1 - distance];
+static Value peek( int distance ) { return vm.stackTop[-1 - distance]; }
+
+static bool call( ObjFunction* function, int argCount ) {
+    CallFrame* frame = &vm.frames[vm.frameCount++];
+    frame->function = function;
+    frame->ip = function->chunk.code;
+    frame->slots = vm.stackTop - argCount - 1;
+    return true;
+}
+
+static bool callValue( Value callee, int argCount ) {
+    if( IS_OBJ( callee ) ) {
+        switch( OBJ_TYPE( callee ) ) {
+            case OBJ_FUNCTION: return call( AS_FUNCTION( callee ), argCount );
+            default: break; // non-callable object type
+        }
+    }
+    runtimeError( "Can only call functions and classes." );
+    return false;
 }
 
 void initVM() {
@@ -202,6 +219,12 @@ static InterpretResult run() {
                 frame->ip -= offset;
                 break;
             }
+            case OP_CALL: {
+                int argCount = READ_BYTE();
+                if( !callValue( peek( argCount ), argCount ) ) return INTERPRET_RUNTIME_ERROR;
+                frame = &vm.frames[vm.frameCount - 1];
+                break;
+            }
             case OP_RETURN: return INTERPRET_OK; // exit interpreter
 
             // not in book: error on unrecognized opcodes
@@ -226,12 +249,7 @@ static InterpretResult interpret_main( ObjFunction* main ) {
     // stack should only contain the main function
     resetStack();
     push( OBJ_VAL( main ) );
-
-    // create a call frame for main
-    CallFrame* frame = &vm.frames[vm.frameCount++];
-    frame->function = main;
-    frame->ip = main->chunk.code;
-    frame->slots = vm.stack; // function slots begin @ top of stack
+    call( main, 0 );
 
     // run VM
     return run();
