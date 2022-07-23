@@ -42,6 +42,16 @@ Value pop() {
 static Value peek( int distance ) { return vm.stackTop[-1 - distance]; }
 
 static bool call( ObjFunction* function, int argCount ) {
+    // sanity check argCount
+    if( argCount != function->arity ) {
+        runtimeError( "Expected %d arguments but got %d.", function->arity, argCount );
+        return false;
+    }
+
+    // check for stack overflow
+    if( FRAMES_MAX == vm.frameCount ) { runtimeError( "Stack overflow." ); return false; }
+
+    // push a new callFrame
     CallFrame* frame = &vm.frames[vm.frameCount++];
     frame->function = function;
     frame->ip = function->chunk.code;
@@ -222,7 +232,7 @@ static InterpretResult run() {
             case OP_CALL: {
                 int argCount = READ_BYTE();
                 if( !callValue( peek( argCount ), argCount ) ) return INTERPRET_RUNTIME_ERROR;
-                frame = &vm.frames[vm.frameCount - 1];
+                frame = &vm.frames[vm.frameCount - 1]; // callValue changed the VM frame, so update our local variable
                 break;
             }
             case OP_RETURN: return INTERPRET_OK; // exit interpreter

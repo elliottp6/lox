@@ -241,6 +241,10 @@ int main( int argc, const char* argv[] ) {
             result = interpret( "fun my_func( x ) { print x; } my_func( 6 ); my_func( 7 );" );
             if( INTERPRET_RUNTIME_ERROR == result ) fprintf( stderr, "error - could not execute function call w/ parameter\n" );
 
+            // function call w/ 1 argument, but CANNOT return yet, so it'll never print the my_func( 7 )!
+            result = interpret( "fun my_func( x ) { print x; } my_func( 6, 7 );" );
+            if( INTERPRET_RUNTIME_ERROR != result ) fprintf( stderr, "error - wrong # of function params should throw an error, but did not\n" );
+
             // done - release all the objects, which will include both versions of 'hi'
             freeVM();
             return 0;
