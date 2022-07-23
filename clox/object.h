@@ -6,14 +6,17 @@
 #define OBJ_TYPE(value)         (AS_OBJ(value)->type)
 #define IS_STRING(value)        isObjType(value, OBJ_STRING)
 #define IS_FUNCTION(value)      isObjType(value, OBJ_FUNCTION)
+#define IS_NATIVE(value)        isObjType(value, OBJ_NATIVE)
 #define AS_STRING(value)        ((ObjString*)AS_OBJ(value))
 #define AS_FUNCTION(value)      ((ObjFunction*)AS_OBJ(value))
+#define AS_NATIVE(value)        (((ObjNative*)AS_OBJ(value))->function)
 #define HASH_SEED 2166136261u
 #define HASH_PRIME 16777619
 
 typedef enum {
     OBJ_STRING,
     OBJ_FUNCTION,
+    OBJ_NATIVE,
 } ObjType;
 
 struct Obj {
@@ -35,6 +38,15 @@ typedef struct { // TODO: why do we ahve to make this a typedef? otherwise compi
     ObjString* name;
 } ObjFunction;
 
+
+// native function object
+typedef Value (*NativeFn)(int argCount, Value* args);
+
+typedef struct {
+    Obj obj;
+    NativeFn function;
+} ObjNative;
+
 // objects
 void printObject( Obj* obj );
 static inline bool isObjType( Value value, ObjType type ) { return IS_OBJ(value) && AS_OBJ(value)->type == type; }
@@ -48,3 +60,6 @@ ObjString* concatStrings( const char* s1, size_t len1, const char* s2, size_t le
 // functions
 void printFunction( ObjFunction* f );
 ObjFunction* newFunction();
+
+// native functions
+ObjNative* newNative( NativeFn function );

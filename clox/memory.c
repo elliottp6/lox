@@ -65,6 +65,11 @@ static void freeObject( Obj* obj ) {
             deallocate( function, sizeof( ObjFunction ) );
             break;
         }
+        
+        case OBJ_NATIVE: {
+            deallocate( obj, sizeof( ObjNative ) );
+            break;
+        }
 
         default:
             break; // unreachable

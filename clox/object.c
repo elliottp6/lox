@@ -10,6 +10,7 @@ void printObject( Obj* obj ) {
     switch( obj->type ) {
         case OBJ_STRING: printString( (ObjString*)obj ); return;
         case OBJ_FUNCTION: printFunction( (ObjFunction*)obj ); return;
+        case OBJ_NATIVE: printf( "<native>" ); return;
         default: printf( "obj<%p>", obj ); return;
     }
 }
@@ -21,9 +22,12 @@ void printFunction( ObjFunction* f ) {
     if( f->name ) printf( "%.*s()", (int)f->name->len, f->name->buf ); else printf( "()" );
 }
 
-static Obj* allocateObject( size_t size ) {
+static Obj* allocateObject( size_t size, ObjType type ) {
     // allocate memory
     Obj* obj = allocate( size );
+
+    // set type
+    obj->type = type;
 
     // insert into VM's object list
     obj->next = vm.objects;
@@ -32,12 +36,18 @@ static Obj* allocateObject( size_t size ) {
 }
 
 ObjFunction* newFunction() {
-    ObjFunction* function = (ObjFunction*)allocateObject( sizeof( ObjFunction ) );
+    ObjFunction* function = (ObjFunction*)allocateObject( sizeof( ObjFunction ), OBJ_FUNCTION );
     function->obj.type = OBJ_FUNCTION;
     function->arity = 0;
     function->name = NULL;
     initChunk( &function->chunk );
     return function;
+}
+
+ObjNative* newNative( NativeFn function ) {
+    ObjNative* native = (ObjNative*)allocateObject( sizeof( ObjNative ), OBJ_NATIVE );
+    native->function = function;
+    return native;
 }
 
 static uint32_t hashStringFNV1a32( const char* key, size_t len, uint32_t hash ) {
@@ -62,8 +72,7 @@ ObjString* concatStrings( const char* s1, size_t len1, const char* s2, size_t le
 
     // otherwise, allocate a new string
     int len = len1 + len2;
-    obj = (ObjString*)allocateObject( sizeof( ObjString ) + len );
-    obj->obj.type = OBJ_STRING;
+    obj = (ObjString*)allocateObject( sizeof( ObjString ) + len, OBJ_STRING );
     obj->len = len;
     obj->hash = hash;
     memcpy( obj->buf, s1, len1 );

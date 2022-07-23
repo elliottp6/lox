@@ -260,6 +260,10 @@ int main( int argc, const char* argv[] ) {
             result = interpret( "fun add1( x ) { return x + 1; } print add1( 2 ); " );
             if( INTERPRET_OK != result ) fprintf( stderr, "error - should have been able to interpret simple function w/ return value\n" );
 
+            // test a native 'clock' function
+            result = interpret( "print clock();" );
+            if( INTERPRET_OK != result ) fprintf( stderr, "error - should have been able to run clock program\n" );
+
             // done - release all the objects, which will include both versions of 'hi'
             freeVM();
             return 0;

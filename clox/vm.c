@@ -5,8 +5,15 @@
 #include "vm.h"
 #include "compiler.h"
 #include "memory.h"
+#include <string.h>
+//#include <time.h>
 
 VM vm; // global variable!
+
+// a simple native function
+static Value clockNative( int argCount, Value* args ) {
+    return NUMBER_VAL( 1618 ); // NUMBER_VAL( (double)clock() / CLOCKS_PER_SEC );
+}
 
 static void resetStack() {
     vm.stackTop = vm.stack;
@@ -42,6 +49,24 @@ static void runtimeError( const char* format, ... ) {
     resetStack();
 }
 
+// defines a native function
+static void defineNative( const char* name, NativeFn function ) {
+    // push a string object w/ name of function
+    push( OBJ_VAL( makeString( name, (int)strlen( name ) ) ) );
+
+    // push the native function
+    push( OBJ_VAL( newNative( function ) ) );
+
+    // set this string in the globals table to point to this native function
+    tableSet( &vm.globals, AS_STRING( vm.stack[0] ), vm.stack[1] );
+
+    // pop the string & function from the stack
+    // note that the ONLY reason we pushed them onto the stack to begin with was so the GC
+    //  would be able to find them if it kicked off before we put them into the table
+    pop();
+    pop();
+}
+
 void push( Value value ) {
     *vm.stackTop = value;
     vm.stackTop++;
@@ -75,7 +100,21 @@ static bool call( ObjFunction* function, int argCount ) {
 static bool callValue( Value callee, int argCount ) {
     if( IS_OBJ( callee ) ) {
         switch( OBJ_TYPE( callee ) ) {
-            case OBJ_FUNCTION: return call( AS_FUNCTION( callee ), argCount );
+            case OBJ_FUNCTION:
+                return call( AS_FUNCTION( callee ), argCount );
+
+            case OBJ_NATIVE: {
+                // call native function
+                NativeFn native = AS_NATIVE( callee );
+                Value result = native( argCount, vm.stackTop - argCount );
+
+                // unwind args
+                vm.stackTop -= argCount + 1;
+
+                // return
+                push( result );
+                return true;
+            }
             default: break; // non-callable object type
         }
     }
@@ -88,6 +127,7 @@ void initVM() {
     vm.objects = NULL;
     initTable( &vm.globals );
     initTable( &vm.strings );
+    defineNative( "clock", clockNative );
 }
 
 void freeVM() {
