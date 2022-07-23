@@ -154,7 +154,7 @@ static void consume( TokenType type, const char* message ) {
 // emit byte(s) to the current chunk
 static void emitByte( uint8_t byte ) { writeChunk( currentChunk(), byte, parser.previous.line ); }
 static void emitBytes( uint8_t byte1, uint8_t byte2 ) { emitByte( byte1 ); emitByte( byte2 ); }
-static void emitReturn() { emitByte( OP_RETURN ); }
+static void emitReturn() { emitByte( OP_NIL ); emitByte( OP_RETURN ); } // returns NIL (since this is for implicit returns only)
 
 static int emitJump( uint8_t jumpInstruction ) {
     emitByte( jumpInstruction );

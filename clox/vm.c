@@ -248,7 +248,20 @@ static InterpretResult run() {
                 frame = &vm.frames[vm.frameCount - 1]; // callValue changed the VM frame, so update our local variable
                 break;
             }
-            case OP_RETURN: return INTERPRET_OK; // exit interpreter
+            case OP_RETURN: {
+                // pop result & the frame
+                Value result = pop();
+                vm.frameCount--;
+
+                // if it is the root frame: exit the program
+                if( 0 == vm.frameCount ) { pop(); return INTERPRET_OK; }
+
+                // otherwise: set stack & frame to that of caller
+                vm.stackTop = frame->slots;
+                push( result );
+                frame = &vm.frames[vm.frameCount - 1];
+                break;
+            }
 
             // not in book: error on unrecognized opcodes
             default:
