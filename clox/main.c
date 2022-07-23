@@ -256,6 +256,10 @@ int main( int argc, const char* argv[] ) {
                 "a();\n" );
             if( INTERPRET_RUNTIME_ERROR != result ) fprintf( stderr, "error - should have crashed due too a nested call w/ too many args" );
 
+            // function which actually returns something
+            result = interpret( "fun add1( x ) { return x + 1; } print add1( 2 ); " );
+            if( INTERPRET_OK != result ) fprintf( stderr, "error - should have been able to interpret simple function w/ return value\n" );
+
             // done - release all the objects, which will include both versions of 'hi'
             freeVM();
             return 0;

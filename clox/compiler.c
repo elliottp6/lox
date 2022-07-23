@@ -610,14 +610,27 @@ static void synchronize() {
     }
 }
 
-// compiles a statement TODO: could use a switch here instead
+static void returnStatement() {
+    // do not allow a return from top-level
+    if( TYPE_SCRIPT == current->type ) error( "Can't return from top-level code." );
+
+    // return nil
+    if( match( TOKEN_SEMICOLON ) ) { emitReturn(); return; }
+
+    // return value
+    expression();
+    consume( TOKEN_SEMICOLON, "Expect ';' after return value." );
+    emitByte( OP_RETURN );
+}
+
+// compiles a statement
 static void statement() {
     if( match( TOKEN_PRINT ) ) printStatement();
     else if( match( TOKEN_FOR ) ) forStatement();
     else if( match( TOKEN_IF ) ) ifStatement();
     else if( match( TOKEN_WHILE ) ) whileStatement();
     else if( match( TOKEN_LEFT_BRACE ) ) { beginScope(); block(); endScope(); }
-    else if( match( TOKEN_RETURN ) ) { consume( TOKEN_SEMICOLON, "Expect ';' after 'return'" ); emitByte( OP_RETURN ); } // TEMPORARY HACK! so we can quit the program early
+    else if( match( TOKEN_RETURN ) ) returnStatement();
     else expressionStatement();
 }
 
