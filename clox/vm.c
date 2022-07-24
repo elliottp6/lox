@@ -288,6 +288,10 @@ static InterpretResult run() {
                 frame = &vm.frames[vm.frameCount - 1]; // callValue changed the VM frame, so update our local variable
                 break;
             }
+            case OP_CLOSURE: {
+                push( READ_CONSTANT() );
+                break;
+            }
             case OP_RETURN: {
                 // pop result & the frame
                 Value result = pop();

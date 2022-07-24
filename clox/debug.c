@@ -40,6 +40,15 @@ static size_t constantInstruction( const char* name, Chunk* chunk, size_t offset
     return offset + 2;
 }
 
+static size_t closureInstruction( const char* name, Chunk* chunk, size_t offset ) {
+    offset++;
+    int8_t constantIndex = chunk->code[offset++];
+    printf( "OP_CLOSURE(" );
+    printValue( chunk->constants.values[constantIndex] );
+    printf( "@%d)", constantIndex );
+    return offset;
+}
+
 size_t disassembleInstruction( Chunk* chunk, size_t offset ) {
     // print instruction offset & line number
     printf( "%04zu %04d ", offset, chunk->lines[offset] );
@@ -73,6 +82,7 @@ size_t disassembleInstruction( Chunk* chunk, size_t offset ) {
         case OP_JUMP_IF_FALSE: return jumpInstruction( "OP_JUMP_IF_FALSE", 1, chunk, offset );
         case OP_LOOP:       return jumpInstruction( "OP_LOOP", -1, chunk, offset );
         case OP_CALL:       return byteInstruction( "OP_CALL", chunk, offset );
+        case OP_CLOSURE:    return closureInstruction( "OP_CLOSURE", chunk, offset );
         case OP_RETURN:     return simpleInstruction( "OP_RETURN", offset );
         default:
             printf( "Unknown opcode %d", instruction );
