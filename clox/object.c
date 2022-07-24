@@ -6,12 +6,13 @@
 #include "vm.h"
 #include "table.h"
 
-void printObject( Obj* obj ) {
-    switch( obj->type ) {
-        case OBJ_STRING: printString( (ObjString*)obj ); return;
-        case OBJ_FUNCTION: printFunction( (ObjFunction*)obj ); return;
+void printObject( Obj* o ) {
+    switch( o->type ) {
+        case OBJ_STRING: printString( (ObjString*)o ); return;
+        case OBJ_FUNCTION: printFunction( (ObjFunction*)o ); return;
         case OBJ_NATIVE: printf( "<native>" ); return;
-        default: printf( "obj<%p>", obj ); return;
+        case OBJ_CLOSURE: printFunction( ((ObjClosure*)o)->function ); return;
+        default: printf( "obj<%p>", o ); return;
     }
 }
 
@@ -48,6 +49,12 @@ ObjNative* newNative( NativeFn function ) {
     ObjNative* native = (ObjNative*)allocateObject( sizeof( ObjNative ), OBJ_NATIVE );
     native->function = function;
     return native;
+}
+
+ObjClosure* newClosure(ObjFunction* function) {
+    ObjClosure* closure = (ObjClosure*)allocateObject( sizeof( ObjClosure ), OBJ_CLOSURE );
+    closure->function = function;
+    return closure;
 }
 
 static uint32_t hashStringFNV1a32( const char* key, size_t len, uint32_t hash ) {

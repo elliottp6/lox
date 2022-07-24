@@ -7,9 +7,11 @@
 #define IS_STRING(value)        isObjType(value, OBJ_STRING)
 #define IS_FUNCTION(value)      isObjType(value, OBJ_FUNCTION)
 #define IS_NATIVE(value)        isObjType(value, OBJ_NATIVE)
+#define IS_CLOSURE(value)       isObjType(value, OBJ_CLOSURE)
 #define AS_STRING(value)        ((ObjString*)AS_OBJ(value))
 #define AS_FUNCTION(value)      ((ObjFunction*)AS_OBJ(value))
 #define AS_NATIVE(value)        (((ObjNative*)AS_OBJ(value))->function)
+#define AS_CLOSURE(value)       ((ObjClosure*)AS_OBJ(value))
 #define HASH_SEED 2166136261u
 #define HASH_PRIME 16777619
 
@@ -17,6 +19,7 @@ typedef enum {
     OBJ_STRING,
     OBJ_FUNCTION,
     OBJ_NATIVE,
+    OBJ_CLOSURE,
 } ObjType;
 
 struct Obj {
@@ -47,6 +50,12 @@ typedef struct {
     NativeFn function;
 } ObjNative;
 
+// closure object
+typedef struct {
+    Obj obj;
+    ObjFunction* function;
+} ObjClosure;
+
 // objects
 void printObject( Obj* obj );
 static inline bool isObjType( Value value, ObjType type ) { return IS_OBJ(value) && AS_OBJ(value)->type == type; }
@@ -63,3 +72,6 @@ ObjFunction* newFunction();
 
 // native functions
 ObjNative* newNative( NativeFn function );
+
+// closures
+ObjClosure* newClosure( ObjFunction* function );

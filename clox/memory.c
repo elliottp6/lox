@@ -46,33 +46,23 @@ void freeArray( size_t typeSize, void* array, size_t capacity ) {
     deallocate( array, size );
 }
 
-static void freeObject( Obj* obj ) {
+static void freeObject( Obj* o ) {
     // trace object freeing
-    printObject( obj );
+    printObject( o );
     printf( "\n" );
     
     // switch on type so we can track VM memory usage
-    switch( obj->type ) {
-        case OBJ_STRING: {
-            ObjString* str = (ObjString*)obj;
-            deallocate( str, sizeof( ObjString ) + str->len );
-            break;
-        }
-
+    switch( o->type ) {        
+        case OBJ_STRING: deallocate( o, sizeof( ObjString ) + ((ObjString*)o)->len ); break;
+        case OBJ_NATIVE: deallocate( o, sizeof( ObjNative ) ); break;
+        case OBJ_CLOSURE: deallocate( o, sizeof( ObjClosure ) ); break;
         case OBJ_FUNCTION: {
-            ObjFunction* function = (ObjFunction*)obj;
-            freeChunk( &function->chunk );
-            deallocate( function, sizeof( ObjFunction ) );
+            ObjFunction* f = (ObjFunction*)o;
+            freeChunk( &f->chunk );
+            deallocate( o, sizeof( ObjFunction ) );
             break;
         }
-        
-        case OBJ_NATIVE: {
-            deallocate( obj, sizeof( ObjNative ) );
-            break;
-        }
-
-        default:
-            break; // unreachable
+        default: break; // unreachable
     }
 }
 
