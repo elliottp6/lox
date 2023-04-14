@@ -51,7 +51,7 @@ ObjNative* newNative( NativeFn function ) {
     return native;
 }
 
-ObjClosure* newClosure(ObjFunction* function) {
+ObjClosure* newClosure( ObjFunction* function ) {
     ObjClosure* closure = (ObjClosure*)allocateObject( sizeof( ObjClosure ), OBJ_CLOSURE );
     closure->function = function;
     return closure;

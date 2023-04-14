@@ -32,7 +32,7 @@ static void runtimeError( const char* format, ... ) {
     for( int i = vm.frameCount - 1; i >= 0; i-- ) {
         // print line # for stack frame
         CallFrame* frame = &vm.frames[i];
-        ObjFunction* function = frame->function;
+        ObjFunction* function = frame->closure->function;
         size_t instruction = frame->ip - function->chunk.code - 1;
         fprintf( stderr, "[line %d] in ", function->chunk.lines[instruction] );
 
@@ -79,10 +79,10 @@ Value pop() {
 
 static Value peek( int distance ) { return vm.stackTop[-1 - distance]; }
 
-static bool call( ObjFunction* function, int argCount ) {
+static bool call( ObjClosure* closure, int argCount ) {
     // sanity check argCount
-    if( argCount != function->arity ) {
-        runtimeError( "Expected %d arguments but got %d.", function->arity, argCount );
+    if( argCount != closure->function->arity ) {
+        runtimeError( "Expected %d arguments but got %d.", closure->function->arity, argCount );
         return false;
     }
 
@@ -91,8 +91,8 @@ static bool call( ObjFunction* function, int argCount ) {
 
     // push a new callFrame
     CallFrame* frame = &vm.frames[vm.frameCount++];
-    frame->function = function;
-    frame->ip = function->chunk.code;
+    frame->closure = closure;
+    frame->ip = closure->function->chunk.code;
     frame->slots = vm.stackTop - argCount - 1;
     return true;
 }
@@ -100,8 +100,14 @@ static bool call( ObjFunction* function, int argCount ) {
 static bool callValue( Value callee, int argCount ) {
     if( IS_OBJ( callee ) ) {
         switch( OBJ_TYPE( callee ) ) {
-            case OBJ_FUNCTION:
-                return call( AS_FUNCTION( callee ), argCount );
+            case OBJ_FUNCTION: {
+               runtimeError( "Encountered a raw function (should be wrapped in a closure)." );
+                //return call( AS_FUNCTION( callee ), argCount );
+                return false;
+            }
+
+            case OBJ_CLOSURE:
+                return call( AS_CLOSURE( callee ), argCount );
 
             case OBJ_NATIVE: {
                 // call native function
@@ -152,7 +158,7 @@ static InterpretResult run() {
     // macros
     #define READ_BYTE() (*frame->ip++)
     #define READ_USHORT() (frame->ip += 2, (uint16_t)((frame->ip[-2] << 8) | frame->ip[-1]))
-    #define READ_CONSTANT() (frame->function->chunk.constants.values[READ_BYTE()])
+    #define READ_CONSTANT() (frame->closure->function->chunk.constants.values[READ_BYTE()])
     #define READ_STRING() AS_STRING(READ_CONSTANT())
 
     // this macro looks strange, but it's a way to define a block that permits a semicolon at the end
@@ -172,7 +178,7 @@ static InterpretResult run() {
         // trace execution
         #ifdef DEBUG_TRACE_EXECUTION
             // print instruction info
-            disassembleInstruction( &frame->function->chunk, (size_t)(frame->ip - frame->function->chunk.code) );
+            disassembleInstruction( &frame->closure->function->chunk, (size_t)(frame->ip - frame->closure->function->chunk.code) );
 
             // print stack contents
             if( vm.stack < vm.stackTop ) {
@@ -289,7 +295,9 @@ static InterpretResult run() {
                 break;
             }
             case OP_CLOSURE: {
-                push( READ_CONSTANT() );
+                ObjFunction* function = AS_FUNCTION( READ_CONSTANT() );
+                ObjClosure* closure = newClosure( function );
+                push( OBJ_VAL( closure ) );
                 break;
             }
             case OP_RETURN: {
@@ -326,10 +334,13 @@ static InterpretResult interpret_main( ObjFunction* main ) {
     // validate args
     if( NULL == main ) return INTERPRET_COMPILE_ERROR;
 
-    // stack should only contain the main function
+    // clear stack
     resetStack();
-    push( OBJ_VAL( main ) );
-    call( main, 0 );
+
+    // wrap main in a closure
+    ObjClosure* closure = newClosure( main );
+    push( OBJ_VAL( closure ) );
+    call( closure, 0 );
 
     // run VM
     return run();

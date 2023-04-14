@@ -34,13 +34,12 @@ struct ObjString {
     char buf[]; // flexible array member
 };
 
-typedef struct { // TODO: why do we ahve to make this a typedef? otherwise compiler is not happy...
+typedef struct {
     Obj obj;
     int arity;
     Chunk chunk;
     ObjString* name;
 } ObjFunction;
-
 
 // native function object
 typedef Value (*NativeFn)(int argCount, Value* args);

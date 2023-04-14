@@ -8,7 +8,7 @@
 #define STACK_MAX (FRAMES_MAX * UINT8_COUNT) // up to 256 variables for each function call (probably overkill?)
 
 typedef struct {
-    ObjFunction* function; // current function being called
+    ObjClosure* closure; // current closure being called
     uint8_t* ip; // the instruction pointer for the caller (i.e. where to return to after we finish function execution)
     Value* slots; // points into the VM's Value stack @ the point where the function's arguments begin
 } CallFrame;
