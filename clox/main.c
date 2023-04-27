@@ -95,10 +95,12 @@ int main( int argc, const char* argv[] ) {
 
         // test
         case 't': {
-            // TEST #1: 1.2 + 3.4
+            // TEST #1
             {
-                printf( "\n--------------------TEST #1--------------------\n" );
+                printf( "\n=> CHUNK TEST #1: -((1.2 + 3.4) / 2)\n" );
                 initVM();
+
+                // write chunk
                 Chunk chunk;
                 initChunk( &chunk );
                 writeChunk( &chunk, OP_CONSTANT, 123 );
@@ -111,10 +113,16 @@ int main( int argc, const char* argv[] ) {
                 writeChunk( &chunk, OP_DIVIDE, 123 );
                 writeChunk( &chunk, OP_NEGATE, 123 );
                 writeChunk( &chunk, OP_RETURN, 123 );
+
+                // interpret
                 printf( "=> bytecode\n" );
                 disassembleChunk( &chunk );
                 Value value = interpret_chunk( &chunk );
+
+                // validate
                 bool passed = IS_NUMBER( value ) && valuesEqual( value, NUMBER_VAL( -2.3 ) );
+                
+                // done
                 freeChunk( &chunk );
                 freeVM();
                 if( passed ) {
@@ -127,33 +135,43 @@ int main( int argc, const char* argv[] ) {
                 }
             }
 
-            /*       
-            // write a constant and then pop it
-            writeChunk( &chunk, OP_CONSTANT, 123 );
-            writeChunk( &chunk, (uint8_t)addConstant( &chunk, NUMBER_VAL( 6 ) ), 123 );
-            writeChunk( &chunk, OP_POP, 123 );
+            // TEST #2
+            {
+                printf( "\n=> CHUNK TEST #2: intern & concat 2 identical strings\n" );
+                initVM();
 
-            // write two strings
-            // TODO: there's a bug here! we intern the strings OK, but they get added to the constant table in two different slots
-            // (note that the same thing happens for numerical values, too)
-            writeChunk( &chunk, OP_CONSTANT, 123 );
-            writeChunk( &chunk, (uint8_t)addConstant( &chunk, OBJ_VAL( makeString( "hi", 2 ) ) ), 123 );
-            writeChunk( &chunk, OP_CONSTANT, 123 );
-            writeChunk( &chunk, (uint8_t)addConstant( &chunk, OBJ_VAL( makeString( "hi", 2 ) ) ), 123 );
+                // write chuink
+                Chunk chunk;
+                initChunk( &chunk );
+                writeChunk( &chunk, OP_CONSTANT, 123 );
+                writeChunk( &chunk, (uint8_t)addConstant( &chunk, OBJ_VAL( makeString( "hi", 2 ) ) ), 123 );
+                writeChunk( &chunk, OP_CONSTANT, 123 );
+                writeChunk( &chunk, (uint8_t)addConstant( &chunk, OBJ_VAL( makeString( "hi", 2 ) ) ), 123 );
+                writeChunk( &chunk, OP_ADD, 123 );
+                writeChunk( &chunk, OP_RETURN, 123 );
+                printf( "=> bytecode\n" );
+                disassembleChunk( &chunk );
+                Value value = interpret_chunk( &chunk );
 
-            // concat them
-            writeChunk( &chunk, OP_ADD, 123 );
-            writeChunk( &chunk, OP_POP, 123 );
-            writeChunk( &chunk, OP_RETURN, 123 );
+                // validate
+                bool passed = IS_STRING( value ) && valuesEqual( value, OBJ_VAL( makeString( "hihi", 4 ) ) );
+                if( passed ) {
+                    printf( "SUCCESS (note: string interned OK, but constant is still duped!)\n" );
+                } else {
+                    printf( "ERROR: Expected \"hihi\", but got: " );
+                    printValue( value );
+                    printf( "\n" );
+                    return 1;
+                }
 
-            // disassemble
-            printf( "=> bytecode\n" );
-            disassembleChunk( &chunk );
+                // done w/ VM
+                freeChunk( &chunk );
+                freeVM();
+            }
 
-            // interpret
-            interpret_chunk( &chunk );
-            freeChunk( &chunk );
+            // TODO: Interpret tests
 
+            /*
             // now run something else
             // this should print 'true'
             InterpretResult result = interpret( "print !(5 - 4 > 3 * 2 == !nil);" );
