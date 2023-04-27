@@ -611,8 +611,9 @@ static void synchronize() {
 }
 
 static void returnStatement() {
+    // TODO: EP disabled this, so we can actually call "return" on top-level to avoid getting a NIL value
     // do not allow a return from top-level
-    if( TYPE_SCRIPT == current->type ) error( "Can't return from top-level code." );
+    // if( TYPE_SCRIPT == current->type ) error( "Can't return from top-level code." );
 
     // return nil
     if( match( TOKEN_SEMICOLON ) ) { emitReturn(); return; }

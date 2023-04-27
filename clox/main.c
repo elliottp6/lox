@@ -59,7 +59,7 @@ static int runFile( const char* path ) {
 int main( int argc, const char* argv[] ) {
     // dispatch on command's 1st character
     switch( argc > 1 ? argv[1][0] : '\0' ) {
-        // run
+        // run file
         case 'r': {
             if( argc < 3 ) break;
             initVM();
@@ -68,17 +68,19 @@ int main( int argc, const char* argv[] ) {
             return result;
         }
 
-
         // shell
         case 's': {
             initVM();
             char line[1024];
-            printf( "Welcome to Lox. Type 'exit' to quit.\n" );
+            printf( "Welcome to Lox. Type 'q' to quit.\n" );
             for(;;) {
                 printf( "> " );
                 if( !fgets( line, sizeof( line ), stdin ) ) { printf( "\n" ); break; }
-                if( 0 == strcmp( "exit\n", line ) ) break;
-                interpret( line );
+                if( 0 == strcmp( "q\n", line ) ) break;
+                Value value = interpret( line );
+                printf( "=> result: " );
+                printValue( value );
+                printf( "\n" );
             }
             freeVM();
             return 0;
