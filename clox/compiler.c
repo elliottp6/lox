@@ -198,9 +198,9 @@ static ObjFunction* endCompiler() {
     #ifdef DEBUG_PRINT_CODE
     if( !parser.hadError ) {
         printConstants( currentChunk() );
-        printf( "== bytecode for: " );
+        printf( "=> bytecode for: " );
         printFunction( function );
-        printf( " ==\n" );
+        printf( "\n" );
         disassembleChunk( currentChunk() );
     }
     #endif

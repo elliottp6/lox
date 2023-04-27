@@ -32,6 +32,13 @@ void printValue( Value value ) {
         case VAL_BOOL: printf( AS_BOOL( value ) ? "true" : "false" ); return;
         case VAL_NUMBER: printf( "%g", AS_NUMBER( value ) ); return;
         case VAL_OBJ: printObject( AS_OBJ( value ) ); return;
+        case VAL_ERROR: {
+            switch( AS_ERROR( value ) ) {
+                case COMPILE_ERROR: printf( "COMPILE ERROR" ); return;
+                case RUNTIME_ERROR: printf( "Runtime Error" ); return;
+                default: printf( "Unknown Error %d", AS_ERROR( value ) ); return;
+            }
+        }
     }
 }
 
@@ -42,6 +49,7 @@ bool valuesEqual( Value a, Value b ) {
         case VAL_NIL:       return true;
         case VAL_NUMBER:    return AS_NUMBER(a) == AS_NUMBER(b);
         case VAL_OBJ:       return AS_OBJ(a) == AS_OBJ(b); // reference equality (also, works for string equality due to interning)
+        case VAL_ERROR:     return AS_ERROR(a) == AS_ERROR(b);
     }
     return false; // unreachable
 }

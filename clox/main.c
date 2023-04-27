@@ -49,11 +49,11 @@ static int runFile( const char* path ) {
     if( NULL == source ) return 74;
 
     // interpret source file
-    InterpretResult result = interpret( source );
+    Value value = interpret( source );
 
     // done
     free( source );
-    return INTERPRET_COMPILE_ERROR == result ? 65 : INTERPRET_RUNTIME_ERROR == result ? 70 : 0;
+    return IS_ERROR( value ) ? 65 : 0; // return INTERPRET_COMPILE_ERROR == result ? 65 : INTERPRET_RUNTIME_ERROR == result ? 70 : 0;
 }
 
 int main( int argc, const char* argv[] ) {
@@ -95,29 +95,39 @@ int main( int argc, const char* argv[] ) {
 
         // test
         case 't': {
-            // init virtual machine
-            initVM();
+            // TEST #1: 1.2 + 3.4
+            {
+                printf( "\n--------------------TEST #1--------------------\n" );
+                initVM();
+                Chunk chunk;
+                initChunk( &chunk );
+                writeChunk( &chunk, OP_CONSTANT, 123 );
+                writeChunk( &chunk, (uint8_t)addConstant( &chunk, NUMBER_VAL( 1.2 ) ), 123 );
+                writeChunk( &chunk, OP_CONSTANT, 123 );
+                writeChunk( &chunk, (uint8_t)addConstant( &chunk, NUMBER_VAL( 3.4 ) ), 123 );
+                writeChunk( &chunk, OP_ADD, 123 );
+                writeChunk( &chunk, OP_CONSTANT, 123 );
+                writeChunk( &chunk, (uint8_t)addConstant( &chunk, NUMBER_VAL( 2 ) ), 123 );
+                writeChunk( &chunk, OP_DIVIDE, 123 );
+                writeChunk( &chunk, OP_NEGATE, 123 );
+                writeChunk( &chunk, OP_RETURN, 123 );
+                printf( "=> bytecode\n" );
+                disassembleChunk( &chunk );
+                Value value = interpret_chunk( &chunk );
+                bool passed = IS_NUMBER( value ) && valuesEqual( value, NUMBER_VAL( -2.3 ) );
+                freeChunk( &chunk );
+                freeVM();
+                if( passed ) {
+                    printf( "SUCCESS\n" );
+                } else {
+                    printf( "ERROR: Expected -2.3, but got: " );
+                    printValue( value );
+                    printf( "\n" );
+                    return 1;
+                }
+            }
 
-            // init chunk
-            Chunk chunk;
-            initChunk( &chunk );
-            
-            // 1.2 + 3.4
-            writeChunk( &chunk, OP_CONSTANT, 123 );
-            writeChunk( &chunk, (uint8_t)addConstant( &chunk, NUMBER_VAL( 1.2 ) ), 123 );
-            writeChunk( &chunk, OP_CONSTANT, 123 );
-            writeChunk( &chunk, (uint8_t)addConstant( &chunk, NUMBER_VAL( 3.4 ) ), 123 );
-            writeChunk( &chunk, OP_ADD, 123 );
-            
-            // divide by 5.6
-            writeChunk( &chunk, OP_CONSTANT, 123 );
-            writeChunk( &chunk, (uint8_t)addConstant( &chunk, NUMBER_VAL( 5.6 ) ), 123 );
-            writeChunk( &chunk, OP_DIVIDE, 123 );
-
-            // negate & print
-            writeChunk( &chunk, OP_NEGATE, 123 );
-            writeChunk( &chunk, OP_PRINT, 123 );
-            
+            /*       
             // write a constant and then pop it
             writeChunk( &chunk, OP_CONSTANT, 123 );
             writeChunk( &chunk, (uint8_t)addConstant( &chunk, NUMBER_VAL( 6 ) ), 123 );
@@ -137,7 +147,7 @@ int main( int argc, const char* argv[] ) {
             writeChunk( &chunk, OP_RETURN, 123 );
 
             // disassemble
-            printf( "== bytecode ==\n" );
+            printf( "=> bytecode\n" );
             disassembleChunk( &chunk );
 
             // interpret
@@ -263,9 +273,9 @@ int main( int argc, const char* argv[] ) {
             // test a native 'clock' function
             result = interpret( "print clock();" );
             if( INTERPRET_OK != result ) fprintf( stderr, "error - should have been able to run clock program\n" );
+            */
 
-            // done - release all the objects, which will include both versions of 'hi'
-            freeVM();
+            // done
             return 0;
         }
     }

@@ -149,7 +149,7 @@ static bool isFalsey( Value value ) {
 static InterpretResult run() {
     // if we're tracing, show it
     #ifdef DEBUG_TRACE_EXECUTION
-    printf( "== execution trace ==\n" );
+    printf( "=> execution trace\n" );
     #endif
 
     // get the current call frame
@@ -306,7 +306,11 @@ static InterpretResult run() {
                 vm.frameCount--;
 
                 // if it is the root frame: exit the program
-                if( 0 == vm.frameCount ) { pop(); return INTERPRET_OK; }
+                if( 0 == vm.frameCount ) {
+                    pop(); // pop main function
+                    push( result ); // push result of calling main
+                    return INTERPRET_OK; // signal no errors
+                }
 
                 // otherwise: set stack & frame to that of caller
                 vm.stackTop = frame->slots;
@@ -330,9 +334,9 @@ static InterpretResult run() {
     #undef BINARY_OP
 }
 
-static InterpretResult interpret_main( ObjFunction* main ) {
+static Value interpret_main( ObjFunction* main ) {
     // validate args
-    if( NULL == main ) return INTERPRET_COMPILE_ERROR;
+    if( NULL == main ) return ERROR_VAL( COMPILE_ERROR );
 
     // clear stack
     resetStack();
@@ -343,18 +347,25 @@ static InterpretResult interpret_main( ObjFunction* main ) {
     call( closure, 0 );
 
     // run VM
-    return run();
+    InterpretResult result = run();
+
+    // check for errors
+    if( INTERPRET_COMPILE_ERROR == result ) return ERROR_VAL( COMPILE_ERROR );
+    if( INTERPRET_RUNTIME_ERROR == result ) return ERROR_VAL( RUNTIME_ERROR );
+    
+    // otherwise, return what's on the stack
+    return pop();
 }
 
-InterpretResult interpret( const char* source ) {
+Value interpret( const char* source ) {
     return interpret_main( compile( source ) );
 }
 
-InterpretResult interpret_chunk( Chunk* chunk ) {
+Value interpret_chunk( Chunk* chunk ) {
     ObjFunction main;
     main.arity = 0;
     main.chunk = *chunk;
-    main.name = NULL;
+    main.name = makeString( "main", 4 );
     main.obj.next = NULL;
     main.obj.type = OBJ_FUNCTION;
     return interpret_main( &main );

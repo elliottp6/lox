@@ -49,7 +49,7 @@ void freeArray( size_t typeSize, void* array, size_t capacity ) {
 static void freeObject( Obj* o ) {
     // trace object freeing
     printObject( o );
-    printf( "\n" );
+    printf( ", " );
     
     // switch on type so we can track VM memory usage
     switch( o->type ) {        
@@ -67,7 +67,7 @@ static void freeObject( Obj* o ) {
 }
 
 void freeObjects() {
-    printf( "== free objects ==\n" );
+    printf( "=> free objects: " );
     Obj* obj = vm.objects;
     while( NULL != obj ) {
         Obj* next = obj->next;
@@ -75,4 +75,5 @@ void freeObjects() {
         obj = next;
     }
     vm.objects = NULL;
+    printf( "\n" );
 }

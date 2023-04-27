@@ -32,7 +32,7 @@ extern VM vm; // vm variable exposed to entire app
 
 void initVM();
 void freeVM();
-InterpretResult interpret( const char* source );
-InterpretResult interpret_chunk( Chunk* chunk );
+Value interpret( const char* source );
+Value interpret_chunk( Chunk* chunk );
 void push( Value value );
 Value pop();
