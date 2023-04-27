@@ -98,11 +98,13 @@ int main( int argc, const char* argv[] ) {
             // TEST #1
             {
                 printf( "\n=> CHUNK TEST #1: -((1.2 + 3.4) / 2)\n" );
-                initVM();
 
-                // write chunk
+                // init VM
+                initVM();
                 Chunk chunk;
                 initChunk( &chunk );
+
+                // write chunk
                 writeChunk( &chunk, OP_CONSTANT, 123 );
                 writeChunk( &chunk, (uint8_t)addConstant( &chunk, NUMBER_VAL( 1.2 ) ), 123 );
                 writeChunk( &chunk, OP_CONSTANT, 123 );
@@ -120,12 +122,7 @@ int main( int argc, const char* argv[] ) {
                 Value value = interpret_chunk( &chunk );
 
                 // validate
-                bool passed = IS_NUMBER( value ) && valuesEqual( value, NUMBER_VAL( -2.3 ) );
-                
-                // done
-                freeChunk( &chunk );
-                freeVM();
-                if( passed ) {
+                if( IS_NUMBER( value ) && valuesEqual( value, NUMBER_VAL( -2.3 ) ) ) {
                     printf( "SUCCESS\n" );
                 } else {
                     printf( "ERROR: Expected -2.3, but got: " );
@@ -133,16 +130,22 @@ int main( int argc, const char* argv[] ) {
                     printf( "\n" );
                     return 1;
                 }
+
+                // free VM
+                freeChunk( &chunk );
+                freeVM();
             }
 
             // TEST #2
             {
                 printf( "\n=> CHUNK TEST #2: intern & concat 2 identical strings\n" );
-                initVM();
 
-                // write chuink
+                // init VM
+                initVM();
                 Chunk chunk;
                 initChunk( &chunk );
+
+                // write chuink
                 writeChunk( &chunk, OP_CONSTANT, 123 );
                 writeChunk( &chunk, (uint8_t)addConstant( &chunk, OBJ_VAL( makeString( "hi", 2 ) ) ), 123 );
                 writeChunk( &chunk, OP_CONSTANT, 123 );
@@ -154,8 +157,7 @@ int main( int argc, const char* argv[] ) {
                 Value value = interpret_chunk( &chunk );
 
                 // validate
-                bool passed = IS_STRING( value ) && valuesEqual( value, OBJ_VAL( makeString( "hihi", 4 ) ) );
-                if( passed ) {
+                if( IS_STRING( value ) && valuesEqual( value, OBJ_VAL( makeString( "hihi", 4 ) ) ) ) {
                     printf( "SUCCESS (note: string interned OK, but constant is still duped!)\n" );
                 } else {
                     printf( "ERROR: Expected \"hihi\", but got: " );
@@ -164,7 +166,7 @@ int main( int argc, const char* argv[] ) {
                     return 1;
                 }
 
-                // done w/ VM
+                // free VM
                 freeChunk( &chunk );
                 freeVM();
             }
