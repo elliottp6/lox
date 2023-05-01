@@ -99,7 +99,7 @@ int main( int argc, const char* argv[] ) {
         case 't': {
             // TEST #1
             {
-                printf( "\n=> CHUNK TEST #1: -((1.2 + 3.4) / 2)\n" );
+                printf( "\n=> TEST #1: -((1.2 + 3.4) / 2)\n" );
 
                 // init VM
                 initVM();
@@ -130,6 +130,7 @@ int main( int argc, const char* argv[] ) {
                     printf( "ERROR: Expected -2.3, but got: " );
                     printValue( value );
                     printf( "\n" );
+                    freeVM();
                     return 1;
                 }
 
@@ -140,7 +141,7 @@ int main( int argc, const char* argv[] ) {
 
             // TEST #2
             {
-                printf( "\n=> CHUNK TEST #2: intern & concat 2 identical strings\n" );
+                printf( "\n=> TEST #2: intern & concat 2 identical strings\n" );
 
                 // init VM
                 initVM();
@@ -162,9 +163,10 @@ int main( int argc, const char* argv[] ) {
                 if( IS_STRING( value ) && valuesEqual( value, OBJ_VAL( makeString( "hihi", 4 ) ) ) ) {
                     printf( "SUCCESS (note: string interned OK, but constant is still duped!)\n" );
                 } else {
-                    printf( "ERROR: Expected \"hihi\", but got: " );
+                    printf( "ERROR: Expected 'hihi', but got: " );
                     printValue( value );
                     printf( "\n" );
+                    freeVM();
                     return 1;
                 }
 
@@ -173,46 +175,64 @@ int main( int argc, const char* argv[] ) {
                 freeVM();
             }
 
-            // TODO: Interpret tests
+            // TEST #3
+            {
+                printf( "\n=> TEST #3: interpret !(5 - 4 > 3 * 2 == !nil)\n" );
+                initVM();
+                Value value = interpret( "return !(5 - 4 > 3 * 2 == !nil);" );
+                if( IS_BOOL( value ) && valuesEqual( value, BOOL_VAL( true ) ) ) {
+                    printf( "SUCCESS\n" );
+                } else {
+                    printf( "ERROR: Expected 'true', but got: " );
+                    printValue( value );
+                    printf( "\n" );
+                    freeVM();
+                    return 1;
+                }
+                freeVM();
+            }
 
-            /*
-            // now run something else
-            // this should print 'true'
-            InterpretResult result = interpret( "print !(5 - 4 > 3 * 2 == !nil);" );
-            if( INTERPRET_OK != result ) fprintf( stderr, "test failed\n" );
+            // TEST #4
+            {
+                printf( "\n=> TEST #4: TEST STRING INTERNING\n" );
+                initVM();
 
-            // test string interning (should have some addresses)
-            ObjString* s1 = concatStrings( "hello", 5, " world", 6 );
-            printString( s1 );
-            printf( "\n" );
+                // create string objects "hello world" and "hi"
+                size_t init_load = vm.strings.load;
+                concatStrings( "hello", 5, " world", 6 );
+                concatStrings( "hello", 5, " world", 6 );
+                makeString( "hi", 2 );
 
-            ObjString* s2 = concatStrings( "hello", 5, " world", 6 );
-            printString( s2 );
-            printf( "\n" );
-
-            ObjString* s3 = makeString( "hi", 2 );
-            printString( s3 );
-            printf( "\n" );
-
-            // print table load (should be 2)
-            printf( "vm.strings.load: %ld\n", vm.strings.load );
-
-            // now delete 's3' and see what happens
-            tableDelete( &vm.strings, s3 );
-
-            // print table load (should be 2)
-            printf( "after deleting 'hi' - vm.strings.load: %ld\n", vm.strings.load ); 
-
-            // recreate string (new address because we removed it from the hash table)
-            ObjString* s4 = makeString( "hi", 2 );
-            printString( s4 );
-            printf( "\n" );
-
-            // load is still 2
-            printf( "vm.strings.load: %ld\n", vm.strings.load );
+                // test # of strings we actually created in the VM - it should just be two
+                if( 2 == vm.strings.load - init_load ) {
+                    printf( "SUCCESS\n" );
+                } else {
+                    printf( "ERROR: Expected 2 strings, but got: %zu strings\n", vm.strings.load );
+                    freeVM();
+                    return 1;
+                }
+                freeVM();
+            }
 
             // test variable assignment precedence
-            InterpretResult result2 = interpret( "var x = 1; print x = 3 + 4;" ); // should be fine since 'print' is PRECEDENCE_NONE which is above assignment
+            {
+                initVM();
+                printf( "\n=> TEST #5: TEST VARIABLE ASSIGNMENT PRECEDENCE\n" );
+                Value value = interpret( "var x = 1; return x = 3 + 4;" ); // should be fine since 'return' is PRECEDENCE_NONE which is above assignment
+                if( IS_NUMBER( value ) && valuesEqual( value, NUMBER_VAL( 7 ) ) ) {
+                    printf( "SUCCESS\n" );
+                } else {
+                    printf( "ERROR: expected 7, but got: " );
+                    printValue( value );
+                    printf( "\n" );
+                    freeVM();
+                    return 1;
+                }
+                freeVM();
+            }
+
+            /*
+            // test variable assignment precedence
             InterpretResult result3 = interpret( "var x = 1; print 2 * x = 3 + 4;" ); // should give a compiler error since 2 * x calls variable with PRECEDENCE_UNARY but "=" is PREDENCE_ASSIGNMENT
             if( INTERPRET_OK != result2 || INTERPRET_COMPILE_ERROR != result3 ) fprintf( stderr, "test2 failed\n" );
 
