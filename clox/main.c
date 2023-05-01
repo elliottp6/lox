@@ -97,9 +97,9 @@ int main( int argc, const char* argv[] ) {
 
         // test
         case 't': {
-            // TEST #1
+            // TEST
             {
-                printf( "\n=> TEST #1: -((1.2 + 3.4) / 2)\n" );
+                printf( "\n=> TEST -((1.2 + 3.4) / 2)\n" );
 
                 // init VM
                 initVM();
@@ -139,9 +139,9 @@ int main( int argc, const char* argv[] ) {
                 freeVM();
             }
 
-            // TEST #2
+            // TEST
             {
-                printf( "\n=> TEST #2: intern & concat 2 identical strings\n" );
+                printf( "\n=> TEST intern & concat 2 identical strings\n" );
 
                 // init VM
                 initVM();
@@ -175,9 +175,9 @@ int main( int argc, const char* argv[] ) {
                 freeVM();
             }
 
-            // TEST #3
+            // TEST
             {
-                printf( "\n=> TEST #3: interpret !(5 - 4 > 3 * 2 == !nil)\n" );
+                printf( "\n=> TEST !(5 - 4 > 3 * 2 == !nil)\n" );
                 initVM();
                 Value value = interpret( "return !(5 - 4 > 3 * 2 == !nil);" );
                 if( IS_BOOL( value ) && valuesEqual( value, BOOL_VAL( true ) ) ) {
@@ -192,9 +192,9 @@ int main( int argc, const char* argv[] ) {
                 freeVM();
             }
 
-            // TEST #4
+            // TEST
             {
-                printf( "\n=> TEST #4: TEST STRING INTERNING\n" );
+                printf( "\n=> TEST STRING INTERNING\n" );
                 initVM();
 
                 // create string objects "hello world" and "hi"
@@ -217,7 +217,7 @@ int main( int argc, const char* argv[] ) {
             // test variable assignment precedence
             {
                 initVM();
-                printf( "\n=> TEST #5: TEST VARIABLE ASSIGNMENT PRECEDENCE\n" );
+                printf( "\n=> TEST ASSIGNMENT PRECEDENCE: var x = 1; return x = 3 + 4;\n" );
                 Value value = interpret( "var x = 1; return x = 3 + 4;" ); // should be fine since 'return' is PRECEDENCE_NONE which is above assignment
                 if( IS_NUMBER( value ) && valuesEqual( value, NUMBER_VAL( 7 ) ) ) {
                     printf( "SUCCESS\n" );
@@ -231,22 +231,38 @@ int main( int argc, const char* argv[] ) {
                 freeVM();
             }
 
-            /*
-            // test variable assignment precedence
-            InterpretResult result3 = interpret( "var x = 1; print 2 * x = 3 + 4;" ); // should give a compiler error since 2 * x calls variable with PRECEDENCE_UNARY but "=" is PREDENCE_ASSIGNMENT
-            if( INTERPRET_OK != result2 || INTERPRET_COMPILE_ERROR != result3 ) fprintf( stderr, "test2 failed\n" );
+            // test incorrect variable assignment precedence
+            {
+                initVM();
+                printf( "\n=> TEST INCORRECT ASSIGNMENT PRECEDENCE: var x = 1; return 2 * x = 3 + 4;\n" );
+                Value value = interpret( "var x = 1; return 2 * x = 3 + 4;" ); // should be fine since 'return' is PRECEDENCE_NONE which is above assignment
+                if( IS_ERROR( value ) && valuesEqual( value, ERROR_VAL( COMPILE_ERROR ) ) ) {
+                    printf( "SUCCESS\n" );
+                } else {
+                    printf( "ERROR: expected COMPILE_ERROR, but got: " );
+                    printValue( value );
+                    printf( "\n" );
+                    freeVM();
+                    return 1;
+                }
+                freeVM();
+            }
 
+            // test creation & access of local varibles
+            // TODO
+
+            /*
             // test creation of local variables
             result = interpret( "{ var x = 5; var y = 6; }" );
             if( INTERPRET_OK != result ) fprintf( stderr, "local varible test failed\n" );
 
-            // test re-definition of local variable
-            result = interpret( "{ var x = 5; var x = 6; }" );
-            if( INTERPRET_COMPILE_ERROR != result ) fprintf( stderr, "variable redefinition test failed\n" );
-
             // test accessing local variable
             result = interpret( "{ var x = 8; print x; }" );
             if( INTERPRET_OK != result ) fprintf( stderr, "accessing local varible test failed\n" );
+
+            // test re-definition of local variable
+            result = interpret( "{ var x = 5; var x = 6; }" );
+            if( INTERPRET_COMPILE_ERROR != result ) fprintf( stderr, "variable redefinition test failed\n" );
 
             // test accessing variable within its own initializer
             result = interpret( "{ var x = x; }" );
