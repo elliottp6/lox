@@ -249,30 +249,58 @@ int main( int argc, const char* argv[] ) {
             }
 
             // test creation & access of local varibles
-            // TODO
+            {
+                initVM();
+                printf( "\n=> TEST CREATION/ACCESS OF LOCALS: { var x = 5; return x; }\n" );
+                Value value = interpret( "{ var x = 5; return x; }" );
+                if( IS_NUMBER( value ) && valuesEqual( value, NUMBER_VAL( 5 ) ) ) {
+                    printf( "SUCCESS\n" );
+                } else {
+                    printf( "ERROR: expected 5, but got: " );
+                    printValue( value );
+                    printf( "\n" );
+                    freeVM();
+                    return 1;
+                }
+                freeVM();
+            }
+
+            // test redefining local
+            {
+                initVM();
+                printf( "\n=> TEST REDEFINING LOCAL: { var x = 5; var x = 6; }\n" );
+                Value value = interpret( "{ var x = 5; var x = 6; }" );
+                if( IS_ERROR( value ) && valuesEqual( value, ERROR_VAL( COMPILE_ERROR ) ) ) {
+                    printf( "SUCCESS\n" );
+                } else {
+                    printf( "ERROR: expected COMPILE_ERROR, but got: " );
+                    printValue( value );
+                    printf( "\n" );
+                    freeVM();
+                    return 1;
+                }
+                freeVM();
+            }
+
+            // test accessing variable within initializer
+            // note that this actually should work by referring to the OUTER scoped x, but lox does not support this
+            {
+                initVM();
+                printf( "\n=> TEST ACCESSING VARIABLE IN INITIALIZER: var x = 1; { var x = x; }\n" );
+                Value value = interpret( "var x = 1; { var x = x; }" );
+                if( IS_ERROR( value ) && valuesEqual( value, ERROR_VAL( COMPILE_ERROR ) ) ) {
+                    printf( "SUCCESS\n" );
+                } else {
+                    printf( "ERROR: expected COMPILE_ERROR, but got: " );
+                    printValue( value );
+                    printf( "\n" );
+                    freeVM();
+                    return 1;
+                }
+                freeVM();
+            }
 
             /*
-            // test creation of local variables
-            result = interpret( "{ var x = 5; var y = 6; }" );
-            if( INTERPRET_OK != result ) fprintf( stderr, "local varible test failed\n" );
-
-            // test accessing local variable
-            result = interpret( "{ var x = 8; print x; }" );
-            if( INTERPRET_OK != result ) fprintf( stderr, "accessing local varible test failed\n" );
-
-            // test re-definition of local variable
-            result = interpret( "{ var x = 5; var x = 6; }" );
-            if( INTERPRET_COMPILE_ERROR != result ) fprintf( stderr, "variable redefinition test failed\n" );
-
-            // test accessing variable within its own initializer
-            result = interpret( "{ var x = x; }" );
-            if( INTERPRET_COMPILE_ERROR != result ) fprintf( stderr, "error - variable allowed to access itself within its initializer! (reads stale value from stack, which is leftover from VM's last execution)\n" );
-
-            // test initializing variable with a variable of same name but higher scope
-            // note that LOX does not support this (at the moment), but it probably should eventually
-            result = interpret( "var x = 1; { var x = x; print x; }" );
-            if( INTERPRET_COMPILE_ERROR != result ) fprintf( stderr, "error - was able to initialize varible with a same-named higher-scoped variable\n" );
-
             // test a simple if statement
             result = interpret( "if( true ) print \"CORRECT!\"; if( false ) print \"ERROR!\";" );
             if( INTERPRET_OK != result ) fprintf( stderr, "error - could not compile a set of if statements\n" );
