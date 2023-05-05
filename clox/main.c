@@ -311,24 +311,23 @@ int main( int argc, const char* argv[] ) {
                 NUMBER_VAL( 1618 ) ) ) { freeVM(); return 1; }
 
             // test calling function with too many parameters
-            // TODO: error was "Expected 1 arguments but got 2", but we experienced a SEGMENTATION_FAULT, oh no!! Why?
-            //if( !interpret_test(
-            //    "FUNCTION CALL WITH TOO MANY PARAMETERS",
-            //    "return double( 1, 2 );",
-            //    OBJ_VAL( RUNTIME_ERROR ) ) ) { freeVM(); return 1; }
+            if( !interpret_test(
+                "FUNCTION CALL WITH TOO MANY PARAMETERS",
+                "return double( 1, 2 );",
+                ERROR_VAL( RUNTIME_ERROR ) ) ) { freeVM(); return 1; }
 
-            /*
-            // broken program for testing stack-trace printing
-            result = interpret(
+            // test broken program for testing stack-trace printing
+            // (you need to visually ensure the stack trace is correct)
+            if( !interpret_test(
+                "RUNTIME ERROR SHOULD PRINT STACK TRACE",
                 "fun a() { b(); }\n"
                 "fun b() { c(); }\n"
                 "fun c() {\n"
                 "   c(\"too\", \"many\");\n"
                 "}\n"
                 "\n"
-                "a();\n" );
-            if( INTERPRET_RUNTIME_ERROR != result ) fprintf( stderr, "error - should have crashed due too a nested call w/ too many args" );
-            */
+                "a();\n",
+                ERROR_VAL( RUNTIME_ERROR ) ) ) { freeVM(); return 1; }
 
             // done
             freeVM();
