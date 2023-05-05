@@ -56,6 +56,29 @@ static int runFile( const char* path ) {
     return IS_ERROR( value ) ? 65 : 0; // return INTERPRET_COMPILE_ERROR == result ? 65 : INTERPRET_RUNTIME_ERROR == result ? 70 : 0;
 }
 
+bool interpret_test( char* title, char* source, Value expected ) {
+    // start the VM
+    initVM();
+
+    // run the test
+    printf( "\n=> %s\n", title );
+    Value value = interpret( source );
+    bool result = valuesEqual( value, expected );
+    if( result ) {
+        printf( "SUCCESS\n" );
+    } else {
+        printf( "ERROR: expected " );
+        printValue( expected );
+        printf( " but got " );
+        printValue( value );
+        printf( "\n" );
+    }
+
+    // free the VM
+    freeVM();
+    return result;
+}
+
 int main( int argc, const char* argv[] ) {
     // dispatch on command's 1st character
     switch( argc > 1 ? argv[1][0] : '\0' ) {
@@ -177,23 +200,6 @@ int main( int argc, const char* argv[] ) {
 
             // TEST
             {
-                printf( "\n=> TEST !(5 - 4 > 3 * 2 == !nil)\n" );
-                initVM();
-                Value value = interpret( "return !(5 - 4 > 3 * 2 == !nil);" );
-                if( IS_BOOL( value ) && valuesEqual( value, BOOL_VAL( true ) ) ) {
-                    printf( "SUCCESS\n" );
-                } else {
-                    printf( "ERROR: Expected 'true', but got: " );
-                    printValue( value );
-                    printf( "\n" );
-                    freeVM();
-                    return 1;
-                }
-                freeVM();
-            }
-
-            // TEST
-            {
                 printf( "\n=> TEST STRING INTERNING\n" );
                 initVM();
 
@@ -214,97 +220,50 @@ int main( int argc, const char* argv[] ) {
                 freeVM();
             }
 
+            // test simple expression
+            if( !interpret_test(
+                "TEST SIMPLE EXPRESSION",
+                "return !(5 - 4 > 3 * 2 == !nil);",
+                BOOL_VAL( true ) ) ) return 1;
+
             // test variable assignment precedence
-            {
-                initVM();
-                printf( "\n=> TEST ASSIGNMENT PRECEDENCE: var x = 1; return x = 3 + 4;\n" );
-                Value value = interpret( "var x = 1; return x = 3 + 4;" ); // should be fine since 'return' is PRECEDENCE_NONE which is above assignment
-                if( IS_NUMBER( value ) && valuesEqual( value, NUMBER_VAL( 7 ) ) ) {
-                    printf( "SUCCESS\n" );
-                } else {
-                    printf( "ERROR: expected 7, but got: " );
-                    printValue( value );
-                    printf( "\n" );
-                    freeVM();
-                    return 1;
-                }
-                freeVM();
-            }
+            if( !interpret_test(
+                "TEST ASSIGNMENT PRECEDENCE",
+                "var x = 1; return x = 3 + 4;", // should be fine since 'return' is PRECEDENCE_NONE which is above assignment
+                NUMBER_VAL( 7 ) ) ) return 1;
 
             // test incorrect variable assignment precedence
-            {
-                initVM();
-                printf( "\n=> TEST INCORRECT ASSIGNMENT PRECEDENCE: var x = 1; return 2 * x = 3 + 4;\n" );
-                Value value = interpret( "var x = 1; return 2 * x = 3 + 4;" ); // should be fine since 'return' is PRECEDENCE_NONE which is above assignment
-                if( IS_ERROR( value ) && valuesEqual( value, ERROR_VAL( COMPILE_ERROR ) ) ) {
-                    printf( "SUCCESS\n" );
-                } else {
-                    printf( "ERROR: expected COMPILE_ERROR, but got: " );
-                    printValue( value );
-                    printf( "\n" );
-                    freeVM();
-                    return 1;
-                }
-                freeVM();
-            }
+            if( !interpret_test(
+                "TEST INCORRECT ASSIGNMENT PRECEDENCE",
+                "var x = 1; return 2 * x = 3 + 4;",
+                ERROR_VAL( COMPILE_ERROR ) ) ) return 1;
 
-            // test creation & access of local varibles
-            {
-                initVM();
-                printf( "\n=> TEST CREATION/ACCESS OF LOCALS: { var x = 5; return x; }\n" );
-                Value value = interpret( "{ var x = 5; return x; }" );
-                if( IS_NUMBER( value ) && valuesEqual( value, NUMBER_VAL( 5 ) ) ) {
-                    printf( "SUCCESS\n" );
-                } else {
-                    printf( "ERROR: expected 5, but got: " );
-                    printValue( value );
-                    printf( "\n" );
-                    freeVM();
-                    return 1;
-                }
-                freeVM();
-            }
+            // test local variable
+            if( !interpret_test(
+                "TEST LOCAL VARIABLE",
+                "{ var x = 5; return x; }",
+                NUMBER_VAL( 5 ) ) ) return 1;
 
-            // test redefining local
-            {
-                initVM();
-                printf( "\n=> TEST REDEFINING LOCAL: { var x = 5; var x = 6; }\n" );
-                Value value = interpret( "{ var x = 5; var x = 6; }" );
-                if( IS_ERROR( value ) && valuesEqual( value, ERROR_VAL( COMPILE_ERROR ) ) ) {
-                    printf( "SUCCESS\n" );
-                } else {
-                    printf( "ERROR: expected COMPILE_ERROR, but got: " );
-                    printValue( value );
-                    printf( "\n" );
-                    freeVM();
-                    return 1;
-                }
-                freeVM();
-            }
+            // test redefining local variable
+            if( !interpret_test(
+                "TEST REDEFINING LOCAL VARIABLE",
+                "{ var x = 5; var x = 6; }",
+                ERROR_VAL( COMPILE_ERROR ) ) ) return 1;
 
             // test accessing variable within initializer
             // note that this actually should work by referring to the OUTER scoped x, but lox does not support this
-            {
-                initVM();
-                printf( "\n=> TEST ACCESSING VARIABLE IN INITIALIZER: var x = 1; { var x = x; }\n" );
-                Value value = interpret( "var x = 1; { var x = x; }" );
-                if( IS_ERROR( value ) && valuesEqual( value, ERROR_VAL( COMPILE_ERROR ) ) ) {
-                    printf( "SUCCESS\n" );
-                } else {
-                    printf( "ERROR: expected COMPILE_ERROR, but got: " );
-                    printValue( value );
-                    printf( "\n" );
-                    freeVM();
-                    return 1;
-                }
-                freeVM();
-            }
+            if( !interpret_test(
+                "TEST ACCESSING VARIABLE IN INITIALIZER",
+                "var x = 1; { var x = x; }",
+                ERROR_VAL( COMPILE_ERROR ) ) ) return 1;
+
+            // test if statment
+            if( !interpret_test(
+                "TEST IF STATEMENT",
+                "if( true ) return 5; if( false ) return 0;",
+                NUMBER_VAL( 5 ) ) ) return 1;
 
             /*
-            // test a simple if statement
-            result = interpret( "if( true ) print \"CORRECT!\"; if( false ) print \"ERROR!\";" );
-            if( INTERPRET_OK != result ) fprintf( stderr, "error - could not compile a set of if statements\n" );
-
             // test if-else statements
             result = interpret( "if( true ) print \"CORRECT!\"; else print \"ERROR!\"; if( false ) print \"ERROR!\"; else print \"CORRECT!\";" );
             if( INTERPRET_OK != result ) fprintf( stderr, "error - could not compile a set of if-else statements\n" );
