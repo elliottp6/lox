@@ -11,8 +11,8 @@
 VM vm; // global variable!
 
 // a simple native function
-static Value clockNative( int argCount, Value* args ) {
-    return NUMBER_VAL( 1618 ); // NUMBER_VAL( (double)clock() / CLOCKS_PER_SEC );
+static Value testNative( int argCount, Value* args ) {
+    return NUMBER_VAL( 1618 );
 }
 
 static void resetStack() {
@@ -133,7 +133,7 @@ void initVM() {
     vm.objects = NULL;
     initTable( &vm.globals );
     initTable( &vm.strings );
-    defineNative( "clock", clockNative );
+    defineNative( "testNative", testNative );
 }
 
 void freeVM() {

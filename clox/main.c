@@ -304,6 +304,12 @@ int main( int argc, const char* argv[] ) {
                 "fun double( str ) { return str + str; } var doubled = double( return_hi() ); return doubled;",
                 OBJ_VAL( makeString( "hihi", 4 ) ) ) ) { freeVM(); return 1; }
 
+            // test calling a native 'testNative' function
+            if( !interpret_test(
+                "CALL NATIVE FUNCTION",
+                "return testNative();",
+                NUMBER_VAL( 1618 ) ) ) { freeVM(); return 1; }
+
             // test calling function with too many parameters
             // TODO: error was "Expected 1 arguments but got 2", but we experienced a SEGMENTATION_FAULT, oh no!! Why?
             //if( !interpret_test(
@@ -322,14 +328,6 @@ int main( int argc, const char* argv[] ) {
                 "\n"
                 "a();\n" );
             if( INTERPRET_RUNTIME_ERROR != result ) fprintf( stderr, "error - should have crashed due too a nested call w/ too many args" );
-
-            // function which actually returns something
-            result = interpret( "fun add1( x ) { return x + 1; } print add1( 2 ); " );
-            if( INTERPRET_OK != result ) fprintf( stderr, "error - should have been able to interpret simple function w/ return value\n" );
-
-            // test a native 'clock' function
-            result = interpret( "print clock();" );
-            if( INTERPRET_OK != result ) fprintf( stderr, "error - should have been able to run clock program\n" );
             */
 
             // done
