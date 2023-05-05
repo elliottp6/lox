@@ -57,13 +57,12 @@ static int runFile( const char* path ) {
 }
 
 bool interpret_test( char* title, char* source, Value expected ) {
-    // start the VM
-    initVM();
-
-    // run the test
+    // run test
     printf( "\n=> %s\n", title );
     Value value = interpret( source );
     bool result = valuesEqual( value, expected );
+
+    // print result
     if( result ) {
         printf( "SUCCESS\n" );
     } else {
@@ -73,9 +72,6 @@ bool interpret_test( char* title, char* source, Value expected ) {
         printValue( value );
         printf( "\n" );
     }
-
-    // free the VM
-    freeVM();
     return result;
 }
 
@@ -220,86 +216,102 @@ int main( int argc, const char* argv[] ) {
                 freeVM();
             }
 
+            // build VM for interpret tests
+            initVM();
+
             // test simple expression
             if( !interpret_test(
                 "TEST SIMPLE EXPRESSION",
                 "return !(5 - 4 > 3 * 2 == !nil);",
-                BOOL_VAL( true ) ) ) return 1;
+                BOOL_VAL( true ) ) ) { freeVM(); return 1; }
 
             // test variable assignment precedence
             if( !interpret_test(
                 "TEST ASSIGNMENT PRECEDENCE",
                 "var x = 1; return x = 3 + 4;", // should be fine since 'return' is PRECEDENCE_NONE which is above assignment
-                NUMBER_VAL( 7 ) ) ) return 1;
+                NUMBER_VAL( 7 ) ) ) { freeVM(); return 1; }
 
             // test incorrect variable assignment precedence
             if( !interpret_test(
                 "TEST INCORRECT ASSIGNMENT PRECEDENCE",
                 "var x = 1; return 2 * x = 3 + 4;",
-                ERROR_VAL( COMPILE_ERROR ) ) ) return 1;
+                ERROR_VAL( COMPILE_ERROR ) ) ) { freeVM(); return 1; }
 
             // test local variable
             if( !interpret_test(
                 "TEST LOCAL VARIABLE",
                 "{ var x = 5; return x; }",
-                NUMBER_VAL( 5 ) ) ) return 1;
+                NUMBER_VAL( 5 ) ) ) { freeVM(); return 1; }
 
             // test redefining local variable
             if( !interpret_test(
                 "TEST REDEFINING LOCAL VARIABLE",
                 "{ var x = 5; var x = 6; }",
-                ERROR_VAL( COMPILE_ERROR ) ) ) return 1;
+                ERROR_VAL( COMPILE_ERROR ) ) ) { freeVM(); return 1; }
 
             // test accessing variable within initializer
             // note that this actually should work by referring to the OUTER scoped x, but lox does not support this
             if( !interpret_test(
                 "TEST ACCESSING VARIABLE IN INITIALIZER",
                 "var x = 1; { var x = x; }",
-                ERROR_VAL( COMPILE_ERROR ) ) ) return 1;
+                ERROR_VAL( COMPILE_ERROR ) ) ) { freeVM(); return 1; }
 
             // test if statment
             if( !interpret_test(
                 "TEST IF STATEMENT",
                 "if( true ) return 5; if( false ) return 0;",
-                NUMBER_VAL( 5 ) ) ) return 1;
+                NUMBER_VAL( 5 ) ) ) { freeVM(); return 1; }
+
+            // test if-else statment
+            if( !interpret_test(
+                "TEST IF-ELSE STATEMENT",
+                "if( false ) return 5; else return 0;",
+                NUMBER_VAL( 0 ) ) ) { freeVM(); return 1; }
+            
+            // test logical and
+            if( !interpret_test(
+                "TEST LOGICAL AND",
+                "if( true and false ) return 1; else return \"OK\";",
+                OBJ_VAL( makeString( "OK", 2 ) ) ) ) { freeVM(); return 1; }
+
+            // test logical or
+            if( !interpret_test(
+                "TEST LOGICAL OR",
+                "return true or false;",
+                BOOL_VAL( true ) ) ) { freeVM(); return 1; }
+
+            // test while loop
+            if( !interpret_test(
+                "WHILE LOOP",
+                "{ var i = 0; while( i < 3 ) { i = i + 1; } return i; }",
+                NUMBER_VAL( 3 ) ) ) { freeVM(); return 1; }
+
+            // test for loop
+            if( !interpret_test(
+                "FOR LOOP",
+                "{ var k = 0; for( var i = 0; i < 4; i = i + 1 ) { k = k + i; } return k; }",
+                NUMBER_VAL( 6 ) ) ) { freeVM(); return 1; }
+
+            // test function
+            if( !interpret_test(
+                "FUNCTION",
+                "fun return_hi() { return \"hi\"; } return return_hi();",
+                OBJ_VAL( makeString( "hi", 2 ) ) ) ) { freeVM(); return 1; }
+
+            // test function with parameters (note that we can use 'return_hi' from before)
+            if( !interpret_test(
+                "FUNCTION WITH PARAMETERS",
+                "fun double( str ) { return str + str; } var doubled = double( return_hi() ); return doubled;",
+                OBJ_VAL( makeString( "hihi", 4 ) ) ) ) { freeVM(); return 1; }
+
+            // test calling function with too many parameters
+            // TODO: error was "Expected 1 arguments but got 2", but we experienced a SEGMENTATION_FAULT, oh no!! Why?
+            //if( !interpret_test(
+            //    "FUNCTION CALL WITH TOO MANY PARAMETERS",
+            //    "return double( 1, 2 );",
+            //    OBJ_VAL( RUNTIME_ERROR ) ) ) { freeVM(); return 1; }
 
             /*
-            // test if-else statements
-            result = interpret( "if( true ) print \"CORRECT!\"; else print \"ERROR!\"; if( false ) print \"ERROR!\"; else print \"CORRECT!\";" );
-            if( INTERPRET_OK != result ) fprintf( stderr, "error - could not compile a set of if-else statements\n" );
-
-            // logical and
-            result = interpret( "if( true and false ) print \"ERROR!\"; else print \"CORRECT\";" );
-            if( INTERPRET_OK != result ) fprintf( stderr, "error - could not compile logical and\n" );
-
-            // logical or
-            result = interpret( "if( true or false ) print \"CORRECT!\"; else print \"ERROR\";" );
-            if( INTERPRET_OK != result ) fprintf( stderr, "error - could not compile logical or\n" );
-
-            // while
-            result = interpret( "{ var i = 0; while( i < 3 ) { print i; i = i + 1; } }" );
-            if( INTERPRET_OK != result ) fprintf( stderr, "error - could not compile while statement\n" );
-
-            // for loop (no content)
-            result = interpret( "for( var i = 0; i < 3; i = i + 1 ) print i;" );
-            if( INTERPRET_OK != result ) fprintf( stderr, "error - could not compile for statement\n" );
-
-            // function declaration
-            result = interpret( "fun say_hi() { print \"hi\"; } print say_hi;" );
-            if( INTERPRET_OK != result ) fprintf( stderr, "error - could not compile function declaration\n" );
-
-            // function declaration w/ parameters
-            result = interpret( "fun say_hi( text1, text2 ) { print text1; print text2; } print say_hi;" );
-            if( INTERPRET_OK != result ) fprintf( stderr, "error - could not compile function declaration w/ parameters\n" );
-
-            // function call w/ 1 argument, but CANNOT return yet, so it'll never print the my_func( 7 )!
-            result = interpret( "fun my_func( x ) { print x; } my_func( 6 ); my_func( 7 );" );
-            if( INTERPRET_RUNTIME_ERROR == result ) fprintf( stderr, "error - could not execute function call w/ parameter\n" );
-
-            // function call w/ 1 argument, but CANNOT return yet, so it'll never print the my_func( 7 )!
-            result = interpret( "fun my_func( x ) { print x; } my_func( 6, 7 );" );
-            if( INTERPRET_RUNTIME_ERROR != result ) fprintf( stderr, "error - wrong # of function params should throw an error, but did not\n" );
-
             // broken program for testing stack-trace printing
             result = interpret(
                 "fun a() { b(); }\n"
@@ -321,6 +333,7 @@ int main( int argc, const char* argv[] ) {
             */
 
             // done
+            freeVM();
             return 0;
         }
     }
