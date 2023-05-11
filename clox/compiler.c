@@ -45,6 +45,12 @@ typedef struct {
     int depth;
 } Local;
 
+// closed-over variables
+typedef struct {
+    uint8_t index;
+    bool isLocal;
+} Upvalue;
+
 // type of function the compiler is compiling
 typedef enum {
     TYPE_FUNCTION,
@@ -56,8 +62,9 @@ typedef struct Compiler {
     struct Compiler* enclosing; // the parent function's compiler
     ObjFunction* function; // current function being compiled
     FunctionType type; // type of current function being compiled
-    Local locals[UINT8_COUNT];
     int localCount, scopeDepth;
+    Local locals[UINT8_COUNT];
+    Upvalue upvalues[UINT8_COUNT];
 } Compiler;
 
 // globals 
@@ -344,6 +351,34 @@ static int resolveLocal( Compiler* compiler, Token* name ) {
     return -1; // we couldn't find it, so it must be a global variable
 }
 
+static int addUpvalue( Compiler* compiler, uint8_t index, bool isLocal ) {
+    // check to see if there's already an upvalue for this
+    int upvalueCount = compiler->function->upvalueCount;
+    for( int i = 0; i < upvalueCount; i++ ) {
+        Upvalue* upvalue = &compiler->upvalues[i];
+        if( upvalue->index == index && upvalue->isLocal == isLocal ) return i;
+    }
+
+    // otherwise: add the upvalue 
+    if( UINT8_COUNT == upvalueCount ) { error( "Too many closure variables in function." ); return 0; }
+    compiler->upvalues[upvalueCount].isLocal = isLocal;
+    compiler->upvalues[upvalueCount].index = index;
+    return compiler->function->upvalueCount++;
+}
+
+static int resolveUpvalue( Compiler* compiler, Token* name ) {
+    // we're calling 'resolveUpvalue' after failing to resolveLocal on compiler
+    // so, we resort to checking up the stack for enclosing locals
+    if( NULL == compiler->enclosing ) return -1;
+    int local = resolveLocal( compiler->enclosing, name );
+
+    // no local found, so we have a global
+    if( -1 == local ) return -1;
+
+    // close over the local variable
+    return addUpvalue( compiler, (uint8_t)local, true );
+}
+
 static void namedVariable( Token name, bool canAssign ) {
     // see if this is a local variable
     int arg = resolveLocal( current, &name );
@@ -351,6 +386,9 @@ static void namedVariable( Token name, bool canAssign ) {
     if( -1 != arg ) {
         getOp = OP_GET_LOCAL;
         setOp = OP_SET_LOCAL;
+    } else if( -1 != (arg = resolveUpvalue( current, &name )) ) {
+        getOp = OP_GET_UPVALUE;
+        setOp = OP_SET_UPVALUE;
     } else {
         getOp = OP_GET_GLOBAL;
         setOp = OP_SET_GLOBAL;

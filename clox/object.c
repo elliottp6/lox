@@ -40,6 +40,7 @@ ObjFunction* newFunction() {
     ObjFunction* function = (ObjFunction*)allocateObject( sizeof( ObjFunction ), OBJ_FUNCTION );
     function->obj.type = OBJ_FUNCTION;
     function->arity = 0;
+    function->upvalueCount = 0;
     function->name = NULL;
     initChunk( &function->chunk );
     return function;
