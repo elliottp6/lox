@@ -54,6 +54,7 @@ static void freeObject( Obj* o ) {
     // switch on type so we can track VM memory usage
     switch( o->type ) {        
         case OBJ_STRING: deallocate( o, sizeof( ObjString ) + ((ObjString*)o)->len ); break;
+        case OBJ_UPVALUE: deallocate( o, sizeof( ObjUpvalue ) ); break;
         case OBJ_NATIVE: deallocate( o, sizeof( ObjNative ) ); break;
         case OBJ_CLOSURE: deallocate( o, sizeof( ObjClosure ) ); break;
         case OBJ_FUNCTION: {

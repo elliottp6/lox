@@ -17,6 +17,7 @@
 
 typedef enum {
     OBJ_STRING,
+    OBJ_UPVALUE,
     OBJ_FUNCTION,
     OBJ_NATIVE,
     OBJ_CLOSURE,
@@ -33,6 +34,11 @@ struct ObjString {
     uint32_t hash; // upgrade to 64-bit at some point
     char buf[]; // flexible array member
 };
+
+typedef struct ObjUpvalue {
+    Obj obj;
+    Value* location;
+} ObjUpvalue;
 
 typedef struct {
     Obj obj;
@@ -64,6 +70,9 @@ void printString( ObjString* s );
 void printStringToErr( ObjString* s );
 ObjString* makeString( const char* s, size_t len );
 ObjString* concatStrings( const char* s1, size_t len1, const char* s2, size_t len2 );
+
+// upvalues
+ObjUpvalue* newUpvalue( Value* slot );
 
 // functions
 void printFunction( ObjFunction* f );

@@ -86,9 +86,9 @@ static void initCompiler( Compiler* compiler, FunctionType type ) {
     compiler->enclosing = current;
     current = compiler;
 
-    // give the function a name (unless it's a top-level script)
-    if( TYPE_SCRIPT != type )
-        current->function->name = makeString( parser.previous.start, parser.previous.length );
+    // give the function a name
+    if( TYPE_SCRIPT != type ) current->function->name = makeString( parser.previous.start, parser.previous.length );
+    else current->function->name = makeString( "main", 4 );
 
     // reserve the 1st stack slot for the main function object (without a name so we cannot refer to it within the code)
     Local* local = &current->locals[current->localCount++];
@@ -841,7 +841,7 @@ ObjFunction* compile( const char* source ) {
     // compile each declaration
     while( !match( TOKEN_EOF ) ) declaration();
 
-    // return the compiled function
+    // return the compiled function w/ the name "main"
     ObjFunction* function = endCompiler();
-    return parser.hadError ? NULL : function; // <-- TODO: shouldn't we delete the function on error?
+    return parser.hadError ? NULL : function;
 }

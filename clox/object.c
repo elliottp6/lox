@@ -9,6 +9,7 @@
 void printObject( Obj* o ) {
     switch( o->type ) {
         case OBJ_STRING: printString( (ObjString*)o ); return;
+        case OBJ_UPVALUE: printf( "upvalue" ); return;
         case OBJ_FUNCTION: printFunction( (ObjFunction*)o ); return;
         case OBJ_NATIVE: printf( "<native>" ); return;
         case OBJ_CLOSURE: printFunction( ((ObjClosure*)o)->function ); return;
@@ -89,4 +90,10 @@ ObjString* concatStrings( const char* s1, size_t len1, const char* s2, size_t le
     // intern it
     tableSet( &vm.strings, obj, NIL_VAL );
     return obj;
+}
+
+ObjUpvalue* newUpvalue( Value* slot ) {
+    ObjUpvalue* upvalue = (ObjUpvalue*)allocateObject( sizeof( ObjUpvalue ), OBJ_UPVALUE );
+    upvalue->location = slot;
+    return upvalue;
 }
