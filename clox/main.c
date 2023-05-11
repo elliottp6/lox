@@ -4,6 +4,7 @@
 #include "vm.h"
 #include "debug.h"
 #include "scanner.h"
+#include "compiler.h"
 
 static char* readFile( const char* path ) {
     // open file
@@ -330,6 +331,21 @@ int main( int argc, const char* argv[] ) {
                 ERROR_VAL( RUNTIME_ERROR ) ) ) { freeVM(); return 1; }
 
             // TODO: test closure disassembly
+            {
+                ObjFunction* main = compile(
+                    "fun outer() {\n"
+                    "   var a = 1;\n"
+                    "   var b = 2;\n"
+                    "   fun middle() {\n"
+                    "       var c = 3;\n"
+                    "       var d = 4;\n"
+                    "       fun inner() {\n"
+                    "           print a + c + b + d;\n"
+                    "       }\n"
+                    "   }\n"
+                    "}\n" );
+                disassembleChunk( &main->chunk );
+            }
 
             // done
             freeVM();
