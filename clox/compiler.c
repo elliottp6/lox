@@ -367,16 +367,17 @@ static int addUpvalue( Compiler* compiler, uint8_t index, bool isLocal ) {
 }
 
 static int resolveUpvalue( Compiler* compiler, Token* name ) {
-    // we're calling 'resolveUpvalue' after failing to resolveLocal on compiler
-    // so, we resort to checking up the stack for enclosing locals
+    // base case: see if enclosing function contains a local we can close over
     if( NULL == compiler->enclosing ) return -1;
     int local = resolveLocal( compiler->enclosing, name );
+    if( -1 != local ) return addUpvalue( compiler, (uint8_t)local, true );
 
-    // no local found, so we have a global
-    if( -1 == local ) return -1;
+    // otherwise: no local found, so try to find upvalue in the enclosing compiler
+    int upvalue = resolveUpvalue( compiler->enclosing, name );
+    if( -1 != upvalue ) return addUpvalue( compiler, (uint8_t)upvalue, false );
 
-    // close over the local variable
-    return addUpvalue( compiler, (uint8_t)local, true );
+    // otherwise: we have a global
+    return -1;
 }
 
 static void namedVariable( Token name, bool canAssign ) {
@@ -789,6 +790,12 @@ static void function( FunctionType type ) {
     // push function onto stack
     ObjFunction* function = endCompiler();
     emitBytes( OP_CLOSURE, makeConstant( OBJ_VAL( function ) ) );
+
+    // push upvalue info
+    for( int i = 0; i < function->upvalueCount; i++ ) {
+        emitByte( compiler.upvalues[i].isLocal ? 1 : 0 );
+        emitByte( compiler.upvalues[i].index );
+    }
 }
 
 static void funDeclaration() {

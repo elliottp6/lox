@@ -1,5 +1,6 @@
 #include <stdio.h>
 #include "debug.h"
+#include "object.h"
 #include "value.h"
 
 static size_t simpleInstruction( const char* name, size_t offset ) {
@@ -41,11 +42,20 @@ static size_t constantInstruction( const char* name, Chunk* chunk, size_t offset
 }
 
 static size_t closureInstruction( const char* name, Chunk* chunk, size_t offset ) {
+    // print the closure
     offset++;
-    int8_t constantIndex = chunk->code[offset++];
+    int8_t constant = chunk->code[offset++];
     printf( "OP_CLOSURE(" );
-    printValue( chunk->constants.values[constantIndex] );
-    printf( "@%d)", constantIndex );
+    printValue( chunk->constants.values[constant] );
+    printf( "@%d)", constant );
+
+    // print the upvalues
+    ObjFunction* function = AS_FUNCTION( chunk->constants.values[constant] );
+    for( int i = 0; i < function->upvalueCount; i++ ) {
+        int isLocal = chunk->code[offset++];
+        int index = chunk->code[offset++];
+        printf( "\n%04zu | %s %04d", offset - 2, isLocal ? "local" : "upvalue", index );
+    }
     return offset;
 }
 
@@ -66,6 +76,8 @@ size_t disassembleInstruction( Chunk* chunk, size_t offset ) {
         case OP_DEFINE_GLOBAL: return constantInstruction( "OP_DEFINE_GLOBAL", chunk, offset );
         case OP_GET_GLOBAL: return constantInstruction( "OP_GET_GLOBAL", chunk, offset );
         case OP_SET_GLOBAL: return constantInstruction( "OP_SET_GLOBAL", chunk, offset );
+        case OP_GET_UPVALUE: return byteInstruction( "OP_GET_UPVALUE", chunk, offset );
+        case OP_SET_UPVALUE: return byteInstruction( "OP_SET_UPVALUE", chunk, offset );
         case OP_GET_LOCAL:  return byteInstruction( "OP_GET_LOCAL", chunk, offset );
         case OP_SET_LOCAL:  return byteInstruction( "OP_SET_LOCAL", chunk, offset );
         case OP_EQUAL:      return simpleInstruction( "OP_EQUAL", offset );

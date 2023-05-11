@@ -329,6 +329,8 @@ int main( int argc, const char* argv[] ) {
                 "a();\n",
                 ERROR_VAL( RUNTIME_ERROR ) ) ) { freeVM(); return 1; }
 
+            // TODO: test closure disassembly
+
             // done
             freeVM();
             return 0;
