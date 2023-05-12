@@ -54,8 +54,16 @@ ObjNative* newNative( NativeFn function ) {
 }
 
 ObjClosure* newClosure( ObjFunction* function ) {
+    // allocate upvalue buffer
+    int upvalueCount = function->upvalueCount;
+    ObjUpvalue** upvalues = (ObjUpvalue**)allocate( sizeof( ObjUpvalue*) * upvalueCount );
+    for( int i = 0; i < upvalueCount; i++ ) upvalues[i] = NULL;
+
+    // allocate closure
     ObjClosure* closure = (ObjClosure*)allocateObject( sizeof( ObjClosure ), OBJ_CLOSURE );
     closure->function = function;
+    closure->upvalues = upvalues;
+    closure->upvalueCount = upvalueCount;
     return closure;
 }
 

@@ -330,7 +330,7 @@ int main( int argc, const char* argv[] ) {
                 "a();\n",
                 ERROR_VAL( RUNTIME_ERROR ) ) ) { freeVM(); return 1; }
 
-            // TODO: test closure disassembly
+            // test closure disassembly (manual only)
             {
                 ObjFunction* main = compile(
                     "fun outer() {\n"
@@ -346,6 +346,19 @@ int main( int argc, const char* argv[] ) {
                     "}\n" );
                 disassembleChunk( &main->chunk );
             }
+
+            // test closures
+            if( !interpret_test(
+                "CLOSURE TEST (UPVALUES STAY ON STACK)",
+                "fun outer() {\n"
+                "   var x = \"outside\";\n"
+                "   fun inner() {\n"
+                "       return x;\n"
+                "   }\n"
+                "   return inner();\n"
+                "}\n"
+                "return outer();\n",
+                OBJ_VAL( makeString( "outside", 7 ) ) ) ) { freeVM(); return 1; }
 
             // done
             freeVM();

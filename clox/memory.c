@@ -56,7 +56,12 @@ static void freeObject( Obj* o ) {
         case OBJ_STRING: deallocate( o, sizeof( ObjString ) + ((ObjString*)o)->len ); break;
         case OBJ_UPVALUE: deallocate( o, sizeof( ObjUpvalue ) ); break;
         case OBJ_NATIVE: deallocate( o, sizeof( ObjNative ) ); break;
-        case OBJ_CLOSURE: deallocate( o, sizeof( ObjClosure ) ); break;
+        case OBJ_CLOSURE: {
+            ObjClosure* c = (ObjClosure*)o;
+            freeArray( sizeof( ObjUpvalue* ), c->upvalues, c->upvalueCount );
+            deallocate( o, sizeof( ObjClosure ) );
+            break;
+        }
         case OBJ_FUNCTION: {
             ObjFunction* f = (ObjFunction*)o;
             freeChunk( &f->chunk );

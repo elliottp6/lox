@@ -128,6 +128,11 @@ static bool callValue( Value callee, int argCount ) {
     return false;
 }
 
+static ObjUpvalue* captureUpvalue( Value* local ) {
+    ObjUpvalue* createdUpvalue = newUpvalue( local );
+    return createdUpvalue;
+}
+
 void initVM() {
     resetStack();
     vm.objects = NULL;
@@ -242,6 +247,16 @@ static InterpretResult run() {
                 push( BOOL_VAL( valuesEqual( a, b ) ) );
                 break;
             }
+            case OP_GET_UPVALUE: {
+                uint8_t slot = READ_BYTE();
+                push(*frame->closure->upvalues[slot]->location);
+                break;
+            }
+            case OP_SET_UPVALUE: {
+                uint8_t slot = READ_BYTE();
+                *frame->closure->upvalues[slot]->location = peek( 0 );
+                break;
+            }
             case OP_GREATER:    BINARY_OP(BOOL_VAL, >); break;
             case OP_LESS:       BINARY_OP(BOOL_VAL, <); break;
             case OP_ADD: {
@@ -295,9 +310,17 @@ static InterpretResult run() {
                 break;
             }
             case OP_CLOSURE: {
+                // push the closure to the stack
                 ObjFunction* function = AS_FUNCTION( READ_CONSTANT() );
                 ObjClosure* closure = newClosure( function );
                 push( OBJ_VAL( closure ) );
+
+                // read the upvalues
+                for( int i = 0; i < closure->upvalueCount; i++ ) {
+                    uint8_t isLocal = READ_BYTE(), index = READ_BYTE();
+                    closure->upvalues[i] = isLocal ? captureUpvalue( frame->slots + index ) :
+                                                     frame->closure->upvalues[index];
+                }
                 break;
             }
             case OP_RETURN: {
