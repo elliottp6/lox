@@ -349,12 +349,10 @@ int main( int argc, const char* argv[] ) {
 
             // test closures
             if( !interpret_test(
-                "CLOSURE TEST (UPVALUES STAY ON STACK)",
+                "CLOSURE TEST (UPVALUES ARE CAPTURED TO HEAP)",
                 "fun outer() {\n"
                 "   var x = \"outside\";\n"
-                "   fun inner() {\n"
-                "       return x;\n"
-                "   }\n"
+                "   fun inner() { return x; }\n"
                 "   return inner();\n"
                 "}\n"
                 "return outer();\n",

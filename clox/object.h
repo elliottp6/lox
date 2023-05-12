@@ -74,6 +74,7 @@ ObjString* makeString( const char* s, size_t len );
 ObjString* concatStrings( const char* s1, size_t len1, const char* s2, size_t len2 );
 
 // upvalues
+void printUpvalue( ObjUpvalue* upvalue );
 ObjUpvalue* newUpvalue( Value* slot );
 
 // functions

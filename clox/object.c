@@ -9,7 +9,7 @@
 void printObject( Obj* o ) {
     switch( o->type ) {
         case OBJ_STRING: printString( (ObjString*)o ); return;
-        case OBJ_UPVALUE: printf( "upvalue" ); return;
+        case OBJ_UPVALUE: printUpvalue( (ObjUpvalue*)o ); return;
         case OBJ_FUNCTION: printFunction( (ObjFunction*)o ); return;
         case OBJ_NATIVE: printf( "<native>" ); return;
         case OBJ_CLOSURE: printFunction( ((ObjClosure*)o)->function ); return;
@@ -22,6 +22,11 @@ void printStringToErr( ObjString* s ) { fprintf( stderr, "\"%.*s\"", (int)s->len
 
 void printFunction( ObjFunction* f ) {
     if( f->name ) printf( "%.*s()", (int)f->name->len, f->name->buf ); else printf( "()" );
+}
+
+void printUpvalue( ObjUpvalue* upvalue ) {
+    printf( "*" );
+    if( upvalue->location ) printValue( *upvalue->location ); else printf( "NULL" );
 }
 
 static Obj* allocateObject( size_t size, ObjType type ) {
