@@ -347,9 +347,9 @@ int main( int argc, const char* argv[] ) {
                 disassembleChunk( &main->chunk );
             }
 
-            // test closures
+            // test capturing upvalues to heap as values
             if( !interpret_test(
-                "CLOSURE TEST (UPVALUES ARE CAPTURED TO HEAP)",
+                "CLOSURE TEST (UPVALUES CAPTURED TO HEAP AS VALUES)",
                 "fun outer() {\n"
                 "   var x = \"outside\";\n"
                 "   fun inner() { return x; }\n"
@@ -357,6 +357,23 @@ int main( int argc, const char* argv[] ) {
                 "}\n"
                 "return outer();\n",
                 OBJ_VAL( makeString( "outside", 7 ) ) ) ) { freeVM(); return 1; }
+
+            // test capturing upvalues to heap as variables
+            if( !interpret_test(
+                "CLOSURE TEST (UPVALUES CAPTURED TO HEAP AS VARIABLES)",
+                "var globalSet;\n"
+                "var globalGet;\n"
+                "fun myFunction() {\n"
+                "   var a = \"initial\";\n"
+                "   fun set() { a = \"updated\"; }\n"
+                "   fun get() { return a; }\n"
+                "   globalSet = set;\n"
+                "   globalGet = get;\n"
+                "}\n"
+                "myFunction();\n"
+                "globalSet();\n"
+                "return globalGet();\n",
+                OBJ_VAL( makeString( "updated", 7 ) ) ) ) { freeVM(); return 1; }
 
             // done
             freeVM();
