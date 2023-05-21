@@ -148,6 +148,15 @@ static ObjUpvalue* captureUpvalue( Value* local ) {
     return createdUpvalue;
 }
 
+static void closeUpvalues( Value* last ) {
+    while( NULL != vm.openUpvalues && vm.openUpvalues->location >= last ) {
+        ObjUpvalue *upvalue = vm.openUpvalues;
+        upvalue->closed = *upvalue->location;
+        upvalue->location = &upvalue->closed;
+        vm.openUpvalues = upvalue->next;
+    }
+}
+
 void initVM() {
     resetStack();
     vm.objects = NULL;
@@ -338,9 +347,15 @@ static InterpretResult run() {
                 }
                 break;
             }
+            case OP_CLOSE_UPVALUE: {
+                closeUpvalues( vm.stackTop - 1 );
+                pop();
+                break;
+            }
             case OP_RETURN: {
                 // pop result & the frame
                 Value result = pop();
+                closeUpvalues( frame->slots );
                 vm.frameCount--;
 
                 // if it is the root frame: exit the program
