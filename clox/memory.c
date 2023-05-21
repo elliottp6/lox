@@ -29,6 +29,22 @@ static void* reallocate( void* buffer, size_t oldSize, size_t newSize ) {
     return newBuffer;
 }
 
+void markValue( Value value )  {
+    if( IS_OBJ( value ) ) markObject( AS_OBJ( value ) );
+}
+
+void markObject( Obj* object ) {
+    if( NULL == object ) return;
+
+    #ifdef DEBUG_LOG_GC
+    printf( "%p mark ", (void*)object );
+    printValue( OBJ_VAL( object ) );
+    printf( "\n" );
+    #endif
+
+    object->isMarked = true;
+}
+
 void* allocate( size_t size ) {
     return reallocate( NULL, 0, size );
 }
@@ -97,10 +113,23 @@ void freeObjects() {
     printf( "\n" );
 }
 
+static void markRoots() {
+    // mark every object reference to by the stack
+    for( Value* slot = vm.stack; slot < vm.stackTop; slot++ ) {
+        markValue( *slot );
+    }
+
+    // mark the table of global variables
+    markTable( &vm.globals );
+}
+
 void collectGarbage() {
     #ifdef DEBUG_LOG_GC
     printf( "-- gc begin\n" );
     #endif
+
+    // mark phase of mark-end-sweep
+    markRoots();
 
     #ifdef DEBUG_LOG_GC
     printf( "-- gc end\n" );

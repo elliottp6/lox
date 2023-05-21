@@ -35,6 +35,7 @@ static Obj* allocateObject( size_t size, ObjType type ) {
 
     // set type
     obj->type = type;
+    obj->isMarked = false;
 
     // insert into VM's object list
     obj->next = vm.objects;

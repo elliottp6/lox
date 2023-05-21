@@ -1,5 +1,6 @@
 #pragma once
 #include "common.h"
+#include "object.h"
 
 void* allocate( size_t size );
 void* zallocate( size_t size );
@@ -9,3 +10,5 @@ void* growArray( size_t typeSize, void* array, size_t oldCapacity, size_t newCap
 void freeArray( size_t typeSize, void* array, size_t capacity );
 void collectGarbage();
 void freeObjects();
+void markObject( Obj* object );
+void markValue( Value value );
