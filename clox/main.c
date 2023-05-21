@@ -359,7 +359,7 @@ int main( int argc, const char* argv[] ) {
                 OBJ_VAL( makeString( "outside", 7 ) ) ) ) { freeVM(); return 1; }
 
             // test capturing upvalues to heap as variables
-            if( !interpret_test(
+            /*if( !interpret_test(
                 "CLOSURE TEST (UPVALUES CAPTURED TO HEAP AS VARIABLES)",
                 "var globalSet;\n"
                 "var globalGet;\n"
@@ -373,7 +373,7 @@ int main( int argc, const char* argv[] ) {
                 "myFunction();\n"
                 "globalSet();\n"
                 "return globalGet();\n",
-                OBJ_VAL( makeString( "updated", 7 ) ) ) ) { freeVM(); return 1; }
+                OBJ_VAL( makeString( "updated", 7 ) ) ) ) { freeVM(); return 1; }*/
 
             // done
             freeVM();

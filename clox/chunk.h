@@ -31,6 +31,7 @@ typedef enum {
     OP_LOOP, // backward branch
     OP_CALL, // function call
     OP_CLOSURE, // closure creation
+    OP_CLOSE_UPVALUE, // upvalue creation
     OP_RETURN,
 } OpCode;
 

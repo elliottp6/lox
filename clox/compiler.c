@@ -43,6 +43,7 @@ typedef struct {
 typedef struct {
     Token name;
     int depth;
+    bool isCaptured;
 } Local;
 
 // closed-over variables
@@ -93,6 +94,7 @@ static void initCompiler( Compiler* compiler, FunctionType type ) {
     // reserve the 1st stack slot for the main function object (without a name so we cannot refer to it within the code)
     Local* local = &current->locals[current->localCount++];
     local->depth = 0;
+    local->isCaptured = false;
     local->name.start = "";
     local->name.length = 0;
 }
@@ -229,7 +231,8 @@ static void endScope() {
     // pop locals TODO: add a POPN instruction so we don't need so many individual pops
     while( current->localCount > 0 &&
            current->locals[current->localCount - 1].depth > current->scopeDepth ) {
-        emitByte( OP_POP );
+        if( current->locals[current->localCount - 1].isCaptured ) emitByte( OP_CLOSE_UPVALUE );
+        else emitByte( OP_POP );
         current->localCount--;
     }
 }
@@ -370,7 +373,10 @@ static int resolveUpvalue( Compiler* compiler, Token* name ) {
     // base case: see if enclosing function contains a local we can close over
     if( NULL == compiler->enclosing ) return -1;
     int local = resolveLocal( compiler->enclosing, name );
-    if( -1 != local ) return addUpvalue( compiler, (uint8_t)local, true );
+    if( -1 != local ) {
+        compiler->enclosing->locals[local].isCaptured = true;
+        return addUpvalue( compiler, (uint8_t)local, true );
+    }
 
     // otherwise: no local found, so try to find upvalue in the enclosing compiler
     int upvalue = resolveUpvalue( compiler->enclosing, name );
@@ -686,6 +692,7 @@ static void addLocal( Token name ) {
     Local* local = &current->locals[current->localCount++];
     local->name = name;
     local->depth = -1; // special value which indicates that the variable is declared but undefined
+    local->isCaptured = false;
 }
 
 static void declareVariable() {
