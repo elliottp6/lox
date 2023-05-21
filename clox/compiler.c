@@ -3,6 +3,7 @@
 #include <stdlib.h>
 #include "common.h"
 #include "compiler.h"
+#include "memory.h"
 #include "scanner.h"
 #include "object.h"
 #ifdef DEBUG_PRINT_CODE
@@ -851,4 +852,12 @@ ObjFunction* compile( const char* source ) {
     // return the compiled function w/ the name "main"
     ObjFunction* function = endCompiler();
     return parser.hadError ? NULL : function;
+}
+
+void markCompilerRoots() {
+    Compiler* compiler = current;
+    while( NULL != compiler ) {
+        markObject( (Obj*)compiler->function );
+        compiler = compiler->enclosing;
+    }
 }

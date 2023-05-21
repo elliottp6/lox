@@ -1,6 +1,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <stdio.h>
+#include "compiler.h"
 #include "memory.h"
 #include "object.h"
 #include "vm.h"
@@ -119,8 +120,21 @@ static void markRoots() {
         markValue( *slot );
     }
 
+    // mark the closures inside of each CallFrame
+    for( int i = 0; i < vm.frameCount; i++ ) {
+        markObject( (Obj*)vm.frames[i].closure );
+    }
+
+    // mark the open upvalue list
+    for( ObjUpvalue* upvalue = vm.openUpvalues; NULL != upvalue; upvalue = upvalue->next ) {
+        markObject( (Obj*)upvalue );
+    }
+
     // mark the table of global variables
     markTable( &vm.globals );
+
+    // mark the roots of the compiler
+    markCompilerRoots();
 }
 
 void collectGarbage() {
