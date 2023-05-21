@@ -21,6 +21,9 @@ typedef struct {
     Table globals, strings; // for global variables, for string interning
     ObjUpvalue* openUpvalues; // for all closed-over upvalues
     Obj* objects; // for keeping track of all objects, so we can GC them
+    int grayCount; // # of gray objects
+    int grayCapacity; // max # of gray objects before reallocating
+    Obj** grayStack; // array of object pointers that have been marked as gray
 } VM;
 
 typedef enum {

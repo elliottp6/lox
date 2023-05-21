@@ -35,6 +35,7 @@ void markValue( Value value )  {
 }
 
 void markObject( Obj* object ) {
+    // ignore null objects
     if( NULL == object ) return;
 
     #ifdef DEBUG_LOG_GC
@@ -43,7 +44,18 @@ void markObject( Obj* object ) {
     printf( "\n" );
     #endif
 
+    // mark the object
     object->isMarked = true;
+
+    // grow capacity of the grayStack as needed
+    if( vm.grayCapacity < vm.grayCount + 1 ) {
+        vm.grayCapacity = growCapacity( vm.grayCapacity );
+        vm.grayStack = (Obj**)realloc( vm.grayStack, sizeof(Obj*) * vm.grayCapacity );
+        if( NULL == vm.grayStack ) exit( 1 );
+    }
+
+    // add the object to the grayStack
+    vm.grayStack[vm.grayCount++] = object;
 }
 
 void* allocate( size_t size ) {
@@ -103,7 +115,7 @@ static void freeObject( Obj* o ) {
 }
 
 void freeObjects() {
-    printf( "=> free objects: " );
+    printf( "=> free objects:\n" );
     Obj* obj = vm.objects;
     while( NULL != obj ) {
         Obj* next = obj->next;
@@ -111,7 +123,10 @@ void freeObjects() {
         obj = next;
     }
     vm.objects = NULL;
-    printf( "\n" );
+
+    // free the VM's grayStack
+    printf( "freeing VM's grayStack\n" );
+    free( vm.grayStack );
 }
 
 static void markRoots() {
