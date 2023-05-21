@@ -18,6 +18,7 @@ static Value testNative( int argCount, Value* args ) {
 static void resetStack() {
     vm.stackTop = vm.stack;
     vm.frameCount = 0;
+    vm.openUpvalues = NULL;
 }
 
 static void runtimeError( const char* format, ... ) {
@@ -129,7 +130,21 @@ static bool callValue( Value callee, int argCount ) {
 }
 
 static ObjUpvalue* captureUpvalue( Value* local ) {
+    // see if another closure has already captured this upvalue, so it can be shared
+    // (note: since list is sorted by upvalue->location, we don't have to keep searching once upvalue->location > local)
+    ObjUpvalue *prevUpvalue = NULL, *upvalue = vm.openUpvalues;
+    while( NULL != upvalue && upvalue->location > local ) {
+        prevUpvalue = upvalue;
+        upvalue = upvalue->next;
+    }
+
+    // if we found it, we're done
+    if( NULL != upvalue && upvalue->location == local ) return upvalue;
+
+    // otherwise: create a new heap-allocated upvalue, & insert it into the list s.t. the list remains sorted
     ObjUpvalue* createdUpvalue = newUpvalue( local );
+    createdUpvalue->next = upvalue;
+    if( NULL == prevUpvalue ) vm.openUpvalues = createdUpvalue; else prevUpvalue->next = createdUpvalue;
     return createdUpvalue;
 }
 

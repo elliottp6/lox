@@ -108,5 +108,6 @@ ObjString* concatStrings( const char* s1, size_t len1, const char* s2, size_t le
 ObjUpvalue* newUpvalue( Value* slot ) {
     ObjUpvalue* upvalue = (ObjUpvalue*)allocateObject( sizeof( ObjUpvalue ), OBJ_UPVALUE );
     upvalue->location = slot;
+    upvalue->next = NULL;
     return upvalue;
 }
