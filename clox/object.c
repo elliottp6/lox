@@ -39,6 +39,11 @@ static Obj* allocateObject( size_t size, ObjType type ) {
     // insert into VM's object list
     obj->next = vm.objects;
     vm.objects = obj;
+
+    // log the allocation
+    #ifdef DEBUG_LOG_GC
+    printf("%p allocate %zu for %d\n", (void*)obj, size, type);
+    #endif
     return obj;
 }
 

@@ -5,7 +5,18 @@
 #include "object.h"
 #include "vm.h"
 
+#ifdef DEBUG_LOG_GC
+#include "debug.h"
+#endif
+
 static void* reallocate( void* buffer, size_t oldSize, size_t newSize ) {
+    // when we request more memory: run the GC
+    if( newSize > oldSize ) {
+    #ifdef DEBUG_STRESS_GC
+        collectGarbage();
+    #endif
+    }
+
     // no bytes requested: free memory
     if( 0 == newSize ) {
         free( buffer );
@@ -47,9 +58,11 @@ void freeArray( size_t typeSize, void* array, size_t capacity ) {
 }
 
 static void freeObject( Obj* o ) {
-    // trace object freeing
+    #ifdef DEBUG_LOG_GC
+    printf( "%p free type %d with value ", (void*)o, o->type );
     printObject( o );
-    printf( ", " );
+    printf( "\n" );
+    #endif
     
     // switch on type so we can track VM memory usage
     switch( o->type ) {        
@@ -82,4 +95,14 @@ void freeObjects() {
     }
     vm.objects = NULL;
     printf( "\n" );
+}
+
+void collectGarbage() {
+    #ifdef DEBUG_LOG_GC
+    printf( "-- gc begin\n" );
+    #endif
+
+    #ifdef DEBUG_LOG_GC
+    printf( "-- gc end\n" );
+    #endif
 }
