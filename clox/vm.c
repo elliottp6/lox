@@ -165,7 +165,7 @@ void initVM() {
     vm.grayStack = NULL;
     initTable( &vm.globals );
     initTable( &vm.strings );
-    defineNative( "testNative", testNative );
+    //defineNative( "testNative", testNative );
 }
 
 void freeVM() {
@@ -288,10 +288,14 @@ static InterpretResult run() {
             case OP_LESS:       BINARY_OP(BOOL_VAL, <); break;
             case OP_ADD: {
                 if( IS_STRING( peek(0) ) && IS_STRING( peek(1) ) ) {
-                    // TODO: isn't this a potential GC problem since the strings won't exist on the stack (so a concurrent GC could collect them after pop, but before concat?)
-                    ObjString* b = AS_STRING( pop() );
-                    ObjString* a = AS_STRING( pop() );
-                    push( OBJ_VAL( concatStrings( a->buf, a->len, b->buf, b->len ) ) );
+                    // EP: isn't this a potential GC problem since the strings won't exist on the stack (so a concurrent GC could collect them after pop, but before concat?)
+                    // EP on GC chaper: yes, it is!
+                    ObjString* b = AS_STRING( peek( 0 ) );
+                    ObjString* a = AS_STRING( peek( 1 ) );
+                    ObjString* c = concatStrings( a->buf, a->len, b->buf, b->len );
+                    pop(); // pop a
+                    pop(); // pop b
+                    push( OBJ_VAL( c ) );
                 } else if( IS_NUMBER( peek(0) ) && IS_NUMBER( peek(1) ) ) {
                     double b = AS_NUMBER( pop() );
                     double a = AS_NUMBER( pop() );

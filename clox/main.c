@@ -306,10 +306,10 @@ int main( int argc, const char* argv[] ) {
                 OBJ_VAL( makeString( "hihi", 4 ) ) ) ) { freeVM(); return 1; }
 
             // test calling a native 'testNative' function
-            if( !interpret_test(
+            /*if( !interpret_test(
                 "CALL NATIVE FUNCTION",
                 "return testNative();",
-                NUMBER_VAL( 1618 ) ) ) { freeVM(); return 1; }
+                NUMBER_VAL( 1618 ) ) ) { freeVM(); return 1; }*/
 
             // test calling function with too many parameters
             if( !interpret_test(

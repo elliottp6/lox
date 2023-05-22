@@ -2,6 +2,7 @@
 #include <stdlib.h>
 #include "chunk.h"
 #include "memory.h"
+#include "vm.h"
 
 void initChunk( Chunk* chunk ) {
     chunk->capacity = 0;
@@ -36,7 +37,9 @@ void freeChunk( Chunk* chunk ) {
 }
 
 size_t addConstant( Chunk* chunk, Value value ) {
+    push( value ); // ensure GC can see this value BEFORE we call writeValueArray (which may trigger a GC)
     writeValueArray( &chunk->constants, value );
+    pop( value );
     return chunk->constants.count - 1;
 }
 

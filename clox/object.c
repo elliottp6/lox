@@ -107,7 +107,9 @@ ObjString* concatStrings( const char* s1, size_t len1, const char* s2, size_t le
     memcpy( obj->buf + len1, s2, len2 );
 
     // intern it
+    push( OBJ_VAL( obj ) ); // ensure GC can see this object BEFORE we call tableSet (which might trigger a GC)
     tableSet( &vm.strings, obj, NIL_VAL );
+    pop();
     return obj;
 }
 
