@@ -26,3 +26,4 @@ bool tableGet( Table* table, ObjString* key, Value* value );
 bool tableDelete( Table* table, ObjString* key );
 ObjString* tableFindString( Table* table, uint32_t hash, const char* s1, size_t len1, const char* s2, size_t len2 );
 void markTable( Table* table );
+void tableRemoveWhite( Table* table );

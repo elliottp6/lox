@@ -199,6 +199,26 @@ static void traceReferences() {
     }
 }
 
+static void sweep() {
+    // check each object
+    for( Obj *obj = vm.objects, *previous = NULL; NULL != obj; ) {
+        if( obj->isMarked ) {
+            // skip object
+            obj->isMarked = false; // set unmarked (for next mark phase)
+            previous = obj;
+            obj = obj->next;
+        } else {
+            // remove objects from vm.objects linked list
+            Obj *unreached = obj;
+            obj = obj->next;
+            if( NULL != previous ) previous->next = obj; else vm.objects = obj;
+
+            // free the unreachable object
+            freeObject( unreached );
+        }
+    }
+}
+
 void collectGarbage() {
     #ifdef DEBUG_LOG_GC
     printf( "-- gc begin\n" );
@@ -207,6 +227,8 @@ void collectGarbage() {
     // mark phase of mark-end-sweep
     markRoots();
     traceReferences();
+    tableRemoveWhite( &vm.strings );
+    sweep();
 
     #ifdef DEBUG_LOG_GC
     printf( "-- gc end\n" );
