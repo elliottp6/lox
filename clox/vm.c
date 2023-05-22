@@ -401,8 +401,16 @@ static Value interpret_main( ObjFunction* main ) {
     // clear stack
     resetStack();
 
-    // wrap main in a closure
+    // push main function (to keep GC happy)
+    push( OBJ_VAL( main ) );
+
+    // wrap main in a closure (this allocates and triggers a GC)
+    printf( "wrapping main in closure..\n" );
     ObjClosure* closure = newClosure( main );
+    printf( "main wrapped in closure\n" );
+
+    // replace main function with clousre
+    pop();
     push( OBJ_VAL( closure ) );
     call( closure, 0 );
 

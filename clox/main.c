@@ -141,6 +141,8 @@ int main( int argc, const char* argv[] ) {
                 // interpret
                 printf( "=> bytecode\n" );
                 disassembleChunk( &chunk );
+
+                printf( "=> interpret_chunk\n" );
                 Value value = interpret_chunk( &chunk );
 
                 // validate
@@ -150,6 +152,7 @@ int main( int argc, const char* argv[] ) {
                     printf( "ERROR: Expected -2.3, but got: " );
                     printValue( value );
                     printf( "\n" );
+                    freeChunk( &chunk );
                     freeVM();
                     return 1;
                 }
@@ -177,6 +180,8 @@ int main( int argc, const char* argv[] ) {
                 writeChunk( &chunk, OP_RETURN, 123 );
                 printf( "=> bytecode\n" );
                 disassembleChunk( &chunk );
+
+                printf( "=> interpret_chunk\n" );
                 Value value = interpret_chunk( &chunk );
 
                 // validate

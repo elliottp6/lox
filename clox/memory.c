@@ -44,16 +44,14 @@ static void blackenObject( Obj* object ) {
     #ifdef DEBUG_LOG_GC
     printf( "%p blacken ", (void*)object );
     printValue( OBJ_VAL( object ) );
-    printf("\n");
+    printf( "\n" );
     #endif
 
     switch( object->type ) {
         case OBJ_CLOSURE: {
             ObjClosure* closure = (ObjClosure*)object;
             markObject( (Obj*)closure->function );
-            for( int i = 0; i < closure->upvalueCount; i++ ) {
-                markObject( (Obj*)closure->upvalues[i] );
-            }
+            for( int i = 0; i < closure->upvalueCount; i++ ) markObject( (Obj*)closure->upvalues[i] );
             break;
         }
         case OBJ_FUNCTION: {
@@ -65,9 +63,7 @@ static void blackenObject( Obj* object ) {
         case OBJ_UPVALUE:
             markValue( ((ObjUpvalue*)object)->closed );
             break;
-        case OBJ_NATIVE:
-        case OBJ_STRING:
-            break;
+        case OBJ_NATIVE: case OBJ_STRING: break;
     }
 }
 
