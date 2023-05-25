@@ -17,6 +17,24 @@ void printObject( Obj* o ) {
     }
 }
 
+void printObjectType( ObjType type ) {
+    switch( type ) {
+        case OBJ_STRING: printf( "OBJ_STRING" ); return;
+        case OBJ_UPVALUE: printf( "OBJ_UPVALUE" ); return;
+        case OBJ_FUNCTION: printf( "OBJ_FUNCTION" ); return;
+        case OBJ_NATIVE: printf( "OBJ_NATIVE" ); return;
+        case OBJ_CLOSURE: printf( "OBJ_CLOSURE" ); return;
+        default: printf( "OBJ_UNKNOWN" ); return;
+    }
+}
+
+void printObjectDebug( Obj* o ) {
+    printObjectType( o->type );
+    printf( " " );
+    printObject( o );
+    printf( " @ %p", (void*)o );
+}
+
 void printString( ObjString* s ) { printf( "\"%.*s\"", (int)s->len, s->buf ); }
 void printStringToErr( ObjString* s ) { fprintf( stderr, "\"%.*s\"", (int)s->len, s->buf ); }
 
@@ -43,7 +61,9 @@ static Obj* allocateObject( size_t size, ObjType type ) {
 
     // log the allocation
     #ifdef DEBUG_LOG_GC
-    printf("%p allocate %zu for %d\n", (void*)obj, size, type);
+    printf( "allocate " );
+    printObjectType( type );
+    printf( " @ %p\n", (void*)obj ); // %zu for size
     #endif
     return obj;
 }

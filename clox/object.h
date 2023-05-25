@@ -68,6 +68,8 @@ typedef struct {
 
 // objects
 void printObject( Obj* obj );
+void printObjectType( ObjType type );
+void printObjectDebug( Obj* obj );
 static inline bool isObjType( Value value, ObjType type ) { return IS_OBJ(value) && AS_OBJ(value)->type == type; }
 
 // strings

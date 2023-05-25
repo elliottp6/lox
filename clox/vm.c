@@ -401,17 +401,13 @@ static Value interpret_main( ObjFunction* main ) {
     // clear stack
     resetStack();
 
-    // push main function (to keep GC happy)
-    push( OBJ_VAL( main ) );
-
     // wrap main in a closure (this allocates and triggers a GC)
-    printf( "wrapping main in closure..\n" );
+    push( OBJ_VAL( main ) );
     ObjClosure* closure = newClosure( main );
-    printf( "main wrapped in closure\n" );
-
-    // replace main function with clousre
     pop();
     push( OBJ_VAL( closure ) );
+
+    // replace main function with clousre
     call( closure, 0 );
 
     // run VM
@@ -430,10 +426,10 @@ Value interpret( const char* source ) {
 }
 
 Value interpret_chunk( Chunk* chunk ) {
-    ObjFunction main;
+    ObjFunction main; // WARNING: main is allocated on stack & not tracked by GC. Which is OK b/c the caller owns the chunk and will delete it. Keep in mind that we CANNOT give main a name, b/c the GC isn't tracking it.
     main.arity = 0;
     main.chunk = *chunk;
-    main.name = makeString( "main", 4 );
+    main.name = NULL;
     main.obj.next = NULL;
     main.obj.type = OBJ_FUNCTION;
     return interpret_main( &main );

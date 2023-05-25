@@ -42,8 +42,8 @@ static void markArray( ValueArray* array ) {
 
 static void blackenObject( Obj* object ) {
     #ifdef DEBUG_LOG_GC
-    printf( "%p blacken ", (void*)object );
-    printValue( OBJ_VAL( object ) );
+    printf( "blacken " );
+    printObjectDebug( object );
     printf( "\n" );
     #endif
 
@@ -70,11 +70,18 @@ static void blackenObject( Obj* object ) {
 void markObject( Obj* object ) {
     // ignore null objects, and objects that we've already marked as gray
     if( NULL == object ) return;
-    if( object->isMarked ) return;
+    if( object->isMarked ) {
+        #ifdef DEBUG_LOG_GC
+        printf( "remark " );
+        printObjectDebug( object );
+        printf( "\n" );
+        #endif
+        return;
+    }
 
     #ifdef DEBUG_LOG_GC
-    printf( "%p mark ", (void*)object );
-    printValue( OBJ_VAL( object ) );
+    printf( "mark " );
+    printObjectDebug( object );
     printf( "\n" );
     #endif
 
@@ -122,8 +129,8 @@ void freeArray( size_t typeSize, void* array, size_t capacity ) {
 
 static void freeObject( Obj* o ) {
     #ifdef DEBUG_LOG_GC
-    printf( "%p free type %d with value ", (void*)o, o->type );
-    printObject( o );
+    printf( "free " );
+    printObjectDebug( o );
     printf( "\n" );
     #endif
     
@@ -149,7 +156,9 @@ static void freeObject( Obj* o ) {
 }
 
 void freeObjects() {
+    #ifdef DEBUG_LOG_GC
     printf( "=> free objects:\n" );
+    #endif
     Obj* obj = vm.objects;
     while( NULL != obj ) {
         Obj* next = obj->next;
@@ -159,7 +168,9 @@ void freeObjects() {
     vm.objects = NULL;
 
     // free the VM's grayStack
-    printf( "freeing VM's grayStack\n" );
+    #ifdef DEBUG_LOG_GC
+    printf( "freeing VM's grayStack\n" );;
+    #endif
     free( vm.grayStack );
 }
 
@@ -200,6 +211,11 @@ static void sweep() {
     for( Obj *obj = vm.objects, *previous = NULL; NULL != obj; ) {
         if( obj->isMarked ) {
             // skip object
+            #ifdef DEBUG_LOG_GC
+            printf( "unmark: " );
+            printObjectDebug( (void*)obj );
+            printf( "\n" );
+            #endif
             obj->isMarked = false; // set unmarked (for next mark phase)
             previous = obj;
             obj = obj->next;
