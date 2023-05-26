@@ -143,7 +143,7 @@ int main( int argc, const char* argv[] ) {
                 disassembleChunk( &chunk );
 
                 printf( "=> interpret_chunk\n" );
-                Value value = interpret_chunk( &chunk );
+                Value value = interpret_chunk( chunk ); // <-- note that VM takes ownership of chunk at this point
 
                 // validate
                 if( IS_NUMBER( value ) && valuesEqual( value, NUMBER_VAL( -2.3 ) ) ) {
@@ -152,13 +152,11 @@ int main( int argc, const char* argv[] ) {
                     printf( "ERROR: Expected -2.3, but got: " );
                     printValue( value );
                     printf( "\n" );
-                    freeChunk( &chunk );
                     freeVM();
                     return 1;
                 }
 
                 // free VM
-                freeChunk( &chunk );
                 freeVM();
             }
 
@@ -182,7 +180,7 @@ int main( int argc, const char* argv[] ) {
                 disassembleChunk( &chunk );
 
                 printf( "=> interpret_chunk\n" );
-                Value value = interpret_chunk( &chunk );
+                Value value = interpret_chunk( chunk ); // <-- note that VM takes ownership of chunk here
 
                 // validate
                 if( IS_STRING( value ) && valuesEqual( value, OBJ_VAL( makeString( "hihi", 4 ) ) ) ) {
@@ -196,7 +194,6 @@ int main( int argc, const char* argv[] ) {
                 }
 
                 // free VM
-                freeChunk( &chunk );
                 freeVM();
             }
 

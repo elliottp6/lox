@@ -425,12 +425,22 @@ Value interpret( const char* source ) {
     return interpret_main( compile( source ) );
 }
 
-Value interpret_chunk( Chunk* chunk ) {
-    ObjFunction main; // WARNING: main is allocated on stack & not tracked by GC. Which is OK b/c the caller owns the chunk and will delete it. Keep in mind that we CANNOT give main a name, b/c the GC isn't tracking it.
-    main.arity = 0;
-    main.chunk = *chunk;
-    main.name = NULL;
-    main.obj.next = NULL;
-    main.obj.type = OBJ_FUNCTION;
-    return interpret_main( &main );
+// WARNING: this takes OWNERSHIP over chunk, so caller should not free the chunk!
+Value interpret_chunk( Chunk chunk ) {
+    // push constants onto stack so GC won't collect them when we call ''makeString' or 'newFunction'
+    resetStack();
+    ValueArray constants = chunk.constants;
+    for( size_t i = 0; i < constants.count; i++ ) push( constants.values[i] );
+
+    // similarly, push the name of the function onto the stack
+    push( OBJ_VAL( makeString( "main", 4 ) ) );
+
+    // create main function
+    ObjFunction *main = newFunction();
+    main->name = (ObjString*)pop().as.obj;
+    main->chunk = chunk;
+
+    // now we can pop the constants off safely
+    resetStack();
+    return interpret_main( main );
 }

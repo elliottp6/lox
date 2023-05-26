@@ -168,9 +168,6 @@ void freeObjects() {
     vm.objects = NULL;
 
     // free the VM's grayStack
-    #ifdef DEBUG_LOG_GC
-    printf( "freeing VM's grayStack\n" );;
-    #endif
     free( vm.grayStack );
 }
 
