@@ -20,6 +20,7 @@ typedef struct {
     Value* stackTop; // pointer to the latest value in the stack
     Table globals, strings; // for global variables, for string interning
     ObjUpvalue* openUpvalues; // for all closed-over upvalues
+    size_t bytesAllocated, nextGC; // for tracking when to GC next
     Obj* objects; // for keeping track of all objects, so we can GC them
     int grayCount; // # of gray objects
     int grayCapacity; // max # of gray objects before reallocating

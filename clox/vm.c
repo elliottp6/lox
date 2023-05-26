@@ -160,6 +160,8 @@ static void closeUpvalues( Value* last ) {
 void initVM() {
     resetStack();
     vm.objects = NULL;
+    vm.bytesAllocated = 0;
+    vm.nextGC = 1024; // 1 KB (1MB is probably best, but this causes GC's to actually run during simple testing, which is handy)
     vm.grayCount = 0;
     vm.grayCapacity = 0;
     vm.grayStack = NULL;
