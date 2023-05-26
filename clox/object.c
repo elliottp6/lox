@@ -13,6 +13,11 @@ void printObject( Obj* o ) {
         case OBJ_FUNCTION: printFunction( (ObjFunction*)o ); return;
         case OBJ_NATIVE: printf( "<native>" ); return;
         case OBJ_CLOSURE: printFunction( ((ObjClosure*)o)->function ); return;
+        case OBJ_CLASS: {
+            ObjClass* c = (ObjClass*)o;
+            printf( "class %.*s", (int)c->name->len, c->name->buf );
+            return;
+        }
         default: printf( "obj<%p>", o ); return;
     }
 }
@@ -66,6 +71,12 @@ static Obj* allocateObject( size_t size, ObjType type ) {
     printf( " @ %p\n", (void*)obj ); // %zu for size
     #endif
     return obj;
+}
+
+ObjClass* newClass( ObjString* name ) {
+    ObjClass* class = (ObjClass*)allocateObject( sizeof( ObjClass ), OBJ_CLASS );
+    class->name = name; 
+    return class;
 }
 
 ObjFunction* newFunction() {

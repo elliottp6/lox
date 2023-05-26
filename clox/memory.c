@@ -55,6 +55,11 @@ static void blackenObject( Obj* object ) {
     #endif
 
     switch( object->type ) {
+        case OBJ_CLASS: {
+            ObjClass* class = (ObjClass*)object;
+            markObject( (Obj*)class->name );
+            break;
+        }
         case OBJ_CLOSURE: {
             ObjClosure* closure = (ObjClosure*)object;
             markObject( (Obj*)closure->function );
@@ -156,6 +161,10 @@ static void freeObject( Obj* o ) {
             ObjFunction* f = (ObjFunction*)o;
             freeChunk( &f->chunk );
             deallocate( o, sizeof( ObjFunction ) );
+            break;
+        }
+        case OBJ_CLASS: {
+            deallocate( o, sizeof( ObjClass ) );
             break;
         }
         default: break; // unreachable
