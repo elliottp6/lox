@@ -380,6 +380,12 @@ static InterpretResult run() {
                 frame = &vm.frames[vm.frameCount - 1];
                 break;
             }
+            
+            // creates a new class
+            case OP_CLASS: {
+                push( OBJ_VAL( newClass( READ_STRING() ) ) );
+                break;
+            }
 
             // not in book: error on unrecognized opcodes
             default:

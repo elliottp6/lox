@@ -806,6 +806,23 @@ static void function( FunctionType type ) {
     }
 }
 
+static void classDeclaration() {
+    // consume class name
+    consume( TOKEN_IDENTIFIER, "Expect class name." );
+    uint8_t nameConstant = identifierConstant( &parser.previous );
+
+    // declare class name as a variable
+    declareVariable();
+
+    // emit OP_CLASS instruction
+    emitBytes( OP_CLASS, nameConstant );
+    defineVariable( nameConstant );
+
+    // class body is empty for now
+    consume( TOKEN_LEFT_BRACE, "Expect '{' before class body." );
+    consume( TOKEN_RIGHT_BRACE, "Expect '}' after class body." );
+}
+
 static void funDeclaration() {
     // declare a variable for the function. mark it initialized b/c it's legal for the function to self-reference
     uint8_t global = parseVariable( "Expect function name." );
@@ -821,7 +838,8 @@ static void funDeclaration() {
 // compiles a declaration
 static void declaration() {
     // dispatch on declaration type
-    if( match( TOKEN_FUN ) ) funDeclaration();
+    if( match( TOKEN_CLASS ) ) classDeclaration();
+    else if( match( TOKEN_FUN ) ) funDeclaration();
     else if( match( TOKEN_VAR ) ) varDeclaration();
     else statement();
 

@@ -97,6 +97,7 @@ size_t disassembleInstruction( Chunk* chunk, size_t offset ) {
         case OP_CLOSURE:        return closureInstruction( "OP_CLOSURE", chunk, offset );
         case OP_CLOSE_UPVALUE:  return simpleInstruction("OP_CLOSE_UPVALUE", offset);
         case OP_RETURN:         return simpleInstruction( "OP_RETURN", offset );
+        case OP_CLASS:          return constantInstruction( "OP_CLASS", chunk, offset );
         default:
             printf( "Unknown opcode %d", instruction );
             return offset + 1;
@@ -104,7 +105,6 @@ size_t disassembleInstruction( Chunk* chunk, size_t offset ) {
 }
 
 void disassembleChunk( Chunk* chunk ) {
-    // disassemble instructions one-at-a-time
     for( size_t offset = 0; offset < chunk->count; ) {
         offset = disassembleInstruction( chunk, offset );
         printf( "\n" );

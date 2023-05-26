@@ -377,6 +377,12 @@ int main( int argc, const char* argv[] ) {
                 "return globalGet();\n",
                 OBJ_VAL( makeString( "updated", 7 ) ) ) ) { freeVM(); return 1; }
 
+            // test class creation
+            if( !interpret_test(
+                "CREATE EMPTY CLASS",
+                "class Brioche {} print Brioche; return 0;",
+                NUMBER_VAL( 0 ) ) ) { freeVM(); return 1; }
+
             // done
             freeVM();
             return 0;
