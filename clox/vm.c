@@ -417,8 +417,8 @@ static Value interpret_main( ObjFunction* main ) {
     if( INTERPRET_COMPILE_ERROR == result ) return ERROR_VAL( COMPILE_ERROR );
     if( INTERPRET_RUNTIME_ERROR == result ) return ERROR_VAL( RUNTIME_ERROR );
     
-    // otherwise, return what's on the stack
-    return pop();
+    // return what's on the stack (but don't pop it, or else it could get GC'd)
+    return peek( 0 );
 }
 
 Value interpret( const char* source ) {
