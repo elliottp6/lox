@@ -50,7 +50,7 @@ static int runFile( const char* path ) {
     if( NULL == source ) return 74;
 
     // interpret source file
-    Value value = interpret( source );
+    Value value = interpret( source, NIL_VAL );
 
     // done
     free( source );
@@ -60,7 +60,7 @@ static int runFile( const char* path ) {
 bool interpret_test( char* title, char* source, Value expected ) {
     // run test
     printf( "\n=> %s\n", title );
-    Value value = interpret( source );
+    Value value = interpret( source, expected );
     bool result = valuesEqual( value, expected );
 
     // print result
@@ -97,7 +97,7 @@ int main( int argc, const char* argv[] ) {
                 printf( "> " );
                 if( !fgets( line, sizeof( line ), stdin ) ) { printf( "\n" ); break; }
                 if( 0 == strcmp( "q\n", line ) ) break;
-                Value value = interpret( line );
+                Value value = interpret( line, NIL_VAL );
                 printf( "=> result: " );
                 printValue( value );
                 printf( "\n" );
@@ -110,7 +110,7 @@ int main( int argc, const char* argv[] ) {
         case 'e': {
             initVM();
             if( argc < 3 ) break;
-            interpret( argv[2] );
+            interpret( argv[2], NIL_VAL );
             freeVM();
             return 0;
         }

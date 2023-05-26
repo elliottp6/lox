@@ -394,12 +394,13 @@ static InterpretResult run() {
     #undef BINARY_OP
 }
 
-static Value interpret_main( ObjFunction* main ) {
+static Value interpret_main( ObjFunction* main, Value keepAlive ) {
     // validate args
     if( NULL == main ) return ERROR_VAL( COMPILE_ERROR );
 
     // clear stack
     resetStack();
+    push( keepAlive );
 
     // wrap main in a closure (this allocates and triggers a GC)
     push( OBJ_VAL( main ) );
@@ -417,12 +418,15 @@ static Value interpret_main( ObjFunction* main ) {
     if( INTERPRET_COMPILE_ERROR == result ) return ERROR_VAL( COMPILE_ERROR );
     if( INTERPRET_RUNTIME_ERROR == result ) return ERROR_VAL( RUNTIME_ERROR );
     
-    // return what's on the stack (but don't pop it, or else it could get GC'd)
+    // return what's on the top of the stack (but don't pop it, or else it could get GC'd)
     return peek( 0 );
 }
 
-Value interpret( const char* source ) {
-    return interpret_main( compile( source ) );
+Value interpret( const char* source, Value keepAlive ) {
+    resetStack();
+    push( keepAlive );
+    ObjFunction* main = compile( source );
+    return interpret_main( main, keepAlive );
 }
 
 // WARNING: this takes OWNERSHIP over chunk, so caller should not free the chunk!
@@ -442,5 +446,5 @@ Value interpret_chunk( Chunk chunk ) {
 
     // now we can pop the constants off safely
     resetStack();
-    return interpret_main( main );
+    return interpret_main( main, NIL_VAL );
 }
