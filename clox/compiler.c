@@ -818,21 +818,43 @@ static void function( FunctionType type ) {
     }
 }
 
+static void method() {
+    // consume the method name as a constant
+    consume( TOKEN_IDENTIFIER, "Expect method name." );
+    uint8_t constant = identifierConstant( &parser.previous );
+
+    // compile method body as function
+    FunctionType type = TYPE_FUNCTION;
+    function( type );
+
+    // bind function as method to class which is on the stack right above function
+    // (i.e. OP_METHOD is a 2-argument operator, taking class & function & binding them, plus a constant for the name)
+    emitBytes( OP_METHOD, constant );
+}
+
 static void classDeclaration() {
     // consume class name
     consume( TOKEN_IDENTIFIER, "Expect class name." );
-    uint8_t nameConstant = identifierConstant( &parser.previous );
+    Token className = parser.previous;
+    uint8_t nameConstant = identifierConstant( &className );
 
-    // declare class name as a variable
+    // declare class name as a variable pointing to class
     declareVariable();
-
-    // emit OP_CLASS instruction
     emitBytes( OP_CLASS, nameConstant );
     defineVariable( nameConstant );
 
-    // class body is empty for now
+    // load class onto stack, s.t. each method() knows where to find the class
+    namedVariable( className, false );
+
+    // compile class body
     consume( TOKEN_LEFT_BRACE, "Expect '{' before class body." );
+    while( !check( TOKEN_RIGHT_BRACE ) && !check( TOKEN_EOF ) ) {
+        method();
+    }
     consume( TOKEN_RIGHT_BRACE, "Expect '}' after class body." );
+
+    // pop class off stack
+    emitByte( OP_POP );
 }
 
 static void funDeclaration() {
