@@ -70,9 +70,14 @@ typedef struct Compiler {
     Upvalue upvalues[UINT8_COUNT];
 } Compiler;
 
+typedef struct ClassCompiler {
+    struct ClassCompiler* enclosing;
+} ClassCompiler;
+
 // globals 
 Parser parser;
 Compiler* current = NULL;
+ClassCompiler* currentClass = NULL;
 
 // initializes the compiler state
 static void initCompiler( Compiler* compiler, FunctionType type ) {
@@ -440,6 +445,11 @@ static void variable( bool canAssign ) {
 }
 
 static void this_( bool canAssign ) {
+    if( NULL == currentClass ) {
+        error( "Can't use 'this' outside of a class." );
+        return;
+    }
+
     variable( false );
 }
 
@@ -856,6 +866,11 @@ static void classDeclaration() {
     emitBytes( OP_CLASS, nameConstant );
     defineVariable( nameConstant );
 
+    // allocate classCompiler on stack, and set the global currentClass to it
+    ClassCompiler classCompiler;
+    classCompiler.enclosing = currentClass;
+    currentClass = &classCompiler;
+
     // load class onto stack, s.t. each method() knows where to find the class
     namedVariable( className, false );
 
@@ -868,6 +883,9 @@ static void classDeclaration() {
 
     // pop class off stack
     emitByte( OP_POP );
+
+    // we're done compiling this class, so restore currentClass
+    currentClass = currentClass->enclosing;
 }
 
 static void funDeclaration() {

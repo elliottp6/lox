@@ -408,6 +408,12 @@ int main( int argc, const char* argv[] ) {
                 "return t.returnNumber();\n",
                 NUMBER_VAL( 101 ) ) ) { freeVM(); return 1; }
 
+            // test that we cannot reference 'this' outside of a class
+            if( !interpret_test(
+                "INVALID 'THIS' REFERENCE",
+                "return this;",
+                ERROR_VAL( COMPILE_ERROR ) ) ) { freeVM(); return 1; }           
+
             // done
             freeVM();
             return 0;
