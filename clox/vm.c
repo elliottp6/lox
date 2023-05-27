@@ -530,6 +530,22 @@ static InterpretResult run() {
                 break;
             }
 
+            case OP_INHERIT: {
+                // get superclass & subclass off the stack
+                Value superclass = peek( 1 );
+                ObjClass* subclass = AS_CLASS( peek( 0 ) );
+
+                // copy all of the superclass methods into the subclass
+                // "copy-down inheritance", which makes method invocation *fast*
+                // this only works b/c user cannot add methods to the superclass at runtime
+                // also note: this runs BEFORE methods are defined on the class, so it can override any of the superclass methods
+                tableAddAll( &AS_CLASS( superclass )->methods, &subclass->methods );
+
+                // pop the subclass (leaving the superclass)
+                pop();
+                break;
+            }
+
             // not in book: error on unrecognized opcodes
             default:
                 runtimeError( "unrecognized opcode: %d", instruction );

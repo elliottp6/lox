@@ -909,6 +909,7 @@ static void classDeclaration() {
         namedVariable( className, false );
 
         // emit OP_INHERIT, which instructs the VM to wire up the subclass to the superclass
+        // TODO: this pops the subclass, but leaves the superclass on the stack? Is this a bug?
         emitByte( OP_INHERIT );
     }
 
