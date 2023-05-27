@@ -899,17 +899,11 @@ static void classDeclaration() {
         // consume token for superclass name
         consume( TOKEN_IDENTIFIER, "Expect superclass name." );
 
-        // emit instructions to load the superclass's value on the stack
+        // emit instructions to load (1) the superclass and (2) the class onto the stack, then run OP_INHERIT
+        // TODO: OP_INHERIT pops the subclass, but appears to leave the superclass on the stack. Is this a bug?
         variable( false );
-        if( lexemesEqual( &className, &parser.previous ) ) {
-            error( "A class can't inherit from itself." );
-        }
-
-        // load class onto stack, s.t. OP_INHERIT now have both the superclass and the subclass on the stack
+        if( lexemesEqual( &className, &parser.previous ) ) error( "A class can't inherit from itself." );
         namedVariable( className, false );
-
-        // emit OP_INHERIT, which instructs the VM to wire up the subclass to the superclass
-        // TODO: this pops the subclass, but leaves the superclass on the stack? Is this a bug?
         emitByte( OP_INHERIT );
     }
 
