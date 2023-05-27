@@ -414,6 +414,30 @@ int main( int argc, const char* argv[] ) {
                 "return this;",
                 ERROR_VAL( COMPILE_ERROR ) ) ) { freeVM(); return 1; }           
 
+            // test a simple constructor
+            if( !interpret_test( 
+                "SIMPLE CONSTRUCTOR",
+                "class CoffeeMaker {\n"
+                "   init(coffee) {\n"
+                "       this.coffee = coffee;\n"
+                "   }\n"
+                "   brew() { return this.coffee; }\n"
+                "}\n"
+                "var maker = CoffeeMaker( 899 );\n"
+                "return maker.brew();",
+                NUMBER_VAL( 899 ) ) ) { freeVM(); return 1; }
+
+            // test that we cannot return from an initializer
+            if( !interpret_test( 
+                "SIMPLE CONSTRUCTOR",
+                "class CoffeeMaker {\n"
+                "   init(coffee) {\n"
+                "       this.coffee = coffee;\n"
+                "       return 56;\n"
+                "   }\n"
+                "}\n",
+                ERROR_VAL( COMPILE_ERROR ) ) ) { freeVM(); return 1; }
+
             // done
             freeVM();
             return 0;

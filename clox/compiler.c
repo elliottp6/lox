@@ -710,6 +710,11 @@ static void returnStatement() {
     // return nil
     if( match( TOKEN_SEMICOLON ) ) { emitReturn(); return; }
 
+    // prevent returning a value from an initializer (emitReturn instead will return 'this')
+    if( current->type == TYPE_INITIALIZER ) {
+        error( "Can't return a value from an initializer." );
+    }
+
     // return value
     expression();
     consume( TOKEN_SEMICOLON, "Expect ';' after return value." );
