@@ -135,6 +135,21 @@ static bool callValue( Value callee, int argCount ) {
     return false;
 }
 
+static bool bindMethod( ObjClass* class, ObjString* name ) {
+    // lookup the method
+    Value method;
+    if( !tableGet( &class->methods, name, &method ) ) {
+        runtimeError( "Undefined property '%.*s'", (int)name->len, name->buf );
+        return false;
+    }
+
+    // bind method to class instance, then put bound method on the stack in place of the class instance
+    ObjBoundMethod* bound = newBoundMethod( peek( 0 ), AS_CLOSURE( method ) );
+    pop();
+    push( OBJ_VAL( bound ) );
+    return true;
+}
+
 static ObjUpvalue* captureUpvalue( Value* local ) {
     // see if another closure has already captured this upvalue, so it can be shared
     // (note: since list is sorted by upvalue->location, we don't have to keep searching once upvalue->location > local)
@@ -296,7 +311,8 @@ static InterpretResult run() {
                 // the next bytecode contains a string constant for the field
                 ObjString* name = READ_STRING();
 
-                // replace 'instance' on stack with 'value' from the field
+                // if we have a field: replace 'instance' on stack with 'value' from the field
+                // (note that fields shadow methods, which is why we check for a field first)
                 Value value;
                 if( tableGet( &instance->fields, name, &value ) ) {
                     pop(); // Instance.
@@ -304,9 +320,11 @@ static InterpretResult run() {
                     break;
                 }
 
-                // property does not exist
-                runtimeError( "Undefined property '%.*s'", (int)name->len, name->buf );
-                return INTERPRET_RUNTIME_ERROR;
+                // if we have a method: bind it to this class before putting it on the stack
+                if( !bindMethod( instance->class, name ) ) {
+                    return INTERPRET_RUNTIME_ERROR;
+                }
+                break;
             }
             case OP_SET_PROPERTY: {
                 // ensure we have an instance second-to-top of stack
