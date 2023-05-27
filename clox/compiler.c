@@ -56,6 +56,7 @@ typedef struct {
 // type of function the compiler is compiling
 typedef enum {
     TYPE_FUNCTION,
+    TYPE_METHOD,
     TYPE_SCRIPT
 } FunctionType;
 
@@ -77,7 +78,7 @@ Compiler* current = NULL;
 static void initCompiler( Compiler* compiler, FunctionType type ) {
     // setup variable tracking
     compiler->localCount = 0;
-    compiler->scopeDepth = 0;    
+    compiler->scopeDepth = 0;
     
     // setup current function
     compiler->type = type;
@@ -96,8 +97,16 @@ static void initCompiler( Compiler* compiler, FunctionType type ) {
     Local* local = &current->locals[current->localCount++];
     local->depth = 0;
     local->isCaptured = false;
-    local->name.start = "";
-    local->name.length = 0;
+
+    // non-fuctions have access to 'this', which is placed into the 1st stack slot
+    // question: why do we allow 'this' at the TYPE_SCRIPT scope?
+    if( type != TYPE_FUNCTION ) {
+        local->name.start = "this";
+        local->name.length = 4;
+    } else {
+        local->name.start = "";
+        local->name.length = 0;
+    }
 }
 
 // returns current chunk being compiled
@@ -430,6 +439,10 @@ static void variable( bool canAssign ) {
     namedVariable( parser.previous, canAssign );
 }
 
+static void this_( bool canAssign ) {
+    variable( false );
+}
+
 static void and( bool canAssign ) {
     // don't evaluate RHS if LHS was false
     int endJump = emitJump( OP_JUMP_IF_FALSE ); // <-- OP_JUMP_IF_FALSE leaves value on stack precisely for this case
@@ -491,7 +504,7 @@ ParseRule rules[] = {
     [TOKEN_PRINT]         = {NULL,     NULL,   PRECEDENCE_NONE},
     [TOKEN_RETURN]        = {NULL,     NULL,   PRECEDENCE_NONE},
     [TOKEN_SUPER]         = {NULL,     NULL,   PRECEDENCE_NONE},
-    [TOKEN_THIS]          = {NULL,     NULL,   PRECEDENCE_NONE},
+    [TOKEN_THIS]          = {this_,    NULL,   PRECEDENCE_NONE},
     [TOKEN_TRUE]          = {literal,  NULL,   PRECEDENCE_NONE},
     [TOKEN_VAR]           = {NULL,     NULL,   PRECEDENCE_NONE},
     [TOKEN_WHILE]         = {NULL,     NULL,   PRECEDENCE_NONE},
@@ -824,7 +837,7 @@ static void method() {
     uint8_t constant = identifierConstant( &parser.previous );
 
     // compile method body as function
-    FunctionType type = TYPE_FUNCTION;
+    FunctionType type = TYPE_METHOD;
     function( type );
 
     // bind function as method to class which is on the stack right above function

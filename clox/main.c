@@ -397,6 +397,17 @@ int main( int argc, const char* argv[] ) {
                 "return t.returnNumber();\n",
                 NUMBER_VAL( 6 ) ) ) { freeVM(); return 1; }
 
+            // test class instance with dynamic method
+            if( !interpret_test(
+                "DYNAMIC METHOD",
+                "class Test {\n"
+                "   returnNumber() { return this.number; }\n"
+                "}\n"
+                "var t = Test();\n"
+                "t.number = 101;\n"
+                "return t.returnNumber();\n",
+                NUMBER_VAL( 101 ) ) ) { freeVM(); return 1; }
+
             // done
             freeVM();
             return 0;

@@ -118,6 +118,7 @@ static bool callValue( Value callee, int argCount ) {
 
             case OBJ_BOUND_METHOD: {
                 ObjBoundMethod* bound = AS_BOUND_METHOD( callee );
+                vm.stackTop[-argCount - 1] = bound->receiver; // replace the CallFrame's function (0th slot) w/ the receiver. 'this' points here b/c of the work we did in initCompiler
                 return call( bound->method, argCount );
             }
 
