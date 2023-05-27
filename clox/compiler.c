@@ -894,6 +894,24 @@ static void classDeclaration() {
     classCompiler.enclosing = currentClass;
     currentClass = &classCompiler;
 
+    // check for '<' token, which means this class will inherit from another, existing class
+    if( match( TOKEN_LESS ) ) {
+        // consume token for superclass name
+        consume( TOKEN_IDENTIFIER, "Expect superclass name." );
+
+        // emit instructions to load the superclass's value on the stack
+        variable( false );
+        if( lexemesEqual( &className, &parser.previous ) ) {
+            error( "A class can't inherit from itself." );
+        }
+
+        // load class onto stack, s.t. OP_INHERIT now have both the superclass and the subclass on the stack
+        namedVariable( className, false );
+
+        // emit OP_INHERIT, which instructs the VM to wire up the subclass to the superclass
+        emitByte( OP_INHERIT );
+    }
+
     // load class onto stack, s.t. each method() knows where to find the class
     namedVariable( className, false );
 
