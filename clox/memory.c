@@ -55,6 +55,12 @@ static void blackenObject( Obj* object ) {
     #endif
 
     switch( object->type ) {
+        case OBJ_BOUND_METHOD: {
+            ObjBoundMethod* bound = (ObjBoundMethod*)object;
+            markValue( bound->receiver );
+            markObject( (Obj*)bound->method ); // not strictly required, since the receiver has a reference to this method
+            break;
+        }
         case OBJ_CLASS: {
             ObjClass* class = (ObjClass*)object;
             markObject( (Obj*)class->name );
@@ -180,6 +186,10 @@ static void freeObject( Obj* o ) {
             ObjInstance* instance = (ObjInstance*)o;
             freeTable( &instance->fields ); // note: no need to free individual entries, since GC will take care of those (there may be other references to them)
             deallocate( o, sizeof( ObjInstance ) );
+            break;
+        }
+        case OBJ_BOUND_METHOD: {
+            deallocate( o, sizeof( ObjBoundMethod ) );
             break;
         }
         default: break; // unreachable

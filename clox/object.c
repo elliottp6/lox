@@ -25,6 +25,10 @@ void printObject( Obj* o ) {
             return;
             break;
         }
+        case OBJ_BOUND_METHOD: {
+            printFunction( ((ObjBoundMethod*)o)->method->function );
+            break;
+        }
         default: printf( "obj<%p>", o ); return;
     }
 }
@@ -122,6 +126,13 @@ ObjClosure* newClosure( ObjFunction* function ) {
     closure->upvalues = upvalues;
     closure->upvalueCount = upvalueCount;
     return closure;
+}
+
+ObjBoundMethod* newBoundMethod( Value receiver, ObjClosure* method ) {
+    ObjBoundMethod* bound = (ObjBoundMethod*)allocateObject( sizeof( ObjBoundMethod ), OBJ_BOUND_METHOD );
+    bound->receiver = receiver;
+    bound->method = method;
+    return bound;
 }
 
 static uint32_t hashStringFNV1a32( const char* key, size_t len, uint32_t hash ) {
