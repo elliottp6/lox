@@ -163,6 +163,13 @@ static void closeUpvalues( Value* last ) {
     }
 }
 
+static void defineMethod( ObjString* name ) {
+    Value method = peek( 0 ); // grab function we compiled from top of stack
+    ObjClass* class = AS_CLASS( peek( 1 ) ); // grab class from second-to-top of stack
+    tableSet( &class->methods, name, method ); // bind method to class
+    pop(); // remove method from stack (leaving class on stack, ready for next method)
+}
+
 void initVM() {
     resetStack();
     vm.objects = NULL;
@@ -437,6 +444,12 @@ static InterpretResult run() {
             // creates a new class
             case OP_CLASS: {
                 push( OBJ_VAL( newClass( READ_STRING() ) ) );
+                break;
+            }
+
+            // creates a new method
+            case OP_METHOD: {
+                defineMethod( READ_STRING() );
                 break;
             }
 
