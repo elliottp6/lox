@@ -1,6 +1,7 @@
 // good read on Pratt parsers: http://journal.stuffwithstuff.com/2011/03/19/pratt-parsers-expression-parsing-made-easy/
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h> // for memcmp
 #include "common.h"
 #include "compiler.h"
 #include "memory.h"
@@ -57,6 +58,7 @@ typedef struct {
 typedef enum {
     TYPE_FUNCTION,
     TYPE_METHOD,
+    TYPE_INITIALIZER,
     TYPE_SCRIPT
 } FunctionType;
 
@@ -178,7 +180,16 @@ static void consume( TokenType type, const char* message ) {
 // emit byte(s) to the current chunk
 static void emitByte( uint8_t byte ) { writeChunk( currentChunk(), byte, parser.previous.line ); }
 static void emitBytes( uint8_t byte1, uint8_t byte2 ) { emitByte( byte1 ); emitByte( byte2 ); }
-static void emitReturn() { emitByte( OP_NIL ); emitByte( OP_RETURN ); } // returns NIL (since this is for implicit returns only)
+
+// called for implicit returns only (or a return w/o a value), where we usually return NIL (except for initializers, where we return 'this')
+static void emitReturn() {
+    if( current->type == TYPE_INITIALIZER ) {
+        emitBytes( OP_GET_LOCAL, 0 ); // 'this'
+    } else {
+        emitByte( OP_NIL ); // nil
+    }
+    emitByte( OP_RETURN );
+}
 
 static int emitJump( uint8_t jumpInstruction ) {
     emitByte( jumpInstruction );
@@ -848,6 +859,9 @@ static void method() {
 
     // compile method body as function
     FunctionType type = TYPE_METHOD;
+    if( parser.previous.length == 4 && memcmp( parser.previous.start, "init", 4 ) == 0 ) {
+        type = TYPE_INITIALIZER;
+    }
     function( type );
 
     // bind function as method to class which is on the stack right above function
