@@ -116,6 +116,11 @@ static bool callValue( Value callee, int argCount ) {
                 return true;
             }
 
+            case OBJ_BOUND_METHOD: {
+                ObjBoundMethod* bound = AS_BOUND_METHOD( callee );
+                return call( bound->method, argCount );
+            }
+
             case OBJ_NATIVE: {
                 // call native function
                 NativeFn native = AS_NATIVE( callee );
