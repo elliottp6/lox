@@ -276,6 +276,53 @@ static InterpretResult run() {
                 }
                 break;
             }
+            case OP_GET_PROPERTY: {
+                // validate that top of stack is an instance
+                if( !IS_INSTANCE( peek( 0 ) ) ) {
+                    runtimeError( "Only instances have properties." );
+                    return INTERPRET_RUNTIME_ERROR;
+                }
+
+                // get instance from top of stack
+                ObjInstance* instance = AS_INSTANCE( peek( 0 ) );
+
+                // the next bytecode contains a string constant for the field
+                ObjString* name = READ_STRING();
+
+                // replace 'instance' on stack with 'value' from the field
+                Value value;
+                if( tableGet( &instance->fields, name, &value ) ) {
+                    pop(); // Instance.
+                    push( value );
+                    break;
+                }
+
+                // property does not exist
+                runtimeError( "Undefined property '%.*s'", (int)name->len, name->buf );
+                return INTERPRET_RUNTIME_ERROR;
+            }
+            case OP_SET_PROPERTY: {
+                // ensure we have an instance second-to-top of stack
+                if( !IS_INSTANCE( peek( 1 ) ) ) {
+                    runtimeError( "Only instances have fields." );
+                    return INTERPRET_RUNTIME_ERROR;
+                }
+
+                // instance is second-to-top of stack
+                ObjInstance* instance = AS_INSTANCE( peek(1) );
+
+                // value to set field to is on top of stack
+                // note that we have to use 'peek' b/c 'pop' might make the value temporarily invisible to the GC (and tableSet can potentially trigger a GC)
+                tableSet( &instance->fields, READ_STRING(), peek(0) );
+
+                // it is now safe to pop the value (since we've already stashed it into a table)
+                Value value = pop();
+
+                // now pop the instance and replace it with the value (since 'set property' is an expression that returns the value it was set to)
+                pop();
+                push( value );
+                break;
+            }
             case OP_EQUAL: {
                 Value b = pop();
                 Value a = pop();

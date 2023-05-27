@@ -377,17 +377,15 @@ int main( int argc, const char* argv[] ) {
                 "return globalGet();\n",
                 OBJ_VAL( makeString( "updated", 7 ) ) ) ) { freeVM(); return 1; }
 
-            // test class creation (ideally, we need a str function, so return str( Brioche ) which we can check)
+            // test simple class instance with fields
             if( !interpret_test(
-                "CREATE EMPTY CLASS",
-                "class Brioche {} print Brioche; return 0;",
-                NUMBER_VAL( 0 ) ) ) { freeVM(); return 1; }
-
-            // test class instance creation (ideally, we need a str function, so return str( Brioche() ) which we can check)
-            if( !interpret_test(
-                "CREATE EMPTY CLASS",
-                "class Brioche {} print Brioche(); return 0;",
-                NUMBER_VAL( 0 ) ) ) { freeVM(); return 1; }
+                "SIMPLE CLASS INSTANCE WITH FIELDS",
+                "class Pair {}\n"
+                "var pair = Pair();\n"
+                "pair.first = 1;\n"
+                "pair.second = 2;\n"
+                "return pair.first + pair.second;",
+                NUMBER_VAL( 3 ) ) ) { freeVM(); return 1; }
 
             // done
             freeVM();
