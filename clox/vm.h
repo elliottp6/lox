@@ -19,6 +19,7 @@ typedef struct {
     Value stack[STACK_MAX]; // our value stack
     Value* stackTop; // pointer to the latest value in the stack
     Table globals, strings; // for global variables, for string interning
+    ObjString* initString; // name of initializer method for classes
     ObjUpvalue* openUpvalues; // for all closed-over upvalues
     size_t bytesAllocated, nextGC; // for tracking when to GC next
     Obj* objects; // for keeping track of all objects, so we can GC them

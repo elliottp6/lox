@@ -111,8 +111,18 @@ static bool callValue( Value callee, int argCount ) {
                 return call( AS_CLOSURE( callee ), argCount );
 
             case OBJ_CLASS: {
+                // allocate class
                 ObjClass* class = AS_CLASS( callee );
                 vm.stackTop[-argCount - 1] = OBJ_VAL( newInstance( class ) );
+
+                // call initializer
+                Value initializer;
+                if( tableGet( &class->methods, vm.initString, &initializer ) ) {
+                    return call( AS_CLOSURE( initializer ), argCount );
+                } else if( 0 != argCount ) {
+                    runtimeError( "Expected 0 arguments but got %d.", argCount );
+                    return false;
+                }
                 return true;
             }
 
@@ -201,12 +211,15 @@ void initVM() {
     vm.grayStack = NULL;
     initTable( &vm.globals );
     initTable( &vm.strings );
+    vm.initString = NULL; // must set this null BEFORE calling makeString, or else a GC could trigger, and try to access vm.initString, which might hold garbage!
+    vm.initString = makeString( "init", 4 );
     //defineNative( "testNative", testNative );
 }
 
 void freeVM() {
     freeTable( &vm.globals );
     freeTable( &vm.strings );
+    vm.initString = NULL;
     freeObjects();
 }
 

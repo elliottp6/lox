@@ -233,6 +233,9 @@ static void markRoots() {
 
     // mark the roots of the compiler
     markCompilerRoots();
+
+    // make sure the vm's initString isn't cleaned up
+    markObject( (Obj*)vm.initString );
 }
 
 // remove and blacken each object from the grayStack, one-at-a-time
