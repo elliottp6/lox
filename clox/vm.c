@@ -151,6 +151,28 @@ static bool callValue( Value callee, int argCount ) {
     return false;
 }
 
+static bool invokeFromClass( ObjClass* class, ObjString* name, int argCount ) {
+    Value method;
+    if( !tableGet( &class->methods, name, &method ) ) {
+        runtimeError( "Undefined property '%.*s'", (int)name->len, name->buf );
+        return false;
+    }
+    return call( AS_CLOSURE( method ), argCount );
+}
+
+static bool invoke( ObjString* name, int argCount ) {
+    // check that receiver is a class instance
+    Value receiver = peek( argCount );
+    if( !IS_INSTANCE( receiver ) ) {
+        runtimeError( "Only instances have methods." );
+        return false;
+    }
+
+    // if so, we can invoke on it
+    ObjInstance* instance = AS_INSTANCE( receiver );
+    return invokeFromClass( instance->class, name, argCount );
+}
+
 static bool bindMethod( ObjClass* class, ObjString* name ) {
     // lookup the method
     Value method;
@@ -437,6 +459,15 @@ static InterpretResult run() {
                 int argCount = READ_BYTE();
                 if( !callValue( peek( argCount ), argCount ) ) return INTERPRET_RUNTIME_ERROR;
                 frame = &vm.frames[vm.frameCount - 1]; // callValue changed the VM frame, so update our local variable
+                break;
+            }
+            case OP_INVOKE: {
+                ObjString* method = READ_STRING();
+                int argCount = READ_BYTE();
+                if( !invoke( method, argCount ) ) return INTERPRET_RUNTIME_ERROR;
+
+                // after invoke, there's a new call frame on the stack, so refresh our local copy
+                frame = &vm.frames[vm.frameCount - 1];
                 break;
             }
             case OP_CLOSURE: {

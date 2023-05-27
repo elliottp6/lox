@@ -32,6 +32,7 @@ typedef enum {
     OP_JUMP_IF_FALSE, // forward branch
     OP_LOOP, // backward branch
     OP_CALL, // function call
+    OP_INVOKE, // optimization: fast version of a method call
     OP_CLOSURE, // closure creation
     OP_CLOSE_UPVALUE, // upvalue creation
     OP_RETURN,
