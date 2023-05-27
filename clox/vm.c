@@ -168,8 +168,17 @@ static bool invoke( ObjString* name, int argCount ) {
         return false;
     }
 
-    // if so, we can invoke on it
+    // get the class instance
     ObjInstance* instance = AS_INSTANCE( receiver );
+
+    // if we're invoking a field on this instance, then call that field
+    Value value;
+    if( tableGet( &instance->fields, name, &value ) ) {
+        vm.stackTop[-argCount - 1] = value; // replace receiver with the value of the field
+        return callValue( value, argCount );
+    }
+
+    // otherwise, it must be a method, so invoke a method
     return invokeFromClass( instance->class, name, argCount );
 }
 
