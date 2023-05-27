@@ -438,6 +438,16 @@ int main( int argc, const char* argv[] ) {
                 "}\n",
                 ERROR_VAL( COMPILE_ERROR ) ) ) { freeVM(); return 1; }
 
+            // test that we can invoke a field
+            if( !interpret_test(
+                "INVOKING A FIELD",
+                "fun myFunction() { return 50; }\n"
+                "class Test {}\n"
+                "var t = Test();\n"
+                "t.field = myFunction;\n"
+                "return t.field();\n",
+                NUMBER_VAL( 50 ) ) ) { freeVM(); return 1; }
+
             // done
             freeVM();
             return 0;
