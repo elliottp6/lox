@@ -60,6 +60,12 @@ static void blackenObject( Obj* object ) {
             markObject( (Obj*)class->name );
             break;
         }
+        case OBJ_INSTANCE: {
+            ObjInstance* instance = (ObjInstance*)object;
+            markObject( (Obj*)instance->class );
+            markTable( &instance->fields );
+            break;
+        }
         case OBJ_CLOSURE: {
             ObjClosure* closure = (ObjClosure*)object;
             markObject( (Obj*)closure->function );
@@ -165,6 +171,12 @@ static void freeObject( Obj* o ) {
         }
         case OBJ_CLASS: {
             deallocate( o, sizeof( ObjClass ) );
+            break;
+        }
+        case OBJ_INSTANCE: {
+            ObjInstance* instance = (ObjInstance*)o;
+            freeTable( &instance->fields ); // note: no need to free individual entries, since GC will take care of those (there may be other references to them)
+            deallocate( o, sizeof( ObjInstance ) );
             break;
         }
         default: break; // unreachable

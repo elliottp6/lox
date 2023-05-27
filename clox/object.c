@@ -18,6 +18,13 @@ void printObject( Obj* o ) {
             printf( "class %.*s", (int)c->name->len, c->name->buf );
             return;
         }
+        case OBJ_INSTANCE: {
+            ObjInstance* i = (ObjInstance*)o;
+            ObjClass* c = i->class;
+            printf( "instance %.*s", (int)c->name->len, c->name->buf );
+            return;
+            break;
+        }
         default: printf( "obj<%p>", o ); return;
     }
 }
@@ -87,6 +94,13 @@ ObjFunction* newFunction() {
     function->name = NULL;
     initChunk( &function->chunk );
     return function;
+}
+
+ObjInstance* newInstance( ObjClass* class ) {
+    ObjInstance* instance = (ObjInstance*)allocateObject( sizeof( ObjInstance ), OBJ_INSTANCE );
+    instance->class = class;
+    initTable( &instance->fields );
+    return instance;
 }
 
 ObjNative* newNative( NativeFn function ) {

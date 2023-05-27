@@ -110,6 +110,12 @@ static bool callValue( Value callee, int argCount ) {
             case OBJ_CLOSURE:
                 return call( AS_CLOSURE( callee ), argCount );
 
+            case OBJ_CLASS: {
+                ObjClass* class = AS_CLASS( callee );
+                vm.stackTop[-argCount - 1] = OBJ_VAL( newInstance( class ) );
+                return true;
+            }
+
             case OBJ_NATIVE: {
                 // call native function
                 NativeFn native = AS_NATIVE( callee );
