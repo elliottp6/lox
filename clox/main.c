@@ -387,6 +387,19 @@ int main( int argc, const char* argv[] ) {
                 "return pair.first + pair.second;",
                 NUMBER_VAL( 3 ) ) ) { freeVM(); return 1; }
 
+            // test class instance with method
+            // note: not ready yet, since t.returnNumber uses OP_GET_PROPERTY, which checks the instance's fields, not the class's methods
+            /*
+            if( !interpret_test(
+                "METHOD",
+                "class Test {\n"
+                "   returnNumber() { return 6; }\n"
+                "}\n"
+                "var t = Test();\n"
+                "return t.returnNumber();\n",
+                NUMBER_VAL( 6 ) ) ) { freeVM(); return 1; }
+            */
+
             // done
             freeVM();
             return 0;
