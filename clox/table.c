@@ -49,12 +49,17 @@ void tableAddAll( Table* from, Table* to ) {
 }
 
 static void adjustCapacity( Table* table, size_t newCapacity ) {
-    // allocate a zeroed-out array of entries
-    // this works because a zeroed-out Entry has a null key and a NIL value
-    Entry* newEntries = zallocate( sizeof( Entry ) * newCapacity );
-    size_t newLoad = 0;
+    // allocate new entries
+    // bugfix: old was just: Entry* newEntries = zallocate( sizeof( Entry ) * newCapacity );
+    //         but, now we've redefined NIL_VAL b/c of NaN boxing, so we have to set it (cannot rely on NIL being zero anymore)
+    Entry* newEntries = allocate( sizeof( Entry ) * newCapacity );
+    for( size_t i = 0; i < newCapacity; i++ ) {
+        newEntries[i].key = NULL;
+        newEntries[i].value = NIL_VAL;
+    }
 
     // insert existing entries into the new table
+    size_t newLoad = 0;
     for( size_t i = 0; i < table->capacity; i++ ) {
         // get old entry
         Entry* entry = &table->entries[i];
@@ -83,7 +88,7 @@ bool tableSet( Table* table, ObjString* key, Value value ) {
 
     // get table entry for this key
     Entry* entry = findEntry( table->entries, table->capacity, key );
-
+   
     // increment the table's load (but only if we didn't just replace a tombstone)
     bool isNewKey = NULL == entry->key;
     if( isNewKey && IS_NIL( entry->value ) ) table->load++;
