@@ -470,6 +470,42 @@ int main( int argc, const char* argv[] ) {
                 "return sec.num1();\n",
                 NUMBER_VAL( 3 ) ) ) { freeVM(); return 1; }
 
+            // benchmark field access
+            if( !interpret_test(
+                "TABLE ACCESS PERFORMANCE",
+                "class Zoo {\n"
+                "    init() {\n"
+                "        this.aardvark = 1;\n"
+                "        this.baboon   = 1;\n"
+                "        this.cat      = 1;\n"
+                "        this.donkey   = 1;\n"
+                "        this.elephant = 1;\n"
+                "        this.fox      = 1;\n"
+                "    }\n"
+                "    ant()    { return this.aardvark; }\n"
+                "    banana() { return this.baboon; }\n"
+                "    tuna()   { return this.cat; }\n"
+                "    hay()    { return this.donkey; }\n"
+                "    grass()  { return this.elephant; }\n"
+                "    mouse()  { return this.fox; }\n"
+                "}\n"
+                "\n"
+                "var zoo = Zoo();\n"
+                "var sum = 0;\n"
+                "var start = clock();\n"
+                "while( sum < 10000000 ) {\n"
+                "    sum = sum + zoo.ant()\n"
+                "             + zoo.banana()\n"
+                "             + zoo.tuna()\n"
+                "             + zoo.hay()\n"
+                "             + zoo.grass()\n"
+                "             + zoo.mouse();\n"
+                "}\n"
+                "\n"
+                "print clock() - start;\n"
+                "print sum;\n",
+                NIL_VAL ) ) { freeVM(); return 1; }
+
             // done
             freeVM();
             return 0;
