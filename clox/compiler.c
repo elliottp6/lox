@@ -74,6 +74,7 @@ typedef struct Compiler {
 
 typedef struct ClassCompiler {
     struct ClassCompiler* enclosing;
+    bool hasSuperclass;
 } ClassCompiler;
 
 // globals 
@@ -775,6 +776,13 @@ static void declareVariable() {
     addLocal( *name );
 }
 
+static Token syntheticToken( const char* text ) {
+    Token token;
+    token.start = text;
+    token.length = (int)strlen(text);
+    return token;
+}
+
 static void markInitialized() { // give the variable a depth value, which marks it as "defined"
     if( 0 == current->scopeDepth ) return; // global variables are not locals
     current->locals[current->localCount - 1].depth = current->scopeDepth;
@@ -891,6 +899,7 @@ static void classDeclaration() {
 
     // allocate classCompiler on stack, and set the global currentClass to it
     ClassCompiler classCompiler;
+    classCompiler.hasSuperclass = false;
     classCompiler.enclosing = currentClass;
     currentClass = &classCompiler;
 
@@ -899,12 +908,24 @@ static void classDeclaration() {
         // consume token for superclass name
         consume( TOKEN_IDENTIFIER, "Expect superclass name." );
 
-        // emit instructions to load (1) the superclass and (2) the class onto the stack, then run OP_INHERIT
-        // TODO: OP_INHERIT pops the subclass, but appears to leave the superclass on the stack. Is this a bug?
+        // load superclass onto the stack
         variable( false );
         if( lexemesEqual( &className, &parser.previous ) ) error( "A class can't inherit from itself." );
+        
+        // make a new variable scope where 'super' lives
+        beginScope();
+        addLocal( syntheticToken( "super" ) );
+        defineVariable( 0 );
+
+        // load class onto the stack
         namedVariable( className, false );
+
+        // inherit methods from superclass => class (also, pops class off the stack)
+        // note that the super will be popped later after the subclass's methods are defined (since they might refer to super)
         emitByte( OP_INHERIT );
+
+        // tell classCompiler that we have a superclass, so it knows to end the scope later
+        classCompiler.hasSuperclass = true;
     }
 
     // load class onto stack, s.t. each method() knows where to find the class
@@ -920,6 +941,9 @@ static void classDeclaration() {
     // pop class off stack
     emitByte( OP_POP );
 
+    // end scope for superclass (which should pop the 'super' off the stack)
+    if( classCompiler.hasSuperclass ) endScope();
+    
     // we're done compiling this class, so restore currentClass
     currentClass = currentClass->enclosing;
 }
