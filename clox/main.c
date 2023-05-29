@@ -455,11 +455,19 @@ int main( int argc, const char* argv[] ) {
                 "class Oops < notClass {}\n",
                 ERROR_VAL( RUNTIME_ERROR ) ) ) { freeVM(); return 1; }
 
-            // test inheritance
-            // TODO
-
-            // test super
-            // TODO
+            // test inheritance & super
+            if( !interpret_test(
+                "INHERITANCE & SUPER",
+                "class First {\n"
+                "   num1() { return 1; }\n"
+                "   num2() { return 2; }\n"
+                "}\n"
+                "class Second < First {\n"
+                "   num1() { return super.num1() + this.num2(); }"
+                "}\n"
+                "var sec = Second();\n"
+                "return sec.num1();\n",
+                NUMBER_VAL( 3 ) ) ) { freeVM(); return 1; }
 
             // done
             freeVM();
