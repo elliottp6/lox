@@ -23,7 +23,7 @@ static Entry* findEntry( Entry* entries, size_t capacity, ObjString* key ) {
     Entry* t = NULL;
 
     // linear probe
-    for( size_t i = key->hash % capacity;; i = (i + 1) % capacity ) {
+    for( size_t i = key->hash & (capacity - 1);; i = (i + 1) & (capacity - 1) ) {
         // get entry
         Entry* e = &entries[i];
 
@@ -130,7 +130,7 @@ ObjString* tableFindString( Table* table, uint32_t hash, const char* s1, size_t 
     if( 0 == table->load ) return NULL;
 
     // linear probing
-    for( uint32_t i = hash % table->capacity;; i = (i + 1) % table->capacity ) {
+    for( uint32_t i = hash & (table->capacity - 1);; i = (i + 1) & (table->capacity - 1) ) {
         // get entry
         Entry* entry = &table->entries[i];
                
