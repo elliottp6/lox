@@ -12,6 +12,8 @@ typedef struct ObjString ObjString;
 #define TAG_NIL   1 // 01.
 #define TAG_FALSE 2 // 10.
 #define TAG_TRUE  3 // 11.
+#define COMPILE_ERROR 4 // 0100. // <-- EP added this in. If sign bit is unset, & we have a qnan, then we can store a lot of numeric values here that are not numbers.
+#define RUNTIME_ERROR 8 // 1100.
 
 // value type
 typedef uint64_t Value;
@@ -19,21 +21,24 @@ typedef uint64_t Value;
 // value constructors
 #define NIL_VAL             ((Value)(uint64_t)(QNAN | TAG_NIL))
 #define FALSE_VAL           ((Value)(uint64_t)(QNAN | TAG_FALSE))
-#define TRUE_VAL            ((Value)(uint64_t)(QNAN | TAG_TRUE)
+#define TRUE_VAL            ((Value)(uint64_t)(QNAN | TAG_TRUE))
 #define BOOL_VAL(b)         ((b) ? TRUE_VAL : FALSE_VAL)
 #define NUMBER_VAL(num)     numToValue(num)
-#define OBJ_VAL(obj)        (Value)(SIGN_BIT | QNAN | (uint64_t)(uintptr_t)(obj))
+#define OBJ_VAL(obj)        ((Value)(SIGN_BIT | QNAN | (uint64_t)(uintptr_t)(obj)))
+#define ERROR_VAL(err)      ((Value)(uint64_t)(QNAN | err))
 
 // value properties
 #define IS_NIL(value)       ((value) == NIL_VAL)
 #define IS_BOOL(value)      (((value) | 1) == TRUE_VAL)
 #define IS_NUMBER(value)    (((value) & QNAN) != QNAN)
 #define IS_OBJ(value)       (((value) & (QNAN | SIGN_BIT)) == (QNAN | SIGN_BIT))
+#define IS_ERROR(value)     (((value) | 8) == (QNAN | RUNTIME_ERROR))
 
 // value casting
 #define AS_BOOL(value)      ((value) == TRUE_VAL)
 #define AS_NUMBER(value)    valueToNum(value)
 #define AS_OBJ(value)       ((Obj*)(uintptr_t)((value) & ~(SIGN_BIT | QNAN)))
+#define AS_ERROR(value)     ((int)(((value) & 12) >> 2))
 
 static inline Value numToValue( double num ) { // seems slow, but compiler should convert this function into a simply copy
     Value value;

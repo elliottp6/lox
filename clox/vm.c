@@ -648,7 +648,7 @@ Value interpret_chunk( Chunk chunk ) {
 
     // create main function
     ObjFunction *main = newFunction();
-    main->name = (ObjString*)pop().as.obj;
+    main->name = (ObjString*)AS_OBJ( pop() );
     main->chunk = chunk;
 
     // now we can pop the constants off safely

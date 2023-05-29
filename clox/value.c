@@ -28,14 +28,20 @@ void freeValueArray( ValueArray* array ) {
 
 void printValue( Value value ) {
     #ifdef NAN_BOXING
-        if( IS_BOOL( value ) ) {
+    if( IS_BOOL( value ) ) {
         printf( AS_BOOL( value ) ? "true" : "false" );
     } else if( IS_NIL( value ) ) {
         printf( "nil" );
     } else if( IS_NUMBER( value ) ) {
         printf( "%g", AS_NUMBER( value ) );
     } else if( IS_OBJ( value ) ) {
-        printObject( value );
+        printObject( AS_OBJ( value ) );
+    } else if( IS_ERROR( value ) ) {
+        switch( AS_ERROR( value ) ) {
+            case COMPILE_ERROR: printf( "COMPILE ERROR" ); return;
+            case RUNTIME_ERROR: printf( "Runtime Error" ); return;
+            default: printf( "Unknown Error %d", AS_ERROR( value ) ); return;
+        }
     }
     #else
     switch( value.type ) {
