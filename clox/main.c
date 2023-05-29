@@ -448,6 +448,13 @@ int main( int argc, const char* argv[] ) {
                 "return t.field();\n",
                 NUMBER_VAL( 50 ) ) ) { freeVM(); return 1; }
 
+            // test inheriting from an invalid superclass
+            if( !interpret_test(
+                "INVALID SUPERCLASS",
+                "var notClass = 5;\n"
+                "class Oops < notClass {}\n",
+                ERROR_VAL( RUNTIME_ERROR ) ) ) { freeVM(); return 1; }
+
             // done
             freeVM();
             return 0;

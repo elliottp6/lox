@@ -531,8 +531,14 @@ static InterpretResult run() {
             }
 
             case OP_INHERIT: {
-                // get superclass & subclass off the stack
+                // get superclass
                 Value superclass = peek( 1 );
+                if( !IS_CLASS( superclass ) ) {
+                    runtimeError( "Superclass must be a class." );
+                    return INTERPRET_RUNTIME_ERROR;
+                }
+
+                // get subclass
                 ObjClass* subclass = AS_CLASS( peek( 0 ) );
 
                 // copy all of the superclass methods into the subclass
