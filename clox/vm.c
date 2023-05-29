@@ -6,13 +6,13 @@
 #include "compiler.h"
 #include "memory.h"
 #include <string.h>
-//#include <time.h>
+#include <time.h>
 
 VM vm; // global variable!
 
-// a simple native function
-static Value testNative( int argCount, Value* args ) {
-    return NUMBER_VAL( 1618 );
+// a simple clock function
+static Value clockNative( int argCount, Value* args ) {
+    return NUMBER_VAL( (double)clock() / CLOCKS_PER_SEC );
 }
 
 static void resetStack() {
@@ -244,7 +244,7 @@ void initVM() {
     initTable( &vm.strings );
     vm.initString = NULL; // must set this null BEFORE calling makeString, or else a GC could trigger, and try to access vm.initString, which might hold garbage!
     vm.initString = makeString( "init", 4 );
-    //defineNative( "testNative", testNative );
+    defineNative( "clock", clockNative );
 }
 
 void freeVM() {

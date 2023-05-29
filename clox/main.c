@@ -307,11 +307,12 @@ int main( int argc, const char* argv[] ) {
                 "fun double( str ) { return str + str; } var doubled = double( return_hi() ); return doubled;",
                 OBJ_VAL( makeString( "hihi", 4 ) ) ) ) { freeVM(); return 1; }
 
-            // test calling a native 'testNative' function
-            /*if( !interpret_test(
+            // test calling a native 'clock' function
+            if( !interpret_test(
                 "CALL NATIVE FUNCTION",
-                "return testNative();",
-                NUMBER_VAL( 1618 ) ) ) { freeVM(); return 1; }*/
+                "var c = clock();\n"
+                "return c - c;\n",
+                NUMBER_VAL( 0 ) ) ) { freeVM(); return 1; }
 
             // test calling function with too many parameters
             if( !interpret_test(
