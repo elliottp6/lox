@@ -529,7 +529,7 @@ ParseRule rules[] = {
     [TOKEN_OR]            = {NULL,     or,   PRECEDENCE_OR},
     [TOKEN_PRINT]         = {NULL,     NULL,   PRECEDENCE_NONE},
     [TOKEN_RETURN]        = {NULL,     NULL,   PRECEDENCE_NONE},
-    [TOKEN_SUPER]         = {NULL,     NULL,   PRECEDENCE_NONE},
+    [TOKEN_SUPER]         = {super_,   NULL,   PRECEDENCE_NONE},
     [TOKEN_THIS]          = {this_,    NULL,   PRECEDENCE_NONE},
     [TOKEN_TRUE]          = {literal,  NULL,   PRECEDENCE_NONE},
     [TOKEN_VAR]           = {NULL,     NULL,   PRECEDENCE_NONE},
@@ -781,6 +781,22 @@ static Token syntheticToken( const char* text ) {
     token.start = text;
     token.length = (int)strlen(text);
     return token;
+}
+
+static void super_( bool canAssign ) {
+    // sanity check
+    if( NULL == currentClass ) error( "Can't use 'super' outside of a class." );
+    else if( !currentClass->hasSuperclass ) error( "Can't use 'super' in a class with no superclass." );
+
+    // get the name of the method being called
+    consume( TOKEN_DOT, "Expect '.' after 'super'." );
+    consume( TOKEN_IDENTIFIER, "Expect superclass method name." );
+    uint8_t name = identifierConstant( &parser.previous );
+
+    // push 'this' and 'super' onto the stack, then call OP_GET_SUPER w/ name of method
+    namedVariable( syntheticToken( "this" ), false );
+    namedVariable( syntheticToken( "super" ), false );
+    emitBytes( OP_GET_SUPER, name );
 }
 
 static void markInitialized() { // give the variable a depth value, which marks it as "defined"

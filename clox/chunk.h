@@ -39,6 +39,7 @@ typedef enum {
     OP_CLASS, // class creation
     OP_METHOD, // method creation
     OP_INHERIT,
+    OP_GET_SUPER,
 } OpCode;
 
 typedef struct {
