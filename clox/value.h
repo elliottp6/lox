@@ -17,6 +17,9 @@ typedef enum {
     RUNTIME_ERROR
 } Error;
 
+#ifdef NAN_BOXING
+typedef uint64_t Value;
+#else 
 typedef struct {
     ValueType type;
     union {
@@ -26,6 +29,7 @@ typedef struct {
         Error error;
     } as;
 } Value;
+#endif
 
 // value constructor macros
 #define NIL_VAL           ((Value){VAL_NIL, {.number = 0}})
