@@ -455,6 +455,12 @@ int main( int argc, const char* argv[] ) {
                 "class Oops < notClass {}\n",
                 ERROR_VAL( RUNTIME_ERROR ) ) ) { freeVM(); return 1; }
 
+            // test inheritance
+            // TODO
+
+            // test super
+            // TODO
+
             // done
             freeVM();
             return 0;

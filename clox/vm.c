@@ -552,6 +552,21 @@ static InterpretResult run() {
                 break;
             }
 
+            case OP_GET_SUPER: {
+                // get method name from constant table
+                ObjString* name = READ_STRING();
+
+                // pop superclass from stack
+                ObjClass* superclass = AS_CLASS( pop() );
+
+                // create a new bound method, connecting super's method to the class
+                // (this pops the class off the stack, and replaces it with the bound method)
+                if( !bindMethod( superclass, name ) ) {
+                    return INTERPRET_RUNTIME_ERROR;
+                }
+                break;
+            }
+
             // not in book: error on unrecognized opcodes
             default:
                 runtimeError( "unrecognized opcode: %d", instruction );

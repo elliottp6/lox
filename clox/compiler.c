@@ -494,6 +494,29 @@ static void or( bool canAssign ) {
     patchJump( endJump );
 }
 
+static Token syntheticToken( const char* text ) {
+    Token token;
+    token.start = text;
+    token.length = (int)strlen(text);
+    return token;
+}
+
+static void super_( bool canAssign ) {
+    // sanity check
+    if( NULL == currentClass ) error( "Can't use 'super' outside of a class." );
+    else if( !currentClass->hasSuperclass ) error( "Can't use 'super' in a class with no superclass." );
+
+    // get the name of the method being called
+    consume( TOKEN_DOT, "Expect '.' after 'super'." );
+    consume( TOKEN_IDENTIFIER, "Expect superclass method name." );
+    uint8_t name = identifierConstant( &parser.previous );
+
+    // push 'this' and 'super' onto the stack, then call OP_GET_SUPER w/ name of method
+    namedVariable( syntheticToken( "this" ), false );
+    namedVariable( syntheticToken( "super" ), false );
+    emitBytes( OP_GET_SUPER, name );
+}
+
 // parsing rules
 ParseRule rules[] = {
     [TOKEN_LEFT_PAREN]    = {grouping, call,   PRECEDENCE_CALL},
@@ -774,29 +797,6 @@ static void declareVariable() {
 
     // create the new local variable
     addLocal( *name );
-}
-
-static Token syntheticToken( const char* text ) {
-    Token token;
-    token.start = text;
-    token.length = (int)strlen(text);
-    return token;
-}
-
-static void super_( bool canAssign ) {
-    // sanity check
-    if( NULL == currentClass ) error( "Can't use 'super' outside of a class." );
-    else if( !currentClass->hasSuperclass ) error( "Can't use 'super' in a class with no superclass." );
-
-    // get the name of the method being called
-    consume( TOKEN_DOT, "Expect '.' after 'super'." );
-    consume( TOKEN_IDENTIFIER, "Expect superclass method name." );
-    uint8_t name = identifierConstant( &parser.previous );
-
-    // push 'this' and 'super' onto the stack, then call OP_GET_SUPER w/ name of method
-    namedVariable( syntheticToken( "this" ), false );
-    namedVariable( syntheticToken( "super" ), false );
-    emitBytes( OP_GET_SUPER, name );
 }
 
 static void markInitialized() { // give the variable a depth value, which marks it as "defined"
