@@ -493,7 +493,7 @@ int main( int argc, const char* argv[] ) {
                 "var zoo = Zoo();\n"
                 "var sum = 0;\n"
                 "var start = clock();\n"
-                "while( sum < 10000000 ) {\n"
+                "while( sum < 1000000 ) {\n"
                 "    sum = sum + zoo.ant()\n"
                 "             + zoo.banana()\n"
                 "             + zoo.tuna()\n"
