@@ -511,10 +511,21 @@ static void super_( bool canAssign ) {
     consume( TOKEN_IDENTIFIER, "Expect superclass method name." );
     uint8_t name = identifierConstant( &parser.previous );
 
-    // push 'this' and 'super' onto the stack, then call OP_GET_SUPER w/ name of method
+    // push 'this' onto stack
     namedVariable( syntheticToken( "this" ), false );
-    namedVariable( syntheticToken( "super" ), false );
-    emitBytes( OP_GET_SUPER, name );
+
+    // check for method call (optimized path)
+    if( match( TOKEN_LEFT_PAREN ) ) {
+        // if so, we can use a fast path
+        uint8_t argCount = argumentList();
+        namedVariable( syntheticToken( "super" ), false );
+        emitBytes( OP_SUPER_INVOKE, name );
+        emitByte( argCount );
+    } else {
+        // push super onto stack, then call OP_GET_SUPER
+        namedVariable( syntheticToken( "super" ), false );
+        emitBytes( OP_GET_SUPER, name );
+    } 
 }
 
 // parsing rules

@@ -479,6 +479,23 @@ static InterpretResult run() {
                 frame = &vm.frames[vm.frameCount - 1];
                 break;
             }
+
+            case OP_SUPER_INVOKE: {
+                // pull method & argCount from instructions
+                ObjString* method = READ_STRING();
+                int argCount = READ_BYTE();
+
+                // pop superclass from stack
+                ObjClass* superclass = AS_CLASS( pop() );
+
+                // directly invoke the method
+                if( !invokeFromClass( superclass, method, argCount ) ) return INTERPRET_RUNTIME_ERROR;
+
+                // after invoke, there's a new call frame on the stack, so refresh our local copy
+                frame = &vm.frames[vm.frameCount - 1];
+                break;
+            }
+            
             case OP_CLOSURE: {
                 // push the closure to the stack
                 ObjFunction* function = AS_FUNCTION( READ_CONSTANT() );
@@ -493,11 +510,13 @@ static InterpretResult run() {
                 }
                 break;
             }
+
             case OP_CLOSE_UPVALUE: {
                 closeUpvalues( vm.stackTop - 1 );
                 pop();
                 break;
             }
+
             case OP_RETURN: {
                 // pop result & the frame
                 Value result = pop();

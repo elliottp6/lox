@@ -40,6 +40,7 @@ typedef enum {
     OP_METHOD, // method creation
     OP_INHERIT,
     OP_GET_SUPER,
+    OP_SUPER_INVOKE, // optimization: fast version of method call on super
 } OpCode;
 
 typedef struct {
